@@ -8,7 +8,7 @@ on:
 
 jobs:
   check:
-    name: Type check & Lint
+    name: Type check, Lint & Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -31,3 +31,6 @@ jobs:
 
       - name: Lint
         run: pnpm lint
+
+      - name: Tests
+        run: pnpm test
