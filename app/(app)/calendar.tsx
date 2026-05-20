@@ -152,12 +152,11 @@ function PopupModal({ visible, onClose, children }: {
 // ── Day cell ─────────────────────────────────────────────────────────────────
 
 function DayCell({
-  day, dateStr, isToday, isSelected, events, onPress,
+  day, dateStr, isToday, events, onPress,
 }: {
   day: number | null
   dateStr: string | null
   isToday: boolean
-  isSelected: boolean
   events: Event[]
   onPress: () => void
 }) {
@@ -167,17 +166,12 @@ function DayCell({
     <Pressable
       style={({ pressed }) => [
         styles.cell,
-        isSelected && styles.cellSelected,
         pressed && events.length > 0 && styles.cellPressed,
       ]}
       onPress={onPress}
     >
-      <View style={[
-        styles.dayNumWrap,
-        isToday && styles.dayNumToday,
-        isSelected && !isToday && styles.dayNumSelected,
-      ]}>
-        <Text style={[styles.dayNum, (isToday || isSelected) && styles.dayNumHighlight]}>
+      <View style={[styles.dayNumWrap, isToday && styles.dayNumToday]}>
+        <Text style={[styles.dayNum, isToday && styles.dayNumHighlight]}>
           {day}
         </Text>
       </View>
@@ -206,8 +200,6 @@ export default function CalendarScreen() {
 
   const [viewYear, setViewYear] = useState(today.getFullYear())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
-  const [selectedDay, setSelectedDay] = useState<string | null>(null)
-
   // Popup state: either showing a day list or a single event
   const [dayPopup, setDayPopup] = useState<{ dateStr: string; events: Event[] } | null>(null)
   const [eventPopup, setEventPopup] = useState<Event | null>(null)
@@ -229,12 +221,10 @@ export default function CalendarScreen() {
   const goPrev = () => {
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1) }
     else setViewMonth(m => m - 1)
-    setSelectedDay(null)
   }
   const goNext = () => {
     if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1) }
     else setViewMonth(m => m + 1)
-    setSelectedDay(null)
   }
 
   const eventsByDay = useMemo(() => {
@@ -249,7 +239,6 @@ export default function CalendarScreen() {
   const weeks = useMemo(() => buildWeeks(viewYear, viewMonth), [viewYear, viewMonth])
 
   const handleCellPress = (dateStr: string) => {
-    setSelectedDay(dateStr)
     const dayEvents = eventsByDay[dateStr] ?? []
     if (dayEvents.length === 0) return
     if (dayEvents.length === 1) {
@@ -303,7 +292,6 @@ export default function CalendarScreen() {
                       day={day}
                       dateStr={dateStr}
                       isToday={dateStr === todayStr}
-                      isSelected={dateStr === selectedDay}
                       events={dateStr ? (eventsByDay[dateStr] ?? []) : []}
                       onPress={() => dateStr && handleCellPress(dateStr)}
                     />
