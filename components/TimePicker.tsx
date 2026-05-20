@@ -45,9 +45,6 @@ function Column({
 
   return (
     <View style={col.wrapper}>
-      {/* Bande de sélection */}
-      <View style={col.band} pointerEvents="none" />
-
       <ScrollView
         ref={ref}
         showsVerticalScrollIndicator={false}
@@ -83,6 +80,9 @@ function Column({
           )
         })}
       </ScrollView>
+
+      {/* Bande de sélection — par-dessus le scroll, fond transparent */}
+      <View style={col.band} pointerEvents="none" />
     </View>
   )
 }
@@ -98,10 +98,9 @@ const col = StyleSheet.create({
     top: PAD,
     height: ITEM_H,
     left: 0, right: 0,
-    backgroundColor: '#F0F5FF',
+    backgroundColor: 'transparent',
     borderTopWidth: 1, borderBottomWidth: 1,
     borderColor: '#2563EB',
-    zIndex: 1,
   },
   item: {
     height: ITEM_H,
