@@ -15,6 +15,7 @@ import { getSpaceMembers, SpaceMember } from '@/lib/spaces'
 import { uploadAttachment, LocalFile } from '@/lib/attachments'
 import { MemberSchedule, getSpaceSchedules, getScheduleSignedUrl } from '@/lib/schedules'
 import CalendarPicker from '@/components/CalendarPicker'
+import TimePicker from '@/components/TimePicker'
 import AttachmentSection from '@/components/AttachmentSection'
 
 function parseTimeInput(input: string): string | null {
@@ -25,11 +26,6 @@ function parseTimeInput(input: string): string | null {
   return `${h}:${m}:00`
 }
 
-function autoFormatTime(raw: string): string {
-  const digits = raw.replace(/\D/g, '').slice(0, 4)
-  if (digits.length <= 2) return digits
-  return `${digits.slice(0, 2)}:${digits.slice(2)}`
-}
 
 function formatDisplayDate(isoDate: string): string {
   const d = new Date(isoDate + 'T00:00:00')
@@ -48,6 +44,8 @@ export default function NewEventScreen() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [startPickerOpen, setStartPickerOpen] = useState(false)
+  const [endPickerOpen, setEndPickerOpen] = useState(false)
   const [pendingFiles, setPendingFiles] = useState<LocalFile[]>([])
   const [schedules, setSchedules] = useState<Record<string, MemberSchedule>>({})
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
@@ -165,27 +163,19 @@ export default function NewEventScreen() {
           <View style={styles.row}>
             <View style={styles.rowItem}>
               <Text style={styles.label}>DÉBUT *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="09:00"
-                placeholderTextColor="#999"
-                value={startTime}
-                onChangeText={t => setStartTime(autoFormatTime(t))}
-                keyboardType="numeric"
-                maxLength={5}
-              />
+              <Pressable style={styles.dateButton} onPress={() => setStartPickerOpen(true)}>
+                <Text style={startTime ? styles.dateText : styles.datePlaceholder}>
+                  {startTime || 'Choisir'}
+                </Text>
+              </Pressable>
             </View>
             <View style={styles.rowItem}>
               <Text style={styles.label}>FIN *</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="10:00"
-                placeholderTextColor="#999"
-                value={endTime}
-                onChangeText={t => setEndTime(autoFormatTime(t))}
-                keyboardType="numeric"
-                maxLength={5}
-              />
+              <Pressable style={styles.dateButton} onPress={() => setEndPickerOpen(true)}>
+                <Text style={endTime ? styles.dateText : styles.datePlaceholder}>
+                  {endTime || 'Choisir'}
+                </Text>
+              </Pressable>
             </View>
           </View>
 
@@ -266,6 +256,22 @@ export default function NewEventScreen() {
         value={date}
         onConfirm={setDate}
         onClose={() => setCalendarOpen(false)}
+      />
+
+      <TimePicker
+        visible={startPickerOpen}
+        value={startTime || null}
+        title="Heure de début"
+        onConfirm={setStartTime}
+        onClose={() => setStartPickerOpen(false)}
+      />
+
+      <TimePicker
+        visible={endPickerOpen}
+        value={endTime || null}
+        title="Heure de fin"
+        onConfirm={setEndTime}
+        onClose={() => setEndPickerOpen(false)}
       />
 
       {/* Schedule list modal */}
