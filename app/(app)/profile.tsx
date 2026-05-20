@@ -71,13 +71,21 @@ export default function ProfileScreen() {
   const [error, setError] = useState<string | null>(null)
 
   const [schedule, setSchedule] = useState<MemberSchedule | null>(null)
+  const [schedulePreviewUri, setSchedulePreviewUri] = useState<string | null>(null)
   const [scheduleUploading, setScheduleUploading] = useState(false)
   const [viewerUri, setViewerUri] = useState<string | null>(null)
 
   useEffect(() => {
     if (!space || !user) return
     getSpaceSchedules(space.id)
-      .then(all => setSchedule(all.find(s => s.user_id === user.id) ?? null))
+      .then(async all => {
+        const mine = all.find(s => s.user_id === user.id) ?? null
+        setSchedule(mine)
+        if (mine && isImage(mine.mime_type)) {
+          const url = await getScheduleSignedUrl(mine.storage_path).catch(() => null)
+          setSchedulePreviewUri(url)
+        }
+      })
       .catch(() => {})
   }, [space?.id, user?.id])
 
@@ -98,8 +106,15 @@ export default function ProfileScreen() {
     try {
       const s = await uploadSchedule(space.id, user.id, file)
       setSchedule(s)
-    } catch {
-      Alert.alert('Erreur', 'L\'upload a échoué')
+      if (isImage(s.mime_type)) {
+        const url = await getScheduleSignedUrl(s.storage_path).catch(() => null)
+        setSchedulePreviewUri(url)
+      } else {
+        setSchedulePreviewUri(null)
+      }
+    } catch (e: unknown) {
+      const msg = (e as { message?: string })?.message ?? JSON.stringify(e)
+      Alert.alert('Erreur upload', msg)
     }
     setScheduleUploading(false)
   }
@@ -128,6 +143,7 @@ export default function ProfileScreen() {
           try {
             await deleteSchedule(schedule.id, schedule.storage_path)
             setSchedule(null)
+            setSchedulePreviewUri(null)
           } catch {
             Alert.alert('Erreur', 'Suppression échouée')
           }
@@ -178,23 +194,34 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <Text style={styles.label}>MON EMPLOI DU TEMPS</Text>
         {schedule ? (
-          <View style={styles.scheduleRow}>
-            <Ionicons
-              name={isImage(schedule.mime_type) ? 'image-outline' : 'document-text-outline'}
-              size={18} color="#666"
-            />
-            <Pressable style={{ flex: 1 }} onPress={handleViewSchedule}>
-              <Text style={styles.scheduleFilename} numberOfLines={1}>{schedule.filename}</Text>
-              <Text style={styles.scheduleDate}>
-                Mis à jour le {new Date(schedule.updated_at).toLocaleDateString('fr-FR')}
-              </Text>
-            </Pressable>
-            <Pressable onPress={handleUploadSchedule} disabled={scheduleUploading}>
-              <Text style={styles.editLink}>Remplacer</Text>
-            </Pressable>
-            <Pressable onPress={handleDeleteSchedule} hitSlop={8}>
-              <Ionicons name="close-circle" size={20} color="#d1d5db" />
-            </Pressable>
+          <View>
+            {schedulePreviewUri ? (
+              <Pressable onPress={handleViewSchedule} style={styles.previewWrapper}>
+                <Image
+                  source={{ uri: schedulePreviewUri }}
+                  style={styles.previewImage}
+                  contentFit="cover"
+                />
+              </Pressable>
+            ) : null}
+            <View style={styles.scheduleRow}>
+              <Ionicons
+                name={isImage(schedule.mime_type) ? 'image-outline' : 'document-text-outline'}
+                size={18} color="#666"
+              />
+              <Pressable style={{ flex: 1 }} onPress={handleViewSchedule}>
+                <Text style={styles.scheduleFilename} numberOfLines={1}>{schedule.filename}</Text>
+                <Text style={styles.scheduleDate}>
+                  Mis à jour le {new Date(schedule.updated_at).toLocaleDateString('fr-FR')}
+                </Text>
+              </Pressable>
+              <Pressable onPress={handleUploadSchedule} disabled={scheduleUploading}>
+                <Text style={styles.editLink}>Remplacer</Text>
+              </Pressable>
+              <Pressable onPress={handleDeleteSchedule} hitSlop={8}>
+                <Ionicons name="close-circle" size={20} color="#d1d5db" />
+              </Pressable>
+            </View>
           </View>
         ) : (
           <Pressable
@@ -270,6 +297,15 @@ const styles = StyleSheet.create({
     borderRadius: 8, padding: 12,
   },
   scheduleAddText: { fontSize: 14, color: BLUE },
+  previewWrapper: {
+    borderRadius: 8, overflow: 'hidden',
+    marginBottom: 8,
+    borderWidth: 1, borderColor: '#e5e5e5',
+  },
+  previewImage: {
+    width: '100%',
+    height: 180,
+  },
 
   signOutBtn: {
     marginTop: 8, borderWidth: 1, borderColor: '#e5e5e5',
