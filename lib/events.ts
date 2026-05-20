@@ -28,6 +28,17 @@ export async function getUpcomingEvents(spaceId: string): Promise<Event[]> {
   return (data ?? []) as Event[]
 }
 
+export async function getEvent(id: string): Promise<Event | null> {
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) return null
+  return data as Event
+}
+
 export async function createEvent(payload: {
   title: string
   date: string

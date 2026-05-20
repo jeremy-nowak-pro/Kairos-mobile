@@ -5,6 +5,7 @@ import { useAuth } from '@/context/auth'
 
 export default function RegisterScreen() {
   const { signUp } = useAuth()
+  const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -14,8 +15,9 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     setError(null)
+    if (!displayName.trim()) { setError('Le pseudo est requis'); return }
     setLoading(true)
-    const { error } = await signUp(email.trim(), password)
+    const { error } = await signUp(email.trim(), password, displayName.trim())
     setLoading(false)
     if (error) setError(error)
     else setDone(true)
@@ -35,6 +37,14 @@ export default function RegisterScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Créer un compte</Text>
 
+      <TextInput
+        style={styles.input}
+        placeholder="Pseudo"
+        placeholderTextColor="#999"
+        value={displayName}
+        onChangeText={setDisplayName}
+        autoCapitalize="none"
+      />
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -74,7 +84,7 @@ export default function RegisterScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 8, textAlign: 'center', color: '#111' },
+  title: { fontSize: 28, fontWeight: '700', marginBottom: 24, textAlign: 'center', color: '#111' },
   subtitle: { fontSize: 15, color: '#666', textAlign: 'center', marginBottom: 24 },
   input: {
     borderWidth: 1,
@@ -93,12 +103,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 12,
   },
-  passwordInput: {
-    flex: 1,
-    padding: 12,
-    fontSize: 16,
-    color: '#111',
-  },
+  passwordInput: { flex: 1, padding: 12, fontSize: 16, color: '#111' },
   eyeButton: { paddingHorizontal: 12 },
   eyeText: { fontSize: 13, color: '#666' },
   button: { backgroundColor: '#111', borderRadius: 8, padding: 14, alignItems: 'center', marginTop: 8 },
