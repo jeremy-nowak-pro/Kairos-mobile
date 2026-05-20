@@ -44,6 +44,13 @@ export default function AppLayout() {
           tabBarIcon: ({ color }) => <Ionicons name="cart-outline" size={22} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profil',
+          tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={22} color={color} />,
+        }}
+      />
       <Tabs.Screen name="dashboard" options={{ href: null }} />
     </Tabs>
   )
