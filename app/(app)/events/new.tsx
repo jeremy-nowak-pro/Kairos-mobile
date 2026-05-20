@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   View, Text, TextInput, Pressable, StyleSheet,
   ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform,
@@ -7,6 +7,7 @@ import { router } from 'expo-router'
 import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
 import { createEvent } from '@/lib/events'
+import { getSpaceMembers, SpaceMember } from '@/lib/spaces'
 import CalendarPicker from '@/components/CalendarPicker'
 
 function parseTimeInput(input: string): string | null {
@@ -41,6 +42,31 @@ export default function NewEventScreen() {
   const [error, setError] = useState<string | null>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
 
+  const [members, setMembers] = useState<SpaceMember[]>([])
+  const [selectedMembers, setSelectedMembers] = useState<string[]>(
+    displayName ? [displayName] : []
+  )
+
+  useEffect(() => {
+    getSpaceMembers()
+      .then(m => {
+        setMembers(m)
+        // Pre-select current user
+        const me = m.find(member => member.display_name === displayName)
+        if (me) setSelectedMembers([me.display_name])
+      })
+      .catch(() => {
+        // Fallback to current user only
+        if (displayName) setSelectedMembers([displayName])
+      })
+  }, [displayName])
+
+  const toggleMember = (name: string) => {
+    setSelectedMembers(prev =>
+      prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+    )
+  }
+
   const createdBy = displayName ?? 'moi'
 
   const handleCreate = async () => {
@@ -54,6 +80,7 @@ export default function NewEventScreen() {
     if (!date) { setError('La date est requise'); return }
     if (!parsedStart) { setError('Heure de début invalide — format HH:MM'); return }
     if (!parsedEnd) { setError('Heure de fin invalide — format HH:MM'); return }
+    if (selectedMembers.length === 0) { setError('Assigne l\'événement à au moins une personne'); return }
 
     setLoading(true)
     try {
@@ -64,7 +91,7 @@ export default function NewEventScreen() {
         end_time: parsedEnd,
         location: location.trim() || null,
         description: description.trim() || null,
-        assigned_to: createdBy,
+        assigned_to: selectedMembers.join(','),
         created_by: createdBy,
         space_id: space.id,
       })
@@ -142,6 +169,30 @@ export default function NewEventScreen() {
             onChangeText={setLocation}
           />
 
+          <Text style={styles.label}>ASSIGNÉ À</Text>
+          <View style={styles.memberRow}>
+            {members.length === 0 ? (
+              <View style={[styles.memberBtn, styles.memberBtnActive]}>
+                <Text style={styles.memberBtnTextActive}>{createdBy}</Text>
+              </View>
+            ) : (
+              members.map(m => {
+                const active = selectedMembers.includes(m.display_name)
+                return (
+                  <Pressable
+                    key={m.user_id}
+                    style={[styles.memberBtn, active && styles.memberBtnActive]}
+                    onPress={() => toggleMember(m.display_name)}
+                  >
+                    <Text style={[styles.memberBtnText, active && styles.memberBtnTextActive]}>
+                      {m.display_name}
+                    </Text>
+                  </Pressable>
+                )
+              })
+            )}
+          </View>
+
           <Text style={styles.label}>DESCRIPTION</Text>
           <TextInput
             style={[styles.input, styles.textarea]}
@@ -179,14 +230,9 @@ const BLUE = '#2563EB'
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 56,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 16, paddingTop: 56, paddingBottom: 16,
+    borderBottomWidth: 1, borderBottomColor: '#e5e5e5',
   },
   cancel: { color: BLUE, fontSize: 16, width: 64 },
   title: { fontSize: 18, fontWeight: '600', color: '#111' },
@@ -208,6 +254,14 @@ const styles = StyleSheet.create({
   textarea: { height: 96, textAlignVertical: 'top' },
   row: { flexDirection: 'row', gap: 12 },
   rowItem: { flex: 1 },
+  memberRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
+  memberBtn: {
+    borderWidth: 1.5, borderColor: '#e5e5e5', borderRadius: 8,
+    paddingHorizontal: 16, paddingVertical: 10,
+  },
+  memberBtnActive: { borderColor: BLUE, backgroundColor: '#EFF6FF' },
+  memberBtnText: { fontSize: 15, color: '#555' },
+  memberBtnTextActive: { fontSize: 15, color: BLUE, fontWeight: '600' },
   button: {
     backgroundColor: BLUE, borderRadius: 10,
     padding: 16, alignItems: 'center', marginTop: 24,
