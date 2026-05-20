@@ -17,5 +17,5 @@ export default function Index() {
 
   if (!session) return <Redirect href="/(auth)/login" />
   if (!space) return <Redirect href="/(onboarding)" />
-  return <Redirect href="/(app)/dashboard" />
+  return <Redirect href="/(app)/events" />
 }
