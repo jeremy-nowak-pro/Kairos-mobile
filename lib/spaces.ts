@@ -32,6 +32,18 @@ export async function createSpace(name: string): Promise<Space> {
   return space as Space
 }
 
+export interface SpaceMember {
+  user_id: string
+  display_name: string
+  is_creator: boolean
+}
+
+export async function getSpaceMembers(): Promise<SpaceMember[]> {
+  const { data, error } = await supabase.rpc('get_space_members')
+  if (error) throw error
+  return (data ?? []) as SpaceMember[]
+}
+
 export async function joinSpaceByCode(code: string): Promise<void> {
   const { error } = await supabase.rpc('join_space_by_code', { code: code.toUpperCase() })
   if (error) throw new Error('Code invalide ou déjà utilisé')

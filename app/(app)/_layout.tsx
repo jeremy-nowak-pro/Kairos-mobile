@@ -38,6 +38,13 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
+        name="calendar"
+        options={{
+          title: 'Calendrier',
+          tabBarIcon: ({ color }) => <Ionicons name="grid-outline" size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="shopping"
         options={{
           title: 'Courses',
