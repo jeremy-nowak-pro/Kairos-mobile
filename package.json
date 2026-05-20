@@ -19,6 +19,7 @@
     }
   },
   "dependencies": {
+    "@expo/vector-icons": "^15.1.1",
     "@supabase/supabase-js": "^2.105.4",
     "expo": "~54.0.33",
     "expo-constants": "~18.0.13",
