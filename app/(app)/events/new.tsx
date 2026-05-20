@@ -2,13 +2,18 @@ import { useEffect, useState } from 'react'
 import {
   View, Text, TextInput, Pressable, StyleSheet,
   ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform,
+  Modal, Alert,
 } from 'react-native'
+import { Image } from 'expo-image'
+import * as WebBrowser from 'expo-web-browser'
+import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
 import { createEvent } from '@/lib/events'
 import { getSpaceMembers, SpaceMember } from '@/lib/spaces'
 import { uploadAttachment, LocalFile } from '@/lib/attachments'
+import { MemberSchedule, getSpaceSchedules, getScheduleSignedUrl } from '@/lib/schedules'
 import CalendarPicker from '@/components/CalendarPicker'
 import AttachmentSection from '@/components/AttachmentSection'
 
@@ -44,11 +49,27 @@ export default function NewEventScreen() {
   const [error, setError] = useState<string | null>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [pendingFiles, setPendingFiles] = useState<LocalFile[]>([])
+  const [schedules, setSchedules] = useState<Record<string, MemberSchedule>>({})
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
+  const [scheduleViewerUri, setScheduleViewerUri] = useState<string | null>(null)
+  const [scheduleLoadingId, setScheduleLoadingId] = useState<string | null>(null)
 
   const [members, setMembers] = useState<SpaceMember[]>([])
   const [selectedMembers, setSelectedMembers] = useState<string[]>(
     displayName ? [displayName] : []
   )
+
+  useEffect(() => {
+    if (space) {
+      getSpaceSchedules(space.id)
+        .then(all => {
+          const map: Record<string, MemberSchedule> = {}
+          all.forEach(s => { map[s.user_id] = s })
+          setSchedules(map)
+        })
+        .catch(() => {})
+    }
+  }, [space?.id])
 
   useEffect(() => {
     getSpaceMembers()
@@ -201,6 +222,14 @@ export default function NewEventScreen() {
             )}
           </View>
 
+          <Pressable
+            style={styles.scheduleBtn}
+            onPress={() => setScheduleModalOpen(true)}
+          >
+            <Ionicons name="calendar-outline" size={15} color={BLUE} />
+            <Text style={styles.scheduleBtnText}>Consulter les emplois du temps</Text>
+          </Pressable>
+
           <Text style={styles.label}>DESCRIPTION</Text>
           <TextInput
             style={[styles.input, styles.textarea]}
@@ -238,6 +267,91 @@ export default function NewEventScreen() {
         onConfirm={setDate}
         onClose={() => setCalendarOpen(false)}
       />
+
+      {/* Schedule list modal */}
+      <Modal
+        visible={scheduleModalOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setScheduleModalOpen(false)}
+      >
+        <Pressable style={styles.backdrop} onPress={() => setScheduleModalOpen(false)}>
+          <Pressable style={styles.sheet} onPress={() => {}}>
+            <Text style={styles.sheetTitle}>Emplois du temps</Text>
+            {members.length === 0 && (
+              <Text style={styles.sheetEmpty}>Aucun membre dans l'espace</Text>
+            )}
+            {members.map(m => {
+              const s = schedules[m.user_id]
+              return (
+                <View key={m.user_id} style={styles.sheetRow}>
+                  <Text style={styles.sheetMemberName}>{m.display_name}</Text>
+                  {s ? (
+                    <Pressable
+                      style={styles.sheetViewBtn}
+                      disabled={scheduleLoadingId === m.user_id}
+                      onPress={async () => {
+                        setScheduleLoadingId(m.user_id)
+                        try {
+                          const url = await getScheduleSignedUrl(s.storage_path)
+                          if (s.mime_type?.startsWith('image/')) {
+                            setScheduleViewerUri(url)
+                          } else {
+                            await WebBrowser.openBrowserAsync(url)
+                          }
+                        } catch {
+                          Alert.alert('Erreur', 'Impossible d\'ouvrir le fichier')
+                        }
+                        setScheduleLoadingId(null)
+                      }}
+                    >
+                      {scheduleLoadingId === m.user_id
+                        ? <ActivityIndicator size="small" color={BLUE} />
+                        : <Text style={styles.sheetViewBtnText}>Voir</Text>
+                      }
+                    </Pressable>
+                  ) : (
+                    <Text style={styles.sheetNoSchedule}>Aucun</Text>
+                  )}
+                </View>
+              )
+            })}
+            <Pressable
+              style={styles.sheetClose}
+              onPress={() => setScheduleModalOpen(false)}
+            >
+              <Text style={styles.sheetCloseText}>Fermer</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Schedule image viewer */}
+      {scheduleViewerUri && (
+        <Modal
+          visible
+          transparent
+          animationType="fade"
+          onRequestClose={() => setScheduleViewerUri(null)}
+        >
+          <Pressable
+            style={styles.viewerBackdrop}
+            onPress={() => setScheduleViewerUri(null)}
+          >
+            <Image
+              source={{ uri: scheduleViewerUri }}
+              style={styles.viewerImage}
+              contentFit="contain"
+            />
+            <Pressable
+              style={styles.viewerClose}
+              onPress={() => setScheduleViewerUri(null)}
+            >
+              <Ionicons name="close-circle" size={32} color="#fff" />
+            </Pressable>
+          </Pressable>
+        </Modal>
+      )}
     </KeyboardAvoidingView>
   )
 }
@@ -289,5 +403,46 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: '#e5e5e5',
     paddingTop: 16,
   },
+  scheduleBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    marginTop: 8, marginBottom: 4,
+  },
+  scheduleBtnText: { fontSize: 13, color: BLUE },
   error: { color: '#dc2626', fontSize: 14, marginTop: 12 },
+
+  // Schedule modal
+  backdrop: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16, borderTopRightRadius: 16,
+    padding: 20, paddingBottom: 40,
+  },
+  sheetTitle: { fontSize: 16, fontWeight: '700', color: '#111', marginBottom: 16 },
+  sheetEmpty: { fontSize: 14, color: '#999', marginBottom: 16 },
+  sheetRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#f5f5f5',
+  },
+  sheetMemberName: { fontSize: 16, color: '#111', fontWeight: '500' },
+  sheetViewBtn: {
+    backgroundColor: '#EFF6FF', borderRadius: 6,
+    paddingHorizontal: 14, paddingVertical: 7, minWidth: 60, alignItems: 'center',
+  },
+  sheetViewBtnText: { fontSize: 14, color: BLUE, fontWeight: '600' },
+  sheetNoSchedule: { fontSize: 14, color: '#bbb' },
+  sheetClose: { marginTop: 16, padding: 12, alignItems: 'center' },
+  sheetCloseText: { fontSize: 16, color: '#666' },
+
+  // Image viewer
+  viewerBackdrop: {
+    flex: 1, backgroundColor: '#000',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  viewerImage: { width: '100%', height: '85%' },
+  viewerClose: {
+    position: 'absolute', top: 56, right: 20,
+    backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 20,
+  },
 })
