@@ -1,6 +1,119 @@
-import { useEffect, useState } from 'react'
-import { View, Text, Pressable, Modal, StyleSheet } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
+import { useEffect, useRef, useState } from 'react'
+import {
+  View, Text, Pressable, Modal, StyleSheet, ScrollView,
+} from 'react-native'
+
+const ITEM_H = 52
+const VISIBLE = 5       // nombre d'items visibles (impair pour centrage)
+const COL_H = ITEM_H * VISIBLE
+const PAD = ITEM_H * Math.floor(VISIBLE / 2)  // padding pour centrer le 1er et dernier item
+
+const HOURS = Array.from({ length: 24 }, (_, i) => i)
+const MINUTES = Array.from({ length: 60 }, (_, i) => i)
+
+function pad(n: number) { return String(n).padStart(2, '0') }
+
+// ── Colonne défilante ──────────────────────────────────────────────────────────
+
+function Column({
+  values, selected, onChange, visible,
+}: {
+  values: number[]
+  selected: number
+  onChange: (v: number) => void
+  visible: boolean
+}) {
+  const ref = useRef<ScrollView>(null)
+  const [offset, setOffset] = useState(0)
+
+  // Positionne au bon endroit à l'ouverture
+  useEffect(() => {
+    if (!visible) return
+    const idx = values.indexOf(selected)
+    const timer = setTimeout(() => {
+      ref.current?.scrollTo({ y: idx * ITEM_H, animated: false })
+      setOffset(idx * ITEM_H)
+    }, 60)
+    return () => clearTimeout(timer)
+  }, [visible])
+
+  const handleEnd = (y: number) => {
+    const idx = Math.round(y / ITEM_H)
+    const clamped = Math.max(0, Math.min(idx, values.length - 1))
+    onChange(values[clamped])
+  }
+
+  return (
+    <View style={col.wrapper}>
+      {/* Bande de sélection */}
+      <View style={col.band} pointerEvents="none" />
+
+      <ScrollView
+        ref={ref}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={ITEM_H}
+        decelerationRate="fast"
+        scrollEventThrottle={16}
+        onScroll={e => setOffset(e.nativeEvent.contentOffset.y)}
+        onMomentumScrollEnd={e => handleEnd(e.nativeEvent.contentOffset.y)}
+        onScrollEndDrag={e => handleEnd(e.nativeEvent.contentOffset.y)}
+        contentContainerStyle={{ paddingVertical: PAD }}
+      >
+        {values.map((v, idx) => {
+          const itemCenter = idx * ITEM_H + ITEM_H / 2
+          const dist = Math.abs(offset + ITEM_H / 2 - itemCenter)
+          // Opacité et taille selon la distance au centre
+          const ratio = Math.max(0, 1 - dist / (ITEM_H * 1.8))
+          const opacity = 0.2 + 0.8 * ratio
+          const fontSize = 18 + 12 * ratio
+
+          return (
+            <Pressable
+              key={v}
+              style={col.item}
+              onPress={() => {
+                ref.current?.scrollTo({ y: idx * ITEM_H, animated: true })
+                onChange(v)
+              }}
+            >
+              <Text style={[col.text, { opacity, fontSize, fontWeight: ratio > 0.8 ? '700' : '400' }]}>
+                {pad(v)}
+              </Text>
+            </Pressable>
+          )
+        })}
+      </ScrollView>
+    </View>
+  )
+}
+
+const col = StyleSheet.create({
+  wrapper: {
+    height: COL_H,
+    width: 80,
+    overflow: 'hidden',
+  },
+  band: {
+    position: 'absolute',
+    top: PAD,
+    height: ITEM_H,
+    left: 0, right: 0,
+    backgroundColor: '#F0F5FF',
+    borderTopWidth: 1, borderBottomWidth: 1,
+    borderColor: '#2563EB',
+    zIndex: 1,
+  },
+  item: {
+    height: ITEM_H,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  text: {
+    color: '#111',
+  },
+})
+
+// ── Composant principal ───────────────────────────────────────────────────────
 
 interface Props {
   visible: boolean
@@ -25,16 +138,9 @@ export default function TimePicker({
     } else {
       const now = new Date()
       setHours(now.getHours())
-      setMinutes(Math.round(now.getMinutes() / 5) * 5 % 60)
+      setMinutes(now.getMinutes())
     }
   }, [visible])
-
-  const incHour = () => setHours(h => (h + 1) % 24)
-  const decHour = () => setHours(h => (h + 23) % 24)
-  const incMin  = () => setMinutes(m => (m + 5) % 60)
-  const decMin  = () => setMinutes(m => (m + 55) % 60)
-
-  const pad = (n: number) => String(n).padStart(2, '0')
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -42,41 +148,28 @@ export default function TimePicker({
         <Pressable style={s.sheet} onPress={() => {}}>
           <Text style={s.title}>{title}</Text>
 
-          <View style={s.row}>
-            {/* Hours */}
-            <View style={s.col}>
-              <Text style={s.colLabel}>HEURES</Text>
-              <Pressable style={s.arrow} onPress={incHour} hitSlop={8}>
-                <Ionicons name="chevron-up" size={26} color="#111" />
-              </Pressable>
-              <View style={s.valueBox}>
-                <Text style={s.value}>{pad(hours)}</Text>
-              </View>
-              <Pressable style={s.arrow} onPress={decHour} hitSlop={8}>
-                <Ionicons name="chevron-down" size={26} color="#111" />
-              </Pressable>
-            </View>
-
+          <View style={s.columns}>
+            <Column
+              values={HOURS}
+              selected={hours}
+              onChange={setHours}
+              visible={visible}
+            />
             <Text style={s.colon}>:</Text>
-
-            {/* Minutes */}
-            <View style={s.col}>
-              <Text style={s.colLabel}>MINUTES</Text>
-              <Pressable style={s.arrow} onPress={incMin} hitSlop={8}>
-                <Ionicons name="chevron-up" size={26} color="#111" />
-              </Pressable>
-              <View style={s.valueBox}>
-                <Text style={s.value}>{pad(minutes)}</Text>
-              </View>
-              <Pressable style={s.arrow} onPress={decMin} hitSlop={8}>
-                <Ionicons name="chevron-down" size={26} color="#111" />
-              </Pressable>
-            </View>
+            <Column
+              values={MINUTES}
+              selected={minutes}
+              onChange={setMinutes}
+              visible={visible}
+            />
           </View>
 
           <Pressable
             style={s.confirm}
-            onPress={() => { onConfirm(`${pad(hours)}:${pad(minutes)}`); onClose() }}
+            onPress={() => {
+              onConfirm(`${pad(hours)}:${pad(minutes)}`)
+              onClose()
+            }}
           >
             <Text style={s.confirmText}>Confirmer</Text>
           </Pressable>
@@ -90,28 +183,26 @@ const BLUE = '#2563EB'
 
 const s = StyleSheet.create({
   overlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.4)',
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center', alignItems: 'center',
   },
   sheet: {
-    backgroundColor: '#fff', borderRadius: 16,
-    padding: 24, width: 280, alignItems: 'center',
+    backgroundColor: '#fff', borderRadius: 20,
+    paddingVertical: 28, paddingHorizontal: 32,
+    alignItems: 'center', width: 300,
   },
-  title: { fontSize: 16, fontWeight: '700', color: '#111', marginBottom: 24 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 28 },
-  col: { alignItems: 'center' },
-  colLabel: { fontSize: 10, fontWeight: '600', color: '#aaa', letterSpacing: 0.5, marginBottom: 6 },
-  arrow: { padding: 8 },
-  valueBox: {
-    width: 76, height: 68, borderRadius: 12,
-    backgroundColor: '#F5F8FF', borderWidth: 1.5, borderColor: BLUE,
-    justifyContent: 'center', alignItems: 'center',
+  title: {
+    fontSize: 16, fontWeight: '700', color: '#111', marginBottom: 20,
   },
-  value: { fontSize: 34, fontWeight: '700', color: '#111' },
-  colon: { fontSize: 34, fontWeight: '700', color: '#111', marginTop: 22 },
+  columns: {
+    flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 28,
+  },
+  colon: {
+    fontSize: 28, fontWeight: '700', color: '#111', marginTop: -8,
+  },
   confirm: {
     backgroundColor: BLUE, borderRadius: 10,
-    paddingVertical: 13, paddingHorizontal: 44,
+    paddingVertical: 13, paddingHorizontal: 48,
   },
   confirmText: { color: '#fff', fontWeight: '600', fontSize: 15 },
 })
