@@ -49,7 +49,7 @@ export async function uploadSchedule(
       contentType: file.mimeType ?? 'application/octet-stream',
       upsert: true,
     })
-  if (storageErr) throw storageErr
+  if (storageErr) throw new Error(storageErr.message ?? JSON.stringify(storageErr))
 
   const { data, error } = await supabase
     .from('member_schedules')
@@ -66,7 +66,7 @@ export async function uploadSchedule(
     )
     .select()
     .single()
-  if (error) throw error
+  if (error) throw new Error(error.message ?? JSON.stringify(error))
   return data as MemberSchedule
 }
 
