@@ -1,7 +1,6 @@
 {
   "cli": {
-    "version": ">= 19.0.0",
-    "packageManager": "pnpm"
+    "version": ">= 19.0.0"
   },
   "build": {
     "development": {
