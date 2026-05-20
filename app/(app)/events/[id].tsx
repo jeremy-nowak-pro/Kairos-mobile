@@ -77,8 +77,12 @@ export default function EventDetailScreen() {
         {event.assigned_to ? (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>ASSIGNÉ À</Text>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>{event.assigned_to}</Text>
+            <View style={styles.tagRow}>
+              {event.assigned_to.split(',').map(n => n.trim()).filter(Boolean).map(name => (
+                <View key={name} style={styles.tag}>
+                  <Text style={styles.tagText}>{name}</Text>
+                </View>
+              ))}
             </View>
           </View>
         ) : null}
@@ -120,12 +124,12 @@ const styles = StyleSheet.create({
     fontSize: 11, fontWeight: '600', color: '#999',
     letterSpacing: 0.5, marginBottom: 8,
   },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: {
     backgroundColor: '#EFF6FF',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 4,
-    alignSelf: 'flex-start',
   },
   tagText: { fontSize: 13, color: BLUE },
   description: { fontSize: 15, color: '#444', lineHeight: 22 },

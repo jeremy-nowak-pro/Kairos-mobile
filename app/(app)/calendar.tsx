@@ -3,7 +3,7 @@ import {
   View, Text, Pressable, StyleSheet, ActivityIndicator,
   ScrollView,
 } from 'react-native'
-import { router, useFocusEffect } from 'expo-router'
+import { useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSpace } from '@/context/space'
 import { getEventsForMonth, Event } from '@/lib/events'
@@ -18,8 +18,16 @@ function toDateStr(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
-function formatTime(t: string): string {
-  return t.slice(0, 5)
+function formatTime(t: string): string { return t.slice(0, 5) }
+
+function formatFullDate(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function formatDayLabel(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
 function buildWeeks(year: number, month: number): (number | null)[][] {
@@ -36,29 +44,129 @@ function buildWeeks(year: number, month: number): (number | null)[][] {
   return weeks
 }
 
-interface DayCellProps {
+// ── Event detail panel ──────────────────────────────────────────────────────
+
+function EventDetail({ event, onBack }: { event: Event; onBack: () => void }) {
+  const assignees = event.assigned_to?.split(',').map(s => s.trim()).filter(Boolean) ?? []
+
+  return (
+    <View style={styles.detail}>
+      <Pressable onPress={onBack} style={styles.backRow}>
+        <Ionicons name="arrow-back" size={16} color={BLUE} />
+        <Text style={styles.backText}>Retour à la liste</Text>
+      </Pressable>
+
+      <Text style={styles.detailTitle}>{event.title}</Text>
+      <Text style={styles.detailDate}>{formatFullDate(event.date)}</Text>
+
+      <View style={styles.detailRow}>
+        <Ionicons name="time-outline" size={15} color="#888" />
+        <Text style={styles.detailRowText}>
+          {formatTime(event.start_time)} – {formatTime(event.end_time)}
+        </Text>
+      </View>
+
+      {event.location ? (
+        <View style={styles.detailRow}>
+          <Ionicons name="location-outline" size={15} color="#888" />
+          <Text style={styles.detailRowText}>{event.location}</Text>
+        </View>
+      ) : null}
+
+      {assignees.length > 0 && (
+        <View style={styles.detailSection}>
+          <Text style={styles.detailSectionLabel}>ASSIGNÉ À</Text>
+          <View style={styles.tagRow}>
+            {assignees.map(name => (
+              <View key={name} style={styles.tag}>
+                <Text style={styles.tagText}>{name}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {event.description ? (
+        <View style={styles.detailSection}>
+          <Text style={styles.detailSectionLabel}>DESCRIPTION</Text>
+          <Text style={styles.detailDescription}>{event.description}</Text>
+        </View>
+      ) : null}
+    </View>
+  )
+}
+
+// ── Day event list ──────────────────────────────────────────────────────────
+
+function DayEventList({
+  dateStr,
+  events,
+  onSelect,
+}: {
+  dateStr: string
+  events: Event[]
+  onSelect: (e: Event) => void
+}) {
+  return (
+    <View style={styles.dayList}>
+      <Text style={styles.dayListHeader}>{formatDayLabel(dateStr)}</Text>
+      {events.length === 0 ? (
+        <Text style={styles.noEvents}>Aucun événement</Text>
+      ) : (
+        events.map(event => {
+          const assignees = event.assigned_to?.split(',').map(s => s.trim()).filter(Boolean) ?? []
+          return (
+            <Pressable
+              key={event.id}
+              style={({ pressed }) => [styles.eventRow, pressed && { opacity: 0.7 }]}
+              onPress={() => onSelect(event)}
+            >
+              <View style={styles.eventTimeCol}>
+                <Text style={styles.eventTimeText}>{formatTime(event.start_time)}</Text>
+                <Text style={styles.eventTimeText}>{formatTime(event.end_time)}</Text>
+              </View>
+              <View style={styles.eventAccent} />
+              <View style={styles.eventInfo}>
+                <Text style={styles.eventTitle}>{event.title}</Text>
+                {event.location ? <Text style={styles.eventLocation}>{event.location}</Text> : null}
+                {assignees.length > 0 && (
+                  <Text style={styles.eventAssigned}>{assignees.join(' · ')}</Text>
+                )}
+              </View>
+              <Ionicons name="chevron-forward" size={16} color="#ccc" />
+            </Pressable>
+          )
+        })
+      )}
+    </View>
+  )
+}
+
+// ── Day cell ────────────────────────────────────────────────────────────────
+
+function DayCell({
+  day, dateStr, isToday, isSelected, events, onDayPress, onEventPress,
+}: {
   day: number | null
   dateStr: string | null
   isToday: boolean
   isSelected: boolean
   events: Event[]
-  onPress: () => void
-}
-
-function DayCell({ day, dateStr, isToday, isSelected, events, onPress }: DayCellProps) {
+  onDayPress: () => void
+  onEventPress: (e: Event) => void
+}) {
   if (!day || !dateStr) return <View style={styles.cell} />
 
   return (
-    <Pressable style={[styles.cell, isSelected && styles.cellSelected]} onPress={onPress}>
+    <Pressable style={[styles.cell, isSelected && styles.cellSelected]} onPress={onDayPress}>
       <View style={[
         styles.dayNumWrap,
         isToday && styles.dayNumWrapToday,
-        isSelected && styles.dayNumWrapSelected,
+        isSelected && !isToday && styles.dayNumWrapSelected,
       ]}>
         <Text style={[
           styles.dayNum,
-          isToday && styles.dayNumToday,
-          isSelected && styles.dayNumSelected,
+          (isToday || isSelected) && styles.dayNumHighlight,
         ]}>
           {day}
         </Text>
@@ -68,7 +176,7 @@ function DayCell({ day, dateStr, isToday, isSelected, events, onPress }: DayCell
         <Pressable
           key={e.id}
           style={styles.chip}
-          onPress={() => router.push(`/(app)/events/${e.id}`)}
+          onPress={ev => { ev.stopPropagation?.(); onEventPress(e) }}
         >
           <Text style={styles.chipText} numberOfLines={1}>{e.title}</Text>
         </Pressable>
@@ -80,6 +188,8 @@ function DayCell({ day, dateStr, isToday, isSelected, events, onPress }: DayCell
   )
 }
 
+// ── Main screen ─────────────────────────────────────────────────────────────
+
 export default function CalendarScreen() {
   const { space } = useSpace()
   const today = new Date()
@@ -88,6 +198,7 @@ export default function CalendarScreen() {
   const [viewYear, setViewYear] = useState(today.getFullYear())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
   const [selectedDay, setSelectedDay] = useState<string>(todayStr)
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -103,10 +214,12 @@ export default function CalendarScreen() {
   useFocusEffect(loadEvents)
 
   const goPrev = () => {
+    setSelectedEvent(null)
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1) }
     else setViewMonth(m => m - 1)
   }
   const goNext = () => {
+    setSelectedEvent(null)
     if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1) }
     else setViewMonth(m => m + 1)
   }
@@ -121,23 +234,20 @@ export default function CalendarScreen() {
   }, [events])
 
   const weeks = useMemo(() => buildWeeks(viewYear, viewMonth), [viewYear, viewMonth])
+  const selectedDayEvents = eventsByDay[selectedDay] ?? []
 
-  const selectedEvents = eventsByDay[selectedDay] ?? []
-
-  const selectedLabel = (() => {
-    const d = new Date(selectedDay + 'T00:00:00')
-    return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
-  })()
+  const handleDayPress = (dateStr: string) => {
+    setSelectedDay(dateStr)
+    setSelectedEvent(null)
+  }
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Calendrier</Text>
         <Text style={styles.eventCount}>{events.length} événement{events.length !== 1 ? 's' : ''}</Text>
       </View>
 
-      {/* Month nav */}
       <View style={styles.monthNav}>
         <Pressable onPress={goPrev} style={styles.navBtn}>
           <Ionicons name="chevron-back" size={20} color="#111" />
@@ -148,7 +258,6 @@ export default function CalendarScreen() {
         </Pressable>
       </View>
 
-      {/* Day name headers */}
       <View style={styles.dayHeaders}>
         {DAYS_FR.map(d => (
           <View key={d} style={styles.dayHeaderCell}>
@@ -157,11 +266,10 @@ export default function CalendarScreen() {
         ))}
       </View>
 
-      {/* Calendar grid */}
-      {loading ? (
-        <ActivityIndicator style={{ marginTop: 24 }} />
-      ) : (
-        <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {loading ? (
+          <ActivityIndicator style={{ marginTop: 24 }} />
+        ) : (
           <View style={styles.grid}>
             {weeks.map((week, wi) => (
               <View key={wi} style={styles.weekRow}>
@@ -175,143 +283,87 @@ export default function CalendarScreen() {
                       isToday={dateStr === todayStr}
                       isSelected={dateStr === selectedDay}
                       events={dateStr ? (eventsByDay[dateStr] ?? []) : []}
-                      onPress={() => { if (dateStr) setSelectedDay(dateStr) }}
+                      onDayPress={() => dateStr && handleDayPress(dateStr)}
+                      onEventPress={e => { if (dateStr) setSelectedDay(dateStr); setSelectedEvent(e) }}
                     />
                   )
                 })}
               </View>
             ))}
           </View>
+        )}
 
-          {/* Selected day detail */}
-          <View style={styles.dayDetail}>
-            <Text style={styles.dayDetailHeader}>{selectedLabel}</Text>
-            {selectedEvents.length === 0 ? (
-              <Text style={styles.noEvents}>Aucun événement</Text>
-            ) : (
-              selectedEvents.map(event => (
-                <Pressable
-                  key={event.id}
-                  style={({ pressed }) => [styles.eventRow, pressed && { opacity: 0.7 }]}
-                  onPress={() => router.push(`/(app)/events/${event.id}`)}
-                >
-                  <View style={styles.eventTimeCol}>
-                    <Text style={styles.eventTimeText}>{formatTime(event.start_time)}</Text>
-                    <Text style={styles.eventTimeText}>{formatTime(event.end_time)}</Text>
-                  </View>
-                  <View style={styles.eventAccent} />
-                  <View style={styles.eventInfo}>
-                    <Text style={styles.eventTitle}>{event.title}</Text>
-                    {event.location
-                      ? <Text style={styles.eventLocation}>{event.location}</Text>
-                      : null}
-                    {event.assigned_to
-                      ? <Text style={styles.eventAssigned}>{event.assigned_to}</Text>
-                      : null}
-                  </View>
-                  <Ionicons name="chevron-forward" size={16} color="#ccc" />
-                </Pressable>
-              ))
-            )}
-          </View>
-        </ScrollView>
-      )}
+        <View style={styles.divider} />
+
+        {selectedEvent ? (
+          <EventDetail event={selectedEvent} onBack={() => setSelectedEvent(null)} />
+        ) : (
+          <DayEventList
+            dateStr={selectedDay}
+            events={selectedDayEvents}
+            onSelect={setSelectedEvent}
+          />
+        )}
+      </ScrollView>
     </View>
   )
 }
 
 const BLUE = '#2563EB'
-const BLUE_LIGHT = '#EFF6FF'
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 56,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    paddingHorizontal: 20, paddingTop: 56, paddingBottom: 12,
+    borderBottomWidth: 1, borderBottomColor: '#e5e5e5',
   },
   title: { fontSize: 26, fontWeight: '700', color: '#111' },
   eventCount: { fontSize: 13, color: '#999', marginTop: 2 },
   monthNav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 12, paddingVertical: 10,
   },
   navBtn: { padding: 8 },
   monthTitle: { fontSize: 16, fontWeight: '600', color: '#111' },
   dayHeaders: {
-    flexDirection: 'row',
-    paddingHorizontal: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    paddingBottom: 4,
+    flexDirection: 'row', paddingHorizontal: 4,
+    borderBottomWidth: 1, borderBottomColor: '#f0f0f0', paddingBottom: 4,
   },
   dayHeaderCell: { flex: 1, alignItems: 'center' },
   dayHeaderText: { fontSize: 11, color: '#aaa', fontWeight: '500' },
   grid: { paddingHorizontal: 4 },
-  weekRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
+  weekRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   cell: {
-    flex: 1,
-    minHeight: 64,
-    paddingVertical: 4,
-    paddingHorizontal: 2,
-    borderRightWidth: 1,
-    borderRightColor: '#f0f0f0',
+    flex: 1, minHeight: 64, paddingVertical: 4, paddingHorizontal: 2,
+    borderRightWidth: 1, borderRightColor: '#f0f0f0',
   },
-  cellSelected: { backgroundColor: '#FAFBFF' },
+  cellSelected: { backgroundColor: '#F5F8FF' },
   dayNumWrap: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 2,
+    width: 24, height: 24, borderRadius: 12,
+    justifyContent: 'center', alignItems: 'center', marginBottom: 2,
   },
   dayNumWrapToday: { backgroundColor: BLUE },
-  dayNumWrapSelected: { backgroundColor: BLUE },
+  dayNumWrapSelected: { borderWidth: 1.5, borderColor: BLUE },
   dayNum: { fontSize: 12, color: '#111' },
-  dayNumToday: { color: '#fff', fontWeight: '700' },
-  dayNumSelected: { color: '#fff', fontWeight: '700' },
+  dayNumHighlight: { color: '#fff', fontWeight: '700' },
   chip: {
-    backgroundColor: BLUE_LIGHT,
-    borderRadius: 3,
-    paddingHorizontal: 3,
-    paddingVertical: 1,
-    marginBottom: 2,
+    backgroundColor: '#EFF6FF', borderRadius: 3,
+    paddingHorizontal: 3, paddingVertical: 1, marginBottom: 2,
   },
   chipText: { fontSize: 9, color: BLUE, fontWeight: '500' },
   moreText: { fontSize: 9, color: '#999', paddingLeft: 2 },
-  dayDetail: {
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 40,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
-    marginTop: 8,
-  },
-  dayDetailHeader: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#888',
-    textTransform: 'capitalize',
-    marginBottom: 12,
+  divider: { height: 1, backgroundColor: '#e5e5e5', marginTop: 4 },
+
+  // Day list
+  dayList: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40 },
+  dayListHeader: {
+    fontSize: 13, fontWeight: '600', color: '#888',
+    textTransform: 'capitalize', marginBottom: 12,
   },
   noEvents: { fontSize: 14, color: '#ccc' },
   eventRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f5f5f5',
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f5f5f5',
   },
   eventTimeCol: { width: 38, gap: 2 },
   eventTimeText: { fontSize: 11, color: '#999', textAlign: 'right' },
@@ -320,4 +372,24 @@ const styles = StyleSheet.create({
   eventTitle: { fontSize: 14, fontWeight: '600', color: '#111' },
   eventLocation: { fontSize: 12, color: '#888', marginTop: 1 },
   eventAssigned: { fontSize: 11, color: BLUE, marginTop: 2 },
+
+  // Event detail
+  detail: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40 },
+  backRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 },
+  backText: { fontSize: 14, color: BLUE },
+  detailTitle: { fontSize: 20, fontWeight: '700', color: '#111', marginBottom: 4 },
+  detailDate: { fontSize: 14, color: BLUE, marginBottom: 12 },
+  detailRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  detailRowText: { fontSize: 14, color: '#444' },
+  detailSection: { marginTop: 16 },
+  detailSectionLabel: {
+    fontSize: 11, fontWeight: '600', color: '#999', letterSpacing: 0.5, marginBottom: 8,
+  },
+  detailDescription: { fontSize: 14, color: '#444', lineHeight: 21 },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  tag: {
+    backgroundColor: '#EFF6FF', paddingHorizontal: 10,
+    paddingVertical: 4, borderRadius: 4,
+  },
+  tagText: { fontSize: 13, color: BLUE },
 })
