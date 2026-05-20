@@ -27,19 +27,25 @@
     "expo-secure-store": "~15.0.8",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.0",
-    "react-native": "0.81.5"
+    "react-native": "0.81.5",
+    "react-native-screens": "4.24.0"
   },
   "devDependencies": {
     "@testing-library/react-native": "^13.3.3",
-    "@types/jest": "^30.0.0",
+    "@types/jest": "^29.5.14",
     "@types/node": "^25.9.1",
     "@types/react": "~19.1.0",
     "@typescript-eslint/eslint-plugin": "^8.59.4",
     "@typescript-eslint/parser": "^8.59.4",
     "eslint": "^9.39.4",
-    "eslint-config-expo": "^55.0.1",
+    "eslint-config-expo": "^10.0.0",
     "jest-expo": "^54.0.17",
     "typescript": "~5.9.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "react-native-screens": "4.24.0"
+    }
   },
   "private": true
 }
