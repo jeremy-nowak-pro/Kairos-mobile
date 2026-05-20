@@ -262,7 +262,13 @@ export default function NewEventScreen() {
         visible={startPickerOpen}
         value={startTime || null}
         title="Heure de début"
-        onConfirm={setStartTime}
+        onConfirm={time => {
+          setStartTime(time)
+          const [h, m] = time.split(':').map(Number)
+          const endH = (h + 1) % 24
+          const auto = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+          if (!endTime || endTime <= time) setEndTime(auto)
+        }}
         onClose={() => setStartPickerOpen(false)}
       />
 
