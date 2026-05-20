@@ -5,13 +5,20 @@ import { supabase } from '@/lib/supabase'
 interface AuthContextType {
   session: Session | null
   user: User | null
+  displayName: string | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
-  signUp: (email: string, password: string) => Promise<{ error: string | null }>
+  signUp: (email: string, password: string, displayName: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
+  updateDisplayName: (name: string) => Promise<{ error: string | null }>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
+
+function getDisplayName(user: User | null): string | null {
+  if (!user) return null
+  return user.user_metadata?.display_name ?? user.email?.split('@')[0] ?? null
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
@@ -35,8 +42,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: error?.message ?? null }
   }
 
-  const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({ email, password })
+  const signUp = async (email: string, password: string, displayName: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { display_name: displayName } },
+    })
     return { error: error?.message ?? null }
   }
 
@@ -44,8 +55,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut()
   }
 
+  const updateDisplayName = async (name: string) => {
+    const { data, error } = await supabase.auth.updateUser({ data: { display_name: name } })
+    if (!error && data.user) setSession(s => s ? { ...s, user: data.user } : s)
+    return { error: error?.message ?? null }
+  }
+
+  const user = session?.user ?? null
+
   return (
-    <AuthContext.Provider value={{ session, user: session?.user ?? null, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{
+      session,
+      user,
+      displayName: getDisplayName(user),
+      loading,
+      signIn,
+      signUp,
+      signOut,
+      updateDisplayName,
+    }}>
       {children}
     </AuthContext.Provider>
   )
