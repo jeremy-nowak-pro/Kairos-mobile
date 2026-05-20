@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import {
   View, Text, Pressable, StyleSheet, ActivityIndicator,
-  ScrollView,
+  ScrollView, Modal,
 } from 'react-native'
 import { useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -22,12 +22,17 @@ function formatTime(t: string): string { return t.slice(0, 5) }
 
 function formatFullDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00')
-  return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  return d.toLocaleDateString('fr-FR', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  })
 }
 
-function formatDayLabel(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00')
-  return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+function getInitials(assignedTo: string | null): string {
+  if (!assignedTo) return ''
+  return assignedTo
+    .split(',')
+    .map(n => n.trim()[0]?.toUpperCase() ?? '')
+    .join('&')
 }
 
 function buildWeeks(year: number, month: number): (number | null)[][] {
@@ -44,105 +49,77 @@ function buildWeeks(year: number, month: number): (number | null)[][] {
   return weeks
 }
 
-// ── Event detail panel ──────────────────────────────────────────────────────
+// ── Event popup modal ────────────────────────────────────────────────────────
 
-function EventDetail({ event, onBack }: { event: Event; onBack: () => void }) {
+function EventModal({ event, onClose }: { event: Event | null; onClose: () => void }) {
+  if (!event) return null
   const assignees = event.assigned_to?.split(',').map(s => s.trim()).filter(Boolean) ?? []
 
   return (
-    <View style={styles.detail}>
-      <Pressable onPress={onBack} style={styles.backRow}>
-        <Ionicons name="arrow-back" size={16} color={BLUE} />
-        <Text style={styles.backText}>Retour à la liste</Text>
-      </Pressable>
-
-      <Text style={styles.detailTitle}>{event.title}</Text>
-      <Text style={styles.detailDate}>{formatFullDate(event.date)}</Text>
-
-      <View style={styles.detailRow}>
-        <Ionicons name="time-outline" size={15} color="#888" />
-        <Text style={styles.detailRowText}>
-          {formatTime(event.start_time)} – {formatTime(event.end_time)}
-        </Text>
-      </View>
-
-      {event.location ? (
-        <View style={styles.detailRow}>
-          <Ionicons name="location-outline" size={15} color="#888" />
-          <Text style={styles.detailRowText}>{event.location}</Text>
-        </View>
-      ) : null}
-
-      {assignees.length > 0 && (
-        <View style={styles.detailSection}>
-          <Text style={styles.detailSectionLabel}>ASSIGNÉ À</Text>
-          <View style={styles.tagRow}>
-            {assignees.map(name => (
-              <View key={name} style={styles.tag}>
-                <Text style={styles.tagText}>{name}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
-
-      {event.description ? (
-        <View style={styles.detailSection}>
-          <Text style={styles.detailSectionLabel}>DESCRIPTION</Text>
-          <Text style={styles.detailDescription}>{event.description}</Text>
-        </View>
-      ) : null}
-    </View>
-  )
-}
-
-// ── Day event list ──────────────────────────────────────────────────────────
-
-function DayEventList({
-  dateStr,
-  events,
-  onSelect,
-}: {
-  dateStr: string
-  events: Event[]
-  onSelect: (e: Event) => void
-}) {
-  return (
-    <View style={styles.dayList}>
-      <Text style={styles.dayListHeader}>{formatDayLabel(dateStr)}</Text>
-      {events.length === 0 ? (
-        <Text style={styles.noEvents}>Aucun événement</Text>
-      ) : (
-        events.map(event => {
-          const assignees = event.assigned_to?.split(',').map(s => s.trim()).filter(Boolean) ?? []
-          return (
-            <Pressable
-              key={event.id}
-              style={({ pressed }) => [styles.eventRow, pressed && { opacity: 0.7 }]}
-              onPress={() => onSelect(event)}
-            >
-              <View style={styles.eventTimeCol}>
-                <Text style={styles.eventTimeText}>{formatTime(event.start_time)}</Text>
-                <Text style={styles.eventTimeText}>{formatTime(event.end_time)}</Text>
-              </View>
-              <View style={styles.eventAccent} />
-              <View style={styles.eventInfo}>
-                <Text style={styles.eventTitle}>{event.title}</Text>
-                {event.location ? <Text style={styles.eventLocation}>{event.location}</Text> : null}
-                {assignees.length > 0 && (
-                  <Text style={styles.eventAssigned}>{assignees.join(' · ')}</Text>
-                )}
-              </View>
-              <Ionicons name="chevron-forward" size={16} color="#ccc" />
+    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.backdrop} onPress={onClose}>
+        <Pressable style={styles.popup} onPress={() => {}}>
+          {/* Header */}
+          <View style={styles.popupHeader}>
+            <Text style={styles.popupTitle}>{event.title}</Text>
+            <Pressable onPress={onClose} style={styles.closeBtn}>
+              <Ionicons name="close" size={20} color="#666" />
             </Pressable>
-          )
-        })
-      )}
-    </View>
+          </View>
+
+          {/* Date */}
+          <View style={styles.popupRow}>
+            <Ionicons name="calendar-outline" size={16} color="#888" />
+            <Text style={styles.popupRowText}>{formatFullDate(event.date)}</Text>
+          </View>
+
+          {/* Time */}
+          <View style={styles.popupRow}>
+            <Ionicons name="time-outline" size={16} color="#888" />
+            <Text style={styles.popupRowText}>
+              {formatTime(event.start_time)} – {formatTime(event.end_time)}
+            </Text>
+          </View>
+
+          {/* Location */}
+          {event.location ? (
+            <View style={styles.popupRow}>
+              <Ionicons name="location-outline" size={16} color="#888" />
+              <Text style={styles.popupRowText}>{event.location}</Text>
+            </View>
+          ) : null}
+
+          {/* Created by */}
+          <View style={styles.popupRow}>
+            <Ionicons name="person-outline" size={16} color="#888" />
+            <Text style={styles.popupRowText}>{event.created_by}</Text>
+          </View>
+
+          {/* Assigned to */}
+          {assignees.length > 0 && (
+            <View style={styles.popupRow}>
+              <Ionicons name="checkmark-circle-outline" size={16} color="#888" />
+              <View style={styles.tagRow}>
+                {assignees.map(name => (
+                  <View key={name} style={styles.tag}>
+                    <Text style={styles.tagText}>{name}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Description */}
+          {event.description ? (
+            <Text style={styles.popupDescription}>{event.description}</Text>
+          ) : null}
+        </Pressable>
+      </Pressable>
+    </Modal>
   )
 }
 
-// ── Day cell ────────────────────────────────────────────────────────────────
+// ── Day cell ─────────────────────────────────────────────────────────────────
 
 function DayCell({
   day, dateStr, isToday, isSelected, events, onDayPress, onEventPress,
@@ -159,10 +136,11 @@ function DayCell({
 
   return (
     <Pressable style={[styles.cell, isSelected && styles.cellSelected]} onPress={onDayPress}>
+      {/* Day number */}
       <View style={[
         styles.dayNumWrap,
-        isToday && styles.dayNumWrapToday,
-        isSelected && !isToday && styles.dayNumWrapSelected,
+        isToday && styles.dayNumToday,
+        isSelected && !isToday && styles.dayNumSelected,
       ]}>
         <Text style={[
           styles.dayNum,
@@ -172,23 +150,27 @@ function DayCell({
         </Text>
       </View>
 
-      {events.slice(0, 3).map(e => (
+      {/* Event chips */}
+      {events.slice(0, 2).map(e => (
         <Pressable
           key={e.id}
           style={styles.chip}
           onPress={ev => { ev.stopPropagation?.(); onEventPress(e) }}
         >
-          <Text style={styles.chipText} numberOfLines={1}>{e.title}</Text>
+          {e.assigned_to ? (
+            <Text style={styles.chipInitials}>{getInitials(e.assigned_to)} </Text>
+          ) : null}
+          <Text style={styles.chipTitle} numberOfLines={1}>{e.title}</Text>
         </Pressable>
       ))}
-      {events.length > 3 && (
-        <Text style={styles.moreText}>+{events.length - 3}</Text>
+      {events.length > 2 && (
+        <Text style={styles.moreText}>+{events.length - 2}</Text>
       )}
     </Pressable>
   )
 }
 
-// ── Main screen ─────────────────────────────────────────────────────────────
+// ── Main screen ──────────────────────────────────────────────────────────────
 
 export default function CalendarScreen() {
   const { space } = useSpace()
@@ -197,8 +179,8 @@ export default function CalendarScreen() {
 
   const [viewYear, setViewYear] = useState(today.getFullYear())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
-  const [selectedDay, setSelectedDay] = useState<string>(todayStr)
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
+  const [activeEvent, setActiveEvent] = useState<Event | null>(null)
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -214,14 +196,14 @@ export default function CalendarScreen() {
   useFocusEffect(loadEvents)
 
   const goPrev = () => {
-    setSelectedEvent(null)
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1) }
     else setViewMonth(m => m - 1)
+    setSelectedDay(null)
   }
   const goNext = () => {
-    setSelectedEvent(null)
     if (viewMonth === 11) { setViewMonth(0); setViewYear(y => y + 1) }
     else setViewMonth(m => m + 1)
+    setSelectedDay(null)
   }
 
   const eventsByDay = useMemo(() => {
@@ -234,30 +216,31 @@ export default function CalendarScreen() {
   }, [events])
 
   const weeks = useMemo(() => buildWeeks(viewYear, viewMonth), [viewYear, viewMonth])
-  const selectedDayEvents = eventsByDay[selectedDay] ?? []
-
-  const handleDayPress = (dateStr: string) => {
-    setSelectedDay(dateStr)
-    setSelectedEvent(null)
-  }
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Calendrier</Text>
-        <Text style={styles.eventCount}>{events.length} événement{events.length !== 1 ? 's' : ''}</Text>
+        {!loading && (
+          <Text style={styles.eventCount}>
+            {events.length} événement{events.length !== 1 ? 's' : ''}
+          </Text>
+        )}
       </View>
 
+      {/* Month navigation */}
       <View style={styles.monthNav}>
         <Pressable onPress={goPrev} style={styles.navBtn}>
-          <Ionicons name="chevron-back" size={20} color="#111" />
+          <Ionicons name="chevron-back" size={22} color="#111" />
         </Pressable>
         <Text style={styles.monthTitle}>{MONTHS_FR[viewMonth]} {viewYear}</Text>
         <Pressable onPress={goNext} style={styles.navBtn}>
-          <Ionicons name="chevron-forward" size={20} color="#111" />
+          <Ionicons name="chevron-forward" size={22} color="#111" />
         </Pressable>
       </View>
 
+      {/* Day name headers */}
       <View style={styles.dayHeaders}>
         {DAYS_FR.map(d => (
           <View key={d} style={styles.dayHeaderCell}>
@@ -266,10 +249,11 @@ export default function CalendarScreen() {
         ))}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {loading ? (
-          <ActivityIndicator style={{ marginTop: 24 }} />
-        ) : (
+      {/* Grid */}
+      {loading ? (
+        <ActivityIndicator style={{ marginTop: 32 }} />
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.grid}>
             {weeks.map((week, wi) => (
               <View key={wi} style={styles.weekRow}>
@@ -283,28 +267,19 @@ export default function CalendarScreen() {
                       isToday={dateStr === todayStr}
                       isSelected={dateStr === selectedDay}
                       events={dateStr ? (eventsByDay[dateStr] ?? []) : []}
-                      onDayPress={() => dateStr && handleDayPress(dateStr)}
-                      onEventPress={e => { if (dateStr) setSelectedDay(dateStr); setSelectedEvent(e) }}
+                      onDayPress={() => setSelectedDay(dateStr)}
+                      onEventPress={setActiveEvent}
                     />
                   )
                 })}
               </View>
             ))}
           </View>
-        )}
+        </ScrollView>
+      )}
 
-        <View style={styles.divider} />
-
-        {selectedEvent ? (
-          <EventDetail event={selectedEvent} onBack={() => setSelectedEvent(null)} />
-        ) : (
-          <DayEventList
-            dateStr={selectedDay}
-            events={selectedDayEvents}
-            onSelect={setSelectedEvent}
-          />
-        )}
-      </ScrollView>
+      {/* Event popup */}
+      <EventModal event={activeEvent} onClose={() => setActiveEvent(null)} />
     </View>
   )
 }
@@ -319,77 +294,91 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 26, fontWeight: '700', color: '#111' },
   eventCount: { fontSize: 13, color: '#999', marginTop: 2 },
+
   monthNav: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 12, paddingVertical: 10,
+    paddingHorizontal: 8, paddingVertical: 12,
   },
   navBtn: { padding: 8 },
-  monthTitle: { fontSize: 16, fontWeight: '600', color: '#111' },
+  monthTitle: { fontSize: 17, fontWeight: '700', color: '#111' },
+
   dayHeaders: {
-    flexDirection: 'row', paddingHorizontal: 4,
-    borderBottomWidth: 1, borderBottomColor: '#f0f0f0', paddingBottom: 4,
+    flexDirection: 'row',
+    borderBottomWidth: 1, borderBottomColor: '#ebebeb',
+    paddingBottom: 6, paddingHorizontal: 4,
   },
   dayHeaderCell: { flex: 1, alignItems: 'center' },
-  dayHeaderText: { fontSize: 11, color: '#aaa', fontWeight: '500' },
+  dayHeaderText: { fontSize: 11, color: '#aaa', fontWeight: '600' },
+
   grid: { paddingHorizontal: 4 },
-  weekRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  weekRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1, borderBottomColor: '#ebebeb',
+  },
   cell: {
-    flex: 1, minHeight: 64, paddingVertical: 4, paddingHorizontal: 2,
-    borderRightWidth: 1, borderRightColor: '#f0f0f0',
+    flex: 1, minHeight: 80,
+    paddingVertical: 5, paddingHorizontal: 2,
+    borderRightWidth: 1, borderRightColor: '#ebebeb',
   },
   cellSelected: { backgroundColor: '#F5F8FF' },
+
   dayNumWrap: {
-    width: 24, height: 24, borderRadius: 12,
-    justifyContent: 'center', alignItems: 'center', marginBottom: 2,
+    width: 26, height: 26, borderRadius: 13,
+    justifyContent: 'center', alignItems: 'center', marginBottom: 3,
   },
-  dayNumWrapToday: { backgroundColor: BLUE },
-  dayNumWrapSelected: { borderWidth: 1.5, borderColor: BLUE },
-  dayNum: { fontSize: 12, color: '#111' },
+  dayNumToday: { backgroundColor: BLUE },
+  dayNumSelected: { borderWidth: 1.5, borderColor: BLUE },
+  dayNum: { fontSize: 13, color: '#111' },
   dayNumHighlight: { color: '#fff', fontWeight: '700' },
+
   chip: {
-    backgroundColor: '#EFF6FF', borderRadius: 3,
-    paddingHorizontal: 3, paddingVertical: 1, marginBottom: 2,
+    flexDirection: 'row',
+    backgroundColor: '#EFF6FF',
+    borderRadius: 4,
+    paddingHorizontal: 4, paddingVertical: 2,
+    marginBottom: 2,
+    alignItems: 'center',
   },
-  chipText: { fontSize: 9, color: BLUE, fontWeight: '500' },
-  moreText: { fontSize: 9, color: '#999', paddingLeft: 2 },
-  divider: { height: 1, backgroundColor: '#e5e5e5', marginTop: 4 },
+  chipInitials: { fontSize: 10, color: BLUE, fontWeight: '700' },
+  chipTitle: { fontSize: 10, color: '#1D4ED8', flex: 1 },
+  moreText: { fontSize: 10, color: '#999', paddingLeft: 4 },
 
-  // Day list
-  dayList: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40 },
-  dayListHeader: {
-    fontSize: 13, fontWeight: '600', color: '#888',
-    textTransform: 'capitalize', marginBottom: 12,
+  // Modal
+  backdrop: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center', alignItems: 'center',
+    padding: 24,
   },
-  noEvents: { fontSize: 14, color: '#ccc' },
-  eventRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f5f5f5',
+  popup: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    maxWidth: 360,
   },
-  eventTimeCol: { width: 38, gap: 2 },
-  eventTimeText: { fontSize: 11, color: '#999', textAlign: 'right' },
-  eventAccent: { width: 3, height: 36, borderRadius: 2, backgroundColor: BLUE },
-  eventInfo: { flex: 1 },
-  eventTitle: { fontSize: 14, fontWeight: '600', color: '#111' },
-  eventLocation: { fontSize: 12, color: '#888', marginTop: 1 },
-  eventAssigned: { fontSize: 11, color: BLUE, marginTop: 2 },
-
-  // Event detail
-  detail: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40 },
-  backRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 },
-  backText: { fontSize: 14, color: BLUE },
-  detailTitle: { fontSize: 20, fontWeight: '700', color: '#111', marginBottom: 4 },
-  detailDate: { fontSize: 14, color: BLUE, marginBottom: 12 },
-  detailRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  detailRowText: { fontSize: 14, color: '#444' },
-  detailSection: { marginTop: 16 },
-  detailSectionLabel: {
-    fontSize: 11, fontWeight: '600', color: '#999', letterSpacing: 0.5, marginBottom: 8,
+  popupHeader: {
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'flex-start', marginBottom: 16,
   },
-  detailDescription: { fontSize: 14, color: '#444', lineHeight: 21 },
-  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  popupTitle: {
+    fontSize: 18, fontWeight: '700', color: '#111',
+    flex: 1, marginRight: 12,
+  },
+  closeBtn: { padding: 2 },
+  popupRow: {
+    flexDirection: 'row', alignItems: 'center',
+    gap: 10, marginBottom: 10,
+  },
+  popupRowText: { fontSize: 14, color: '#444', flex: 1 },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, flex: 1 },
   tag: {
     backgroundColor: '#EFF6FF', paddingHorizontal: 10,
-    paddingVertical: 4, borderRadius: 4,
+    paddingVertical: 3, borderRadius: 4,
   },
-  tagText: { fontSize: 13, color: BLUE },
+  tagText: { fontSize: 13, color: BLUE, fontWeight: '500' },
+  popupDescription: {
+    fontSize: 14, color: '#666', lineHeight: 21,
+    marginTop: 8, paddingTop: 12,
+    borderTopWidth: 1, borderTopColor: '#f0f0f0',
+  },
 })
