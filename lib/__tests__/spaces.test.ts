@@ -1,8 +1,7 @@
 import { getMySpace, createSpace, joinSpaceByCode } from '../spaces'
+import { supabase } from '../supabase'
 
 jest.mock('../supabase', () => ({ supabase: { from: jest.fn(), rpc: jest.fn() } }))
-
-import { supabase } from '../supabase'
 
 const mockRpc = supabase.rpc as jest.Mock
 const mockFrom = supabase.from as jest.Mock

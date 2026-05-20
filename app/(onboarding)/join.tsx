@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { useSpace } from '@/context/space'
@@ -12,12 +12,7 @@ export default function JoinSpaceScreen() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Si le deep link contient déjà un code valide, rejoindre automatiquement
-  useEffect(() => {
-    if (deepLinkCode?.length === 8) handleJoin(deepLinkCode)
-  }, [deepLinkCode])
-
-  const handleJoin = async (codeToUse = code) => {
+  const handleJoin = useCallback(async (codeToUse = code) => {
     if (!codeToUse.trim()) return
     setError(null)
     setLoading(true)
@@ -29,7 +24,12 @@ export default function JoinSpaceScreen() {
       setError(e instanceof Error ? e.message : 'Une erreur est survenue')
     }
     setLoading(false)
-  }
+  }, [code, refresh, router])
+
+  // Si le deep link contient déjà un code valide, rejoindre automatiquement
+  useEffect(() => {
+    if (deepLinkCode?.length === 8) handleJoin(deepLinkCode)
+  }, [deepLinkCode, handleJoin])
 
   return (
     <View style={styles.container}>
