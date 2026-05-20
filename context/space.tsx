@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import { Space, getMySpace } from '@/lib/spaces'
 import { useAuth } from './auth'
 
@@ -15,15 +15,15 @@ export function SpaceProvider({ children }: { children: React.ReactNode }) {
   const [space, setSpace] = useState<Space | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     if (!session) { setSpace(null); setLoading(false); return }
     setLoading(true)
     const s = await getMySpace()
     setSpace(s)
     setLoading(false)
-  }
+  }, [session])
 
-  useEffect(() => { refresh() }, [session])
+  useEffect(() => { refresh() }, [refresh])
 
   return (
     <SpaceContext.Provider value={{ space, loading, refresh }}>
