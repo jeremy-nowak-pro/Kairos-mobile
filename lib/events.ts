@@ -28,6 +28,23 @@ export async function getUpcomingEvents(spaceId: string): Promise<Event[]> {
   return (data ?? []) as Event[]
 }
 
+export async function getEventsForMonth(spaceId: string, year: number, month: number): Promise<Event[]> {
+  const from = `${year}-${String(month + 1).padStart(2, '0')}-01`
+  const lastDay = new Date(year, month + 1, 0).getDate()
+  const to = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('space_id', spaceId)
+    .gte('date', from)
+    .lte('date', to)
+    .order('start_time', { ascending: true })
+
+  if (error) throw error
+  return (data ?? []) as Event[]
+}
+
 export async function getEvent(id: string): Promise<Event | null> {
   const { data, error } = await supabase
     .from('events')

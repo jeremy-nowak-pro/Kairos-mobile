@@ -37,9 +37,11 @@ function EventCard({ event }: { event: Event }) {
       ) : null}
       {event.assigned_to ? (
         <View style={styles.tagRow}>
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>{event.assigned_to}</Text>
-          </View>
+          {event.assigned_to.split(',').map(name => name.trim()).filter(Boolean).map(name => (
+            <View key={name} style={styles.tag}>
+              <Text style={styles.tagText}>{name}</Text>
+            </View>
+          ))}
         </View>
       ) : null}
     </Pressable>
