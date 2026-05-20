@@ -7,15 +7,7 @@ import { router } from 'expo-router'
 import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
 import { createEvent } from '@/lib/events'
-
-function parseDateInput(input: string): string | null {
-  const match = input.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
-  if (!match) return null
-  const [, d, m, y] = match
-  const date = new Date(`${y}-${m}-${d}`)
-  if (isNaN(date.getTime())) return null
-  return `${y}-${m}-${d}`
-}
+import CalendarPicker from '@/components/CalendarPicker'
 
 function parseTimeInput(input: string): string | null {
   const match = input.match(/^(\d{2}):(\d{2})$/)
@@ -25,43 +17,41 @@ function parseTimeInput(input: string): string | null {
   return `${h}:${m}:00`
 }
 
-function autoFormatDate(raw: string): string {
-  const digits = raw.replace(/\D/g, '').slice(0, 8)
-  if (digits.length <= 2) return digits
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`
-}
-
 function autoFormatTime(raw: string): string {
   const digits = raw.replace(/\D/g, '').slice(0, 4)
   if (digits.length <= 2) return digits
   return `${digits.slice(0, 2)}:${digits.slice(2)}`
 }
 
+function formatDisplayDate(isoDate: string): string {
+  const d = new Date(isoDate + 'T00:00:00')
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
 export default function NewEventScreen() {
-  const { user } = useAuth()
+  const { displayName } = useAuth()
   const { space } = useSpace()
   const [title, setTitle] = useState('')
-  const [date, setDate] = useState('')
+  const [date, setDate] = useState<string | null>(null)
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
   const [location, setLocation] = useState('')
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [calendarOpen, setCalendarOpen] = useState(false)
 
-  const createdBy = user?.email?.split('@')[0] ?? 'moi'
+  const createdBy = displayName ?? 'moi'
 
   const handleCreate = async () => {
     if (!space) return
     setError(null)
 
-    const parsedDate = parseDateInput(date)
     const parsedStart = parseTimeInput(startTime)
     const parsedEnd = parseTimeInput(endTime)
 
     if (!title.trim()) { setError('Le titre est requis'); return }
-    if (!parsedDate) { setError('Date invalide — format JJ/MM/AAAA'); return }
+    if (!date) { setError('La date est requise'); return }
     if (!parsedStart) { setError('Heure de début invalide — format HH:MM'); return }
     if (!parsedEnd) { setError('Heure de fin invalide — format HH:MM'); return }
 
@@ -69,7 +59,7 @@ export default function NewEventScreen() {
     try {
       await createEvent({
         title: title.trim(),
-        date: parsedDate,
+        date,
         start_time: parsedStart,
         end_time: parsedEnd,
         location: location.trim() || null,
@@ -110,15 +100,11 @@ export default function NewEventScreen() {
           />
 
           <Text style={styles.label}>DATE *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="JJ/MM/AAAA"
-            placeholderTextColor="#999"
-            value={date}
-            onChangeText={t => setDate(autoFormatDate(t))}
-            keyboardType="numeric"
-            maxLength={10}
-          />
+          <Pressable style={styles.dateButton} onPress={() => setCalendarOpen(true)}>
+            <Text style={date ? styles.dateText : styles.datePlaceholder}>
+              {date ? formatDisplayDate(date) : 'Choisir une date'}
+            </Text>
+          </Pressable>
 
           <View style={styles.row}>
             <View style={styles.rowItem}>
@@ -177,6 +163,13 @@ export default function NewEventScreen() {
           </Pressable>
         </View>
       </ScrollView>
+
+      <CalendarPicker
+        visible={calendarOpen}
+        value={date}
+        onConfirm={setDate}
+        onClose={() => setCalendarOpen(false)}
+      />
     </KeyboardAvoidingView>
   )
 }
@@ -199,31 +192,25 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontWeight: '600', color: '#111' },
   form: { padding: 20 },
   label: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#999',
-    letterSpacing: 0.5,
-    marginBottom: 6,
-    marginTop: 16,
+    fontSize: 11, fontWeight: '600', color: '#999',
+    letterSpacing: 0.5, marginBottom: 6, marginTop: 16,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#e5e5e5',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: '#111',
-    backgroundColor: '#fafafa',
+    borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 8,
+    padding: 12, fontSize: 16, color: '#111', backgroundColor: '#fafafa',
   },
+  dateButton: {
+    borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 8,
+    padding: 12, backgroundColor: '#fafafa',
+  },
+  dateText: { fontSize: 16, color: '#111' },
+  datePlaceholder: { fontSize: 16, color: '#999' },
   textarea: { height: 96, textAlignVertical: 'top' },
   row: { flexDirection: 'row', gap: 12 },
   rowItem: { flex: 1 },
   button: {
-    backgroundColor: BLUE,
-    borderRadius: 10,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 24,
+    backgroundColor: BLUE, borderRadius: 10,
+    padding: 16, alignItems: 'center', marginTop: 24,
   },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   error: { color: '#dc2626', fontSize: 14, marginTop: 12 },

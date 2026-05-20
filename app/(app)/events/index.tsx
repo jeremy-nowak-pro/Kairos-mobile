@@ -1,12 +1,10 @@
 import { useCallback, useState } from 'react'
 import {
-  View, Text, FlatList, Pressable, StyleSheet,
-  ActivityIndicator,
+  View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator,
 } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSpace } from '@/context/space'
-import { useAuth } from '@/context/auth'
 import { getUpcomingEvents, Event } from '@/lib/events'
 
 function formatDate(dateStr: string): string {
@@ -22,7 +20,10 @@ function formatTime(t: string): string {
 
 function EventCard({ event }: { event: Event }) {
   return (
-    <View style={styles.card}>
+    <Pressable
+      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      onPress={() => router.push(`/(app)/events/${event.id}`)}
+    >
       <View style={styles.cardRow}>
         <Text style={styles.cardTitle} numberOfLines={1}>{event.title}</Text>
         <Text style={styles.cardCreator}>{event.created_by}</Text>
@@ -41,13 +42,12 @@ function EventCard({ event }: { event: Event }) {
           </View>
         </View>
       ) : null}
-    </View>
+    </Pressable>
   )
 }
 
 export default function EventsScreen() {
   const { space } = useSpace()
-  const { signOut } = useAuth()
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -72,17 +72,6 @@ export default function EventsScreen() {
             <Text style={styles.subtitle}>{events.length} à venir</Text>
           )}
         </View>
-        <View style={styles.headerActions}>
-          <Pressable
-            style={styles.addButton}
-            onPress={() => router.push('/(app)/events/new')}
-          >
-            <Ionicons name="add" size={22} color="#fff" />
-          </Pressable>
-          <Pressable onPress={signOut} style={styles.iconButton}>
-            <Ionicons name="log-out-outline" size={22} color="#999" />
-          </Pressable>
-        </View>
       </View>
 
       {loading ? (
@@ -105,6 +94,13 @@ export default function EventsScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      <Pressable
+        style={styles.fab}
+        onPress={() => router.push('/(app)/events/new')}
+      >
+        <Ionicons name="add" size={28} color="#fff" />
+      </Pressable>
     </View>
   )
 }
@@ -114,9 +110,6 @@ const BLUE = '#2563EB'
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
     paddingHorizontal: 20,
     paddingTop: 56,
     paddingBottom: 16,
@@ -125,16 +118,6 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 26, fontWeight: '700', color: '#111' },
   subtitle: { fontSize: 13, color: '#999', marginTop: 2 },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  addButton: {
-    backgroundColor: BLUE,
-    borderRadius: 8,
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  iconButton: { padding: 4 },
   card: {
     marginHorizontal: 16,
     marginTop: 12,
@@ -143,6 +126,7 @@ const styles = StyleSheet.create({
     borderColor: '#e5e5e5',
     borderRadius: 10,
   },
+  cardPressed: { backgroundColor: '#f5f5f5' },
   cardRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -165,4 +149,16 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 15, color: '#999', marginBottom: 8 },
   emptyAction: { fontSize: 15, color: BLUE, fontWeight: '500' },
   error: { color: '#dc2626', padding: 20, textAlign: 'center' },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 24,
+    backgroundColor: BLUE,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+  },
 })
