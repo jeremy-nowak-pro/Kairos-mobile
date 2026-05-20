@@ -8,7 +8,9 @@ import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
 import { createEvent } from '@/lib/events'
 import { getSpaceMembers, SpaceMember } from '@/lib/spaces'
+import { uploadAttachment, LocalFile } from '@/lib/attachments'
 import CalendarPicker from '@/components/CalendarPicker'
+import AttachmentSection from '@/components/AttachmentSection'
 
 function parseTimeInput(input: string): string | null {
   const match = input.match(/^(\d{2}):(\d{2})$/)
@@ -41,6 +43,7 @@ export default function NewEventScreen() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [pendingFiles, setPendingFiles] = useState<LocalFile[]>([])
 
   const [members, setMembers] = useState<SpaceMember[]>([])
   const [selectedMembers, setSelectedMembers] = useState<string[]>(
@@ -84,7 +87,7 @@ export default function NewEventScreen() {
 
     setLoading(true)
     try {
-      await createEvent({
+      const event = await createEvent({
         title: title.trim(),
         date,
         start_time: parsedStart,
@@ -95,6 +98,11 @@ export default function NewEventScreen() {
         created_by: createdBy,
         space_id: space.id,
       })
+      await Promise.all(
+        pendingFiles.map(f =>
+          uploadAttachment(f, event.id, space.id, createdBy)
+        )
+      )
       router.back()
     } catch {
       setError('Une erreur est survenue')
@@ -204,6 +212,15 @@ export default function NewEventScreen() {
             numberOfLines={4}
           />
 
+          <View style={styles.attachmentSection}>
+            <AttachmentSection
+              mode="pending"
+              files={pendingFiles}
+              onAdd={f => setPendingFiles(prev => [...prev, f])}
+              onRemove={i => setPendingFiles(prev => prev.filter((_, idx) => idx !== i))}
+            />
+          </View>
+
           {error && <Text style={styles.error}>{error}</Text>}
 
           <Pressable style={styles.button} onPress={handleCreate} disabled={loading}>
@@ -267,5 +284,10 @@ const styles = StyleSheet.create({
     padding: 16, alignItems: 'center', marginTop: 24,
   },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  attachmentSection: {
+    marginTop: 20,
+    borderTopWidth: 1, borderTopColor: '#e5e5e5',
+    paddingTop: 16,
+  },
   error: { color: '#dc2626', fontSize: 14, marginTop: 12 },
 })
