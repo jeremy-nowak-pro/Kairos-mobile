@@ -3,6 +3,9 @@ import { View, Text, Pressable, StyleSheet, ActivityIndicator, ScrollView } from
 import { router, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { getEvent, Event } from '@/lib/events'
+import { useAuth } from '@/context/auth'
+import { useSpace } from '@/context/space'
+import AttachmentSection from '@/components/AttachmentSection'
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00')
@@ -17,6 +20,8 @@ function formatTime(t: string): string {
 
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
+  const { displayName } = useAuth()
+  const { space } = useSpace()
   const [event, setEvent] = useState<Event | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -93,6 +98,17 @@ export default function EventDetailScreen() {
             <Text style={styles.description}>{event.description}</Text>
           </View>
         ) : null}
+
+        {space && (
+          <View style={styles.section}>
+            <AttachmentSection
+              mode="saved"
+              eventId={event.id}
+              spaceId={space.id}
+              createdBy={displayName ?? 'moi'}
+            />
+          </View>
+        )}
       </View>
     </ScrollView>
   )

@@ -27,7 +27,14 @@
     },
     "scheme": "kairos-mobile",
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Kairos accède à ta galerie pour joindre des photos aux événements."
+        }
+      ]
     ],
     "extra": {
       "router": {},
