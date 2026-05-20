@@ -265,8 +265,8 @@ export default function NewEventScreen() {
         onConfirm={time => {
           setStartTime(time)
           const [h, m] = time.split(':').map(Number)
-          const endH = (h + 1) % 24
-          const auto = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+          const total = h * 60 + m + 15
+          const auto = `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
           if (!endTime || endTime <= time) setEndTime(auto)
         }}
         onClose={() => setStartPickerOpen(false)}
