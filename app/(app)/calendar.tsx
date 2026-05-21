@@ -1,12 +1,15 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   View, Text, Pressable, StyleSheet, ActivityIndicator,
   ScrollView, Modal,
 } from 'react-native'
-import { useFocusEffect } from 'expo-router'
+import { Image } from 'expo-image'
+import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSpace } from '@/context/space'
 import { getEventsForMonth, Event } from '@/lib/events'
+import { getAttachments, getSignedUrl } from '@/lib/attachments'
+import { userColor } from '@/lib/userColor'
 
 const DAYS_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
 const MONTHS_FR = [
@@ -28,10 +31,6 @@ function formatShortDate(dateStr: string) {
     weekday: 'long', day: 'numeric', month: 'long',
   })
 }
-function getInitials(assignedTo: string | null) {
-  if (!assignedTo) return ''
-  return assignedTo.split(',').map(n => n.trim()[0]?.toUpperCase() ?? '').join('&')
-}
 function buildWeeks(year: number, month: number): (number | null)[][] {
   const firstWeekday = new Date(year, month, 1).getDay()
   const offset = firstWeekday === 0 ? 6 : firstWeekday - 1
@@ -50,22 +49,68 @@ function buildWeeks(year: number, month: number): (number | null)[][] {
 
 function EventDetailPopup({ event, onClose }: { event: Event; onClose: () => void }) {
   const assignees = event.assigned_to?.split(',').map(s => s.trim()).filter(Boolean) ?? []
+  const color = userColor(event.assigned_to)
+  const [thumbs, setThumbs] = useState<string[]>([])
+  const [viewerUri, setViewerUri] = useState<string | null>(null)
+
+  useEffect(() => {
+    getAttachments(event.id)
+      .then(async atts => {
+        const imgs = atts.filter(a => a.mime_type?.startsWith('image/'))
+        const urls = await Promise.all(
+          imgs.map(a => getSignedUrl(a.storage_path).catch(() => null))
+        )
+        setThumbs(urls.filter((u): u is string => u !== null))
+      })
+      .catch(() => {})
+  }, [event.id])
+
   return (
     <View style={styles.popup}>
+      <View style={[styles.popupAccent, { backgroundColor: color.text }]} />
+
       <View style={styles.popupHeader}>
         <Text style={styles.popupTitle}>{event.title}</Text>
         <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={8}>
           <Ionicons name="close" size={20} color="#666" />
         </Pressable>
       </View>
-      <View style={styles.popupRow}>
-        <Ionicons name="calendar-outline" size={15} color="#888" />
-        <Text style={styles.popupRowText}>{formatFullDate(event.date)}</Text>
+
+      {/* Date/heure — avec miniature à droite si une seule image */}
+      <View style={thumbs.length === 1 ? styles.popupMainRow : undefined}>
+        <View style={thumbs.length === 1 ? styles.popupDateTimeCol : undefined}>
+          <View style={styles.popupRow}>
+            <Ionicons name="calendar-outline" size={15} color="#888" />
+            <Text style={styles.popupRowText}>{formatFullDate(event.date)}</Text>
+          </View>
+          <View style={[styles.popupRow, { marginBottom: 0 }]}>
+            <Ionicons name="time-outline" size={15} color="#888" />
+            <Text style={styles.popupRowText}>
+              {formatTime(event.start_time)} – {formatTime(event.end_time)}
+            </Text>
+          </View>
+        </View>
+
+        {thumbs.length === 1 && (
+          <Pressable onPress={() => setViewerUri(thumbs[0])}>
+            <Image source={{ uri: thumbs[0] }} style={styles.popupThumb} contentFit="cover" />
+          </Pressable>
+        )}
       </View>
-      <View style={styles.popupRow}>
-        <Ionicons name="time-outline" size={15} color="#888" />
-        <Text style={styles.popupRowText}>{formatTime(event.start_time)} – {formatTime(event.end_time)}</Text>
-      </View>
+
+      {/* Plusieurs images : rangée centrée sous la date/heure */}
+      {thumbs.length > 1 && (
+        <View style={styles.popupThumbRow}>
+          {thumbs.slice(0, 4).map((uri, i) => (
+            <Pressable key={i} onPress={() => setViewerUri(uri)}>
+              <Image source={{ uri }} style={styles.popupThumb} contentFit="cover" />
+            </Pressable>
+          ))}
+        </View>
+      )}
+
+      <View style={styles.popupDivider} />
+
       {event.location ? (
         <View style={styles.popupRow}>
           <Ionicons name="location-outline" size={15} color="#888" />
@@ -77,20 +122,34 @@ function EventDetailPopup({ event, onClose }: { event: Event; onClose: () => voi
         <Text style={styles.popupRowText}>{event.created_by}</Text>
       </View>
       {assignees.length > 0 && (
-        <View style={styles.popupRow}>
+        <View style={[styles.popupRow, { marginBottom: 0 }]}>
           <Ionicons name="checkmark-circle-outline" size={15} color="#888" />
           <View style={styles.tagRow}>
-            {assignees.map(name => (
-              <View key={name} style={styles.tag}>
-                <Text style={styles.tagText}>{name}</Text>
-              </View>
-            ))}
+            {assignees.map(name => {
+              const c = userColor(name)
+              return (
+                <View key={name} style={[styles.tag, { backgroundColor: c.bg }]}>
+                  <Text style={[styles.tagText, { color: c.text }]}>{name}</Text>
+                </View>
+              )
+            })}
           </View>
         </View>
       )}
       {event.description ? (
         <Text style={styles.popupDescription}>{event.description}</Text>
       ) : null}
+
+      {viewerUri && (
+        <Modal visible transparent animationType="fade" onRequestClose={() => setViewerUri(null)}>
+          <Pressable style={styles.viewerBackdrop} onPress={() => setViewerUri(null)}>
+            <Image source={{ uri: viewerUri }} style={styles.viewerImage} contentFit="contain" />
+            <Pressable style={styles.viewerClose} onPress={() => setViewerUri(null)}>
+              <Ionicons name="close-circle" size={32} color="#fff" />
+            </Pressable>
+          </Pressable>
+        </Modal>
+      )}
     </View>
   )
 }
@@ -119,7 +178,7 @@ function DayListPopup({
           style={({ pressed }) => [styles.dayListRow, pressed && { opacity: 0.6 }]}
           onPress={() => onSelectEvent(e)}
         >
-          <View style={styles.eventAccent} />
+          <View style={[styles.eventAccent, { backgroundColor: userColor(e.assigned_to).text }]} />
           <View style={styles.dayListInfo}>
             <Text style={styles.dayListTitle}>{e.title}</Text>
             <Text style={styles.dayListTime}>{formatTime(e.start_time)} – {formatTime(e.end_time)}</Text>
@@ -166,7 +225,7 @@ function DayCell({
     <Pressable
       style={({ pressed }) => [
         styles.cell,
-        pressed && events.length > 0 && styles.cellPressed,
+        pressed && styles.cellPressed,
       ]}
       onPress={onPress}
     >
@@ -176,14 +235,14 @@ function DayCell({
         </Text>
       </View>
 
-      {events.slice(0, 2).map(e => (
-        <View key={e.id} style={styles.chip}>
-          {e.assigned_to ? (
-            <Text style={styles.chipInitials}>{getInitials(e.assigned_to)} </Text>
-          ) : null}
-          <Text style={styles.chipTitle} numberOfLines={1}>{e.title}</Text>
-        </View>
-      ))}
+      {events.slice(0, 2).map(e => {
+        const { bg, text } = userColor(e.assigned_to)
+        return (
+          <View key={e.id} style={[styles.chip, { backgroundColor: bg }]}>
+            <Text style={[styles.chipTitle, { color: text }]} numberOfLines={1}>{e.title}</Text>
+          </View>
+        )
+      })}
       {events.length > 2 && (
         <Text style={styles.moreText}>+{events.length - 2}</Text>
       )}
@@ -240,7 +299,10 @@ export default function CalendarScreen() {
 
   const handleCellPress = (dateStr: string) => {
     const dayEvents = eventsByDay[dateStr] ?? []
-    if (dayEvents.length === 0) return
+    if (dayEvents.length === 0) {
+      router.push(`/(app)/events/new?date=${dateStr}`)
+      return
+    }
     if (dayEvents.length === 1) {
       setEventPopup(dayEvents[0])
     } else {
@@ -365,12 +427,10 @@ const styles = StyleSheet.create({
   dayNum: { fontSize: 13, color: '#111' },
   dayNumHighlight: { color: '#fff', fontWeight: '700' },
   chip: {
-    flexDirection: 'row', backgroundColor: '#EFF6FF',
     borderRadius: 4, paddingHorizontal: 4, paddingVertical: 2,
-    marginBottom: 2, alignItems: 'center',
+    marginBottom: 2,
   },
-  chipInitials: { fontSize: 10, color: BLUE, fontWeight: '700' },
-  chipTitle: { fontSize: 10, color: '#1D4ED8', flex: 1 },
+  chipTitle: { fontSize: 10, fontWeight: '600' },
   moreText: { fontSize: 10, color: '#999', paddingLeft: 4 },
 
   // Modal
@@ -379,30 +439,48 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', padding: 24,
   },
   popupWrapper: { width: '100%', maxWidth: 360 },
-  popup: { backgroundColor: '#fff', borderRadius: 16, padding: 20 },
+  popup: { backgroundColor: '#fff', borderRadius: 16, padding: 20, overflow: 'hidden' },
+  popupAccent: { height: 4, marginHorizontal: -20, marginTop: -20, marginBottom: 14 },
   popupHeader: {
     flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'flex-start', marginBottom: 14,
+    alignItems: 'flex-start', marginBottom: 12,
   },
-  popupTitle: { fontSize: 18, fontWeight: '700', color: '#111', flex: 1, marginRight: 12 },
+  popupTitle: { fontSize: 17, fontWeight: '700', color: '#111', flex: 1, marginRight: 12 },
   closeBtn: { padding: 2 },
-  popupRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  popupRowText: { fontSize: 14, color: '#444', flex: 1 },
+  popupMainRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 10 },
+  popupDateTimeCol: { flex: 1 },
+  popupThumbCol: {},
+  popupThumbRow: {
+    flexDirection: 'row', justifyContent: 'center',
+    gap: 8, marginTop: 10,
+  },
+  popupThumb: { width: 72, height: 72, borderRadius: 8 },
+  popupThumbMore: {
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  popupThumbMoreText: { fontSize: 13, color: '#666', fontWeight: '600' },
+  popupDivider: { height: 1, backgroundColor: '#f0f0f0', marginBottom: 10 },
+  popupRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  popupRowText: { fontSize: 13, color: '#444', flex: 1 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, flex: 1 },
-  tag: { backgroundColor: '#EFF6FF', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 4 },
-  tagText: { fontSize: 13, color: BLUE, fontWeight: '500' },
+  tag: { backgroundColor: '#EFF6FF', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
+  tagText: { fontSize: 12, color: BLUE, fontWeight: '500' },
   popupDescription: {
-    fontSize: 14, color: '#666', lineHeight: 21,
-    marginTop: 8, paddingTop: 12,
+    fontSize: 13, color: '#666', lineHeight: 20,
+    marginTop: 10, paddingTop: 10,
     borderTopWidth: 1, borderTopColor: '#f0f0f0',
   },
+  viewerBackdrop: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
+  viewerImage: { width: '100%', height: '85%' },
+  viewerClose: { position: 'absolute', top: 56, right: 20, backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 20 },
 
   // Day list popup rows
   dayListRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f5f5f5',
   },
-  eventAccent: { width: 3, height: 36, borderRadius: 2, backgroundColor: BLUE },
+  eventAccent: { width: 3, height: 36, borderRadius: 2 },
   dayListInfo: { flex: 1 },
   dayListTitle: { fontSize: 14, fontWeight: '600', color: '#111' },
   dayListTime: { fontSize: 12, color: '#888', marginTop: 2 },
