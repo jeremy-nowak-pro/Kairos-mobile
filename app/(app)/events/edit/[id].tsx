@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   View, Text, TextInput, Pressable, StyleSheet,
   ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform,
@@ -10,11 +10,10 @@ import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
-import { createEvent } from '@/lib/events'
+import { getEvent, updateEvent } from '@/lib/events'
 import { getSpaceMembers, SpaceMember } from '@/lib/spaces'
-import { uploadAttachment, LocalFile } from '@/lib/attachments'
-import { MemberSchedule, getSpaceSchedules, getScheduleSignedUrl } from '@/lib/schedules'
 import { upsertLocation } from '@/lib/locations'
+import { MemberSchedule, getSpaceSchedules, getScheduleSignedUrl } from '@/lib/schedules'
 import CalendarPicker from '@/components/CalendarPicker'
 import TimePicker from '@/components/TimePicker'
 import AttachmentSection from '@/components/AttachmentSection'
@@ -28,37 +27,54 @@ function parseTimeInput(input: string): string | null {
   return `${h}:${m}:00`
 }
 
-
 function formatDisplayDate(isoDate: string): string {
-  const d = new Date(isoDate + 'T00:00:00')
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+  return new Date(isoDate + 'T00:00:00').toLocaleDateString('fr-FR', {
+    day: 'numeric', month: 'long', year: 'numeric',
+  })
 }
 
-export default function NewEventScreen() {
+export default function EditEventScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>()
   const { displayName } = useAuth()
   const { space } = useSpace()
-  const { date: dateParam } = useLocalSearchParams<{ date?: string }>()
+
+  const [loaded, setLoaded] = useState(false)
+  const [eventId, setEventId] = useState('')
   const [title, setTitle] = useState('')
-  const [date, setDate] = useState<string | null>(dateParam ?? null)
+  const [date, setDate] = useState<string | null>(null)
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
   const [location, setLocation] = useState('')
   const [description, setDescription] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [startPickerOpen, setStartPickerOpen] = useState(false)
   const [endPickerOpen, setEndPickerOpen] = useState(false)
-  const [pendingFiles, setPendingFiles] = useState<LocalFile[]>([])
+  const [members, setMembers] = useState<SpaceMember[]>([])
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([])
   const [schedules, setSchedules] = useState<Record<string, MemberSchedule>>({})
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
   const [scheduleViewerUri, setScheduleViewerUri] = useState<string | null>(null)
   const [scheduleLoadingId, setScheduleLoadingId] = useState<string | null>(null)
 
-  const [members, setMembers] = useState<SpaceMember[]>([])
-  const [selectedMembers, setSelectedMembers] = useState<string[]>(
-    displayName ? [displayName] : []
-  )
+  useEffect(() => {
+    if (!id) return
+    getEvent(id).then(event => {
+      if (!event) { router.back(); return }
+      setEventId(event.id)
+      setTitle(event.title)
+      setDate(event.date)
+      setStartTime(event.start_time.slice(0, 5))
+      setEndTime(event.end_time.slice(0, 5))
+      setLocation(event.location ?? '')
+      setDescription(event.description ?? '')
+      setSelectedMembers(
+        event.assigned_to?.split(',').map(s => s.trim()).filter(Boolean) ?? []
+      )
+      setLoaded(true)
+    }).catch(() => router.back())
+  }, [id])
 
   useEffect(() => {
     if (space) {
@@ -73,18 +89,8 @@ export default function NewEventScreen() {
   }, [space?.id])
 
   useEffect(() => {
-    getSpaceMembers()
-      .then(m => {
-        setMembers(m)
-        // Pre-select current user
-        const me = m.find(member => member.display_name === displayName)
-        if (me) setSelectedMembers([me.display_name])
-      })
-      .catch(() => {
-        // Fallback to current user only
-        if (displayName) setSelectedMembers([displayName])
-      })
-  }, [displayName])
+    getSpaceMembers().then(setMembers).catch(() => {})
+  }, [])
 
   const toggleMember = (name: string) => {
     setSelectedMembers(prev =>
@@ -92,25 +98,21 @@ export default function NewEventScreen() {
     )
   }
 
-  const createdBy = displayName ?? 'moi'
-
-  const handleCreate = async () => {
-    if (!space) return
+  const handleSave = async () => {
+    if (!space || !eventId) return
     setError(null)
-
     const parsedStart = parseTimeInput(startTime)
     const parsedEnd = parseTimeInput(endTime)
-
     if (!title.trim()) { setError('Le titre est requis'); return }
     if (!date) { setError('La date est requise'); return }
     if (!parsedStart) { setError('Heure de début invalide — format HH:MM'); return }
     if (!parsedEnd) { setError('Heure de fin invalide — format HH:MM'); return }
     if (selectedMembers.length === 0) { setError('Assigne l\'événement à au moins une personne'); return }
 
-    setLoading(true)
+    setSaving(true)
     try {
       const trimmedLocation = location.trim()
-      const event = await createEvent({
+      await updateEvent(eventId, {
         title: title.trim(),
         date,
         start_time: parsedStart,
@@ -118,19 +120,24 @@ export default function NewEventScreen() {
         location: trimmedLocation || null,
         description: description.trim() || null,
         assigned_to: selectedMembers.join(','),
-        created_by: createdBy,
-        space_id: space.id,
       })
-      await Promise.all([
-        ...pendingFiles.map(f => uploadAttachment(f, event.id, space.id, createdBy)),
-        trimmedLocation ? upsertLocation(trimmedLocation) : Promise.resolve(),
-      ])
+      if (trimmedLocation) upsertLocation(trimmedLocation).catch(() => {})
       router.back()
     } catch {
       setError('Une erreur est survenue')
     }
-    setLoading(false)
+    setSaving(false)
   }
+
+  if (!loaded) {
+    return (
+      <View style={styles.loadingCenter}>
+        <ActivityIndicator />
+      </View>
+    )
+  }
+
+  const createdBy = displayName ?? 'moi'
 
   return (
     <KeyboardAvoidingView
@@ -142,7 +149,7 @@ export default function NewEventScreen() {
           <Pressable onPress={() => router.back()}>
             <Text style={styles.cancel}>Annuler</Text>
           </Pressable>
-          <Text style={styles.title}>Nouvel événement</Text>
+          <Text style={styles.title}>Modifier</Text>
           <View style={{ width: 64 }} />
         </View>
 
@@ -209,10 +216,7 @@ export default function NewEventScreen() {
             )}
           </View>
 
-          <Pressable
-            style={styles.scheduleBtn}
-            onPress={() => setScheduleModalOpen(true)}
-          >
+          <Pressable style={styles.scheduleBtn} onPress={() => setScheduleModalOpen(true)}>
             <Ionicons name="calendar-outline" size={15} color={BLUE} />
             <Text style={styles.scheduleBtnText}>Consulter les emplois du temps</Text>
           </Pressable>
@@ -228,21 +232,23 @@ export default function NewEventScreen() {
             numberOfLines={4}
           />
 
-          <View style={styles.attachmentSection}>
-            <AttachmentSection
-              mode="pending"
-              files={pendingFiles}
-              onAdd={f => setPendingFiles(prev => [...prev, f])}
-              onRemove={i => setPendingFiles(prev => prev.filter((_, idx) => idx !== i))}
-            />
-          </View>
+          {space && (
+            <View style={styles.attachmentSection}>
+              <AttachmentSection
+                mode="saved"
+                eventId={eventId}
+                spaceId={space.id}
+                createdBy={createdBy}
+              />
+            </View>
+          )}
 
           {error && <Text style={styles.error}>{error}</Text>}
 
-          <Pressable style={styles.button} onPress={handleCreate} disabled={loading}>
-            {loading
+          <Pressable style={styles.button} onPress={handleSave} disabled={saving}>
+            {saving
               ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.buttonText}>+ Créer l'événement</Text>
+              : <Text style={styles.buttonText}>Enregistrer</Text>
             }
           </Pressable>
         </View>
@@ -277,7 +283,6 @@ export default function NewEventScreen() {
         onClose={() => setEndPickerOpen(false)}
       />
 
-      {/* Schedule list modal */}
       <Modal
         visible={scheduleModalOpen}
         transparent
@@ -325,17 +330,13 @@ export default function NewEventScreen() {
                 </View>
               )
             })}
-            <Pressable
-              style={styles.sheetClose}
-              onPress={() => setScheduleModalOpen(false)}
-            >
+            <Pressable style={styles.sheetClose} onPress={() => setScheduleModalOpen(false)}>
               <Text style={styles.sheetCloseText}>Fermer</Text>
             </Pressable>
           </Pressable>
         </Pressable>
       </Modal>
 
-      {/* Schedule image viewer */}
       {scheduleViewerUri && (
         <Modal
           visible
@@ -343,19 +344,13 @@ export default function NewEventScreen() {
           animationType="fade"
           onRequestClose={() => setScheduleViewerUri(null)}
         >
-          <Pressable
-            style={styles.viewerBackdrop}
-            onPress={() => setScheduleViewerUri(null)}
-          >
+          <Pressable style={styles.viewerBackdrop} onPress={() => setScheduleViewerUri(null)}>
             <Image
               source={{ uri: scheduleViewerUri }}
               style={styles.viewerImage}
               contentFit="contain"
             />
-            <Pressable
-              style={styles.viewerClose}
-              onPress={() => setScheduleViewerUri(null)}
-            >
+            <Pressable style={styles.viewerClose} onPress={() => setScheduleViewerUri(null)}>
               <Ionicons name="close-circle" size={32} color="#fff" />
             </Pressable>
           </Pressable>
@@ -368,6 +363,7 @@ export default function NewEventScreen() {
 const BLUE = '#2563EB'
 
 const styles = StyleSheet.create({
+  loadingCenter: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   container: { flex: 1, backgroundColor: '#fff' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -402,24 +398,21 @@ const styles = StyleSheet.create({
   memberBtnActive: { borderColor: BLUE, backgroundColor: '#EFF6FF' },
   memberBtnText: { fontSize: 15, color: '#555' },
   memberBtnTextActive: { fontSize: 15, color: BLUE, fontWeight: '600' },
-  button: {
-    backgroundColor: BLUE, borderRadius: 10,
-    padding: 16, alignItems: 'center', marginTop: 24,
-  },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  attachmentSection: {
-    marginTop: 20,
-    borderTopWidth: 1, borderTopColor: '#e5e5e5',
-    paddingTop: 16,
-  },
   scheduleBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     marginTop: 8, marginBottom: 4,
   },
   scheduleBtnText: { fontSize: 13, color: BLUE },
+  attachmentSection: {
+    marginTop: 20, borderTopWidth: 1,
+    borderTopColor: '#e5e5e5', paddingTop: 16,
+  },
   error: { color: '#dc2626', fontSize: 14, marginTop: 12 },
-
-  // Schedule modal
+  button: {
+    backgroundColor: BLUE, borderRadius: 10,
+    padding: 16, alignItems: 'center', marginTop: 24,
+  },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   backdrop: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end',
   },
@@ -443,8 +436,6 @@ const styles = StyleSheet.create({
   sheetNoSchedule: { fontSize: 14, color: '#bbb' },
   sheetClose: { marginTop: 16, padding: 12, alignItems: 'center' },
   sheetCloseText: { fontSize: 16, color: '#666' },
-
-  // Image viewer
   viewerBackdrop: {
     flex: 1, backgroundColor: '#000',
     justifyContent: 'center', alignItems: 'center',

@@ -1,11 +1,14 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator,
 } from 'react-native'
-import { router, useFocusEffect } from 'expo-router'
+import { Image } from 'expo-image'
 import { Ionicons } from '@expo/vector-icons'
+import { router, useFocusEffect } from 'expo-router'
 import { useSpace } from '@/context/space'
 import { getUpcomingEvents, Event } from '@/lib/events'
+import { getAttachments, getSignedUrl } from '@/lib/attachments'
+import { userColor } from '@/lib/userColor'
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00')
@@ -19,29 +22,58 @@ function formatTime(t: string): string {
 }
 
 function EventCard({ event }: { event: Event }) {
+  const color = userColor(event.assigned_to)
+  const [thumb, setThumb] = useState<string | null>(null)
+
+  useEffect(() => {
+    getAttachments(event.id)
+      .then(async atts => {
+        const img = atts.find(a => a.mime_type?.startsWith('image/'))
+        if (!img) return
+        const url = await getSignedUrl(img.storage_path)
+        setThumb(url)
+      })
+      .catch(() => {})
+  }, [event.id])
+
   return (
     <Pressable
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      style={({ pressed }) => [styles.card, { borderLeftColor: color.text }, pressed && styles.cardPressed]}
       onPress={() => router.push(`/(app)/events/${event.id}`)}
     >
       <View style={styles.cardRow}>
         <Text style={styles.cardTitle} numberOfLines={1}>{event.title}</Text>
         <Text style={styles.cardCreator}>{event.created_by}</Text>
       </View>
-      <Text style={styles.cardDate}>{formatDate(event.date)}</Text>
-      <Text style={styles.cardTime}>
-        {formatTime(event.start_time)} – {formatTime(event.end_time)}
-      </Text>
+
+      <View style={styles.cardMainRow}>
+        <View style={styles.cardDateTimeCol}>
+          <Text style={styles.cardDate}>{formatDate(event.date)}</Text>
+          <Text style={styles.cardTime}>
+            {formatTime(event.start_time)} – {formatTime(event.end_time)}
+          </Text>
+        </View>
+        {thumb && (
+          <Image source={{ uri: thumb }} style={styles.cardThumb} contentFit="cover" />
+        )}
+      </View>
+
       {event.location ? (
-        <Text style={styles.cardLocation}>· {event.location}</Text>
+        <View style={styles.cardLocationRow}>
+          <Ionicons name="location-outline" size={13} color="#888" />
+          <Text style={styles.cardLocation} numberOfLines={1}>{event.location}</Text>
+        </View>
       ) : null}
       {event.assigned_to ? (
         <View style={styles.tagRow}>
-          {event.assigned_to.split(',').map(name => name.trim()).filter(Boolean).map(name => (
-            <View key={name} style={styles.tag}>
-              <Text style={styles.tagText}>{name}</Text>
-            </View>
-          ))}
+          {event.assigned_to.split(',').map(n => n.trim()).filter(Boolean).map(name => {
+            const c = userColor(name)
+            return (
+              <View key={name} style={[styles.tag, { backgroundColor: c.bg }]}>
+                <Text style={[styles.tagText, { color: c.text }]}>{name}</Text>
+              </View>
+            )
+          })}
         </View>
       ) : null}
     </Pressable>
@@ -126,19 +158,26 @@ const styles = StyleSheet.create({
     padding: 14,
     borderWidth: 1,
     borderColor: '#e5e5e5',
+    borderLeftWidth: 4,
     borderRadius: 10,
   },
   cardPressed: { backgroundColor: '#f5f5f5' },
   cardRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'baseline', marginBottom: 8,
   },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: '#111', flex: 1, marginRight: 8 },
+  cardTitle: { fontSize: 15, fontWeight: '600', color: '#111', flex: 1, marginRight: 8 },
   cardCreator: { fontSize: 12, color: '#999' },
+  cardMainRow: {
+    flexDirection: 'row', alignItems: 'flex-start',
+    gap: 12, marginBottom: 8,
+  },
+  cardDateTimeCol: { flex: 1 },
+  cardThumb: { width: 64, height: 64, borderRadius: 8 },
   cardDate: { fontSize: 13, color: BLUE, marginBottom: 2 },
-  cardTime: { fontSize: 13, color: '#555', marginBottom: 2 },
-  cardLocation: { fontSize: 13, color: '#666', marginBottom: 4 },
+  cardTime: { fontSize: 13, color: '#555' },
+  cardLocationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
+  cardLocation: { fontSize: 13, color: '#666', flex: 1 },
   tagRow: { flexDirection: 'row', gap: 6, marginTop: 4 },
   tag: {
     backgroundColor: '#EFF6FF',
