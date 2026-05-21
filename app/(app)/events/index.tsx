@@ -1,82 +1,88 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator,
+  View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator, Animated, Easing,
 } from 'react-native'
-import { Image } from 'expo-image'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useFocusEffect } from 'expo-router'
 import { useSpace } from '@/context/space'
 import { getUpcomingEvents, Event } from '@/lib/events'
-import { getAttachments, getSignedUrl } from '@/lib/attachments'
 import { userColor } from '@/lib/userColor'
+import { prefetchEventImages } from '@/lib/imageCache'
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00')
-  return d.toLocaleDateString('fr-FR', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  })
+  return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
 function formatTime(t: string): string {
   return t.slice(0, 5)
 }
 
-function EventCard({ event }: { event: Event }) {
+function EventCard({ event, delay }: { event: Event; delay: number }) {
   const color = userColor(event.assigned_to)
-  const [thumb, setThumb] = useState<string | null>(null)
+  const anim = useRef(new Animated.Value(0)).current
+
+  const slideAnim = useRef(new Animated.Value(0)).current
+  const translateX = slideAnim.interpolate({ inputRange: [0, 1], outputRange: [260, 0] })
 
   useEffect(() => {
-    getAttachments(event.id)
-      .then(async atts => {
-        const img = atts.find(a => a.mime_type?.startsWith('image/'))
-        if (!img) return
-        const url = await getSignedUrl(img.storage_path)
-        setThumb(url)
-      })
-      .catch(() => {})
-  }, [event.id])
+    const t = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 1500,
+          easing: Easing.out(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 1,
+          duration: 500,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]).start()
+    }, delay)
+    return () => clearTimeout(t)
+  }, [])
 
   return (
+    <Animated.View style={{ opacity: anim, transform: [{ translateX }] }}>
     <Pressable
-      style={({ pressed }) => [styles.card, { borderLeftColor: color.text }, pressed && styles.cardPressed]}
+      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
       onPress={() => router.push(`/(app)/events/${event.id}`)}
     >
-      <View style={styles.cardRow}>
+      <View style={[styles.cardBar, { backgroundColor: color.text }]} />
+      <View style={styles.cardBody}>
         <Text style={styles.cardTitle} numberOfLines={1}>{event.title}</Text>
-        <Text style={styles.cardCreator}>{event.created_by}</Text>
-      </View>
-
-      <View style={styles.cardMainRow}>
-        <View style={styles.cardDateTimeCol}>
-          <Text style={styles.cardDate}>{formatDate(event.date)}</Text>
+        <Text style={styles.cardDate}>{formatDate(event.date)}</Text>
+        <View style={styles.cardMeta}>
+          <Ionicons name="time-outline" size={12} color="#aaa" />
           <Text style={styles.cardTime}>
             {formatTime(event.start_time)} – {formatTime(event.end_time)}
           </Text>
+          {event.location ? (
+            <>
+              <Text style={styles.dot}>·</Text>
+              <Ionicons name="location-outline" size={12} color="#aaa" />
+              <Text style={styles.cardLoc} numberOfLines={1}>{event.location}</Text>
+            </>
+          ) : null}
         </View>
-        {thumb && (
-          <Image source={{ uri: thumb }} style={styles.cardThumb} contentFit="cover" />
-        )}
+        {event.assigned_to ? (
+          <View style={styles.tagRow}>
+            {event.assigned_to.split(',').map(n => n.trim()).filter(Boolean).map(name => {
+              const c = userColor(name)
+              return (
+                <View key={name} style={[styles.tag, { backgroundColor: c.bg }]}>
+                  <Text style={[styles.tagText, { color: c.text }]}>{name}</Text>
+                </View>
+              )
+            })}
+          </View>
+        ) : null}
       </View>
-
-      {event.location ? (
-        <View style={styles.cardLocationRow}>
-          <Ionicons name="location-outline" size={13} color="#888" />
-          <Text style={styles.cardLocation} numberOfLines={1}>{event.location}</Text>
-        </View>
-      ) : null}
-      {event.assigned_to ? (
-        <View style={styles.tagRow}>
-          {event.assigned_to.split(',').map(n => n.trim()).filter(Boolean).map(name => {
-            const c = userColor(name)
-            return (
-              <View key={name} style={[styles.tag, { backgroundColor: c.bg }]}>
-                <Text style={[styles.tagText, { color: c.text }]}>{name}</Text>
-              </View>
-            )
-          })}
-        </View>
-      ) : null}
     </Pressable>
+    </Animated.View>
   )
 }
 
@@ -89,9 +95,12 @@ export default function EventsScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!space) return
-      setLoading(true)
+      if (events.length === 0) setLoading(true)
       getUpcomingEvents(space.id)
-        .then(setEvents)
+        .then(data => {
+          setEvents(data)
+          data.slice(0, 5).forEach(e => prefetchEventImages(e.id))
+        })
         .catch(() => setError('Impossible de charger les événements'))
         .finally(() => setLoading(false))
     }, [space])
@@ -100,12 +109,10 @@ export default function EventsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Événements</Text>
-          {!loading && (
-            <Text style={styles.subtitle}>{events.length} à venir</Text>
-          )}
-        </View>
+        <Text style={styles.title}>Événements</Text>
+        {!loading && events.length > 0 && (
+          <Text style={styles.subtitle}>{events.length} à venir</Text>
+        )}
       </View>
 
       {loading ? (
@@ -123,8 +130,8 @@ export default function EventsScreen() {
         <FlatList
           data={events}
           keyExtractor={e => e.id}
-          renderItem={({ item }) => <EventCard event={item} />}
-          contentContainerStyle={{ paddingBottom: 24 }}
+          renderItem={({ item, index }) => <EventCard event={item} delay={80 + index * 150} />}
+          contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -142,64 +149,65 @@ export default function EventsScreen() {
 const BLUE = '#2563EB'
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#f2f2f7' },
   header: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 56,
     paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e5e5',
+    backgroundColor: '#fff',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#d1d1d6',
   },
-  title: { fontSize: 26, fontWeight: '700', color: '#111' },
-  subtitle: { fontSize: 13, color: '#999', marginTop: 2 },
+  title: { fontSize: 28, fontWeight: '700', color: '#111' },
+  subtitle: { fontSize: 14, color: '#999' },
+
+  list: { paddingTop: 16, paddingBottom: 100 },
+
   card: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 12,
     marginHorizontal: 16,
-    marginTop: 12,
-    padding: 14,
+    marginBottom: 10,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#e5e5e5',
-    borderLeftWidth: 4,
-    borderRadius: 10,
+    borderColor: '#d1d1d6',
   },
-  cardPressed: { backgroundColor: '#f5f5f5' },
-  cardRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'baseline', marginBottom: 8,
-  },
-  cardTitle: { fontSize: 15, fontWeight: '600', color: '#111', flex: 1, marginRight: 8 },
-  cardCreator: { fontSize: 12, color: '#999' },
-  cardMainRow: {
-    flexDirection: 'row', alignItems: 'flex-start',
-    gap: 12, marginBottom: 8,
-  },
-  cardDateTimeCol: { flex: 1 },
-  cardThumb: { width: 64, height: 64, borderRadius: 8 },
-  cardDate: { fontSize: 13, color: BLUE, marginBottom: 2 },
-  cardTime: { fontSize: 13, color: '#555' },
-  cardLocationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
-  cardLocation: { fontSize: 13, color: '#666', flex: 1 },
-  tagRow: { flexDirection: 'row', gap: 6, marginTop: 4 },
-  tag: {
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  tagText: { fontSize: 12, color: BLUE },
+  cardPressed: { opacity: 0.75 },
+  cardBar: { width: 4 },
+  cardBody: { flex: 1, paddingHorizontal: 14, paddingVertical: 13 },
+  cardTitle: { fontSize: 16, fontWeight: '600', color: '#111', marginBottom: 3 },
+  cardDate: { fontSize: 13, color: BLUE, marginBottom: 5 },
+  cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
+  cardTime: { fontSize: 13, color: '#666' },
+  dot: { fontSize: 13, color: '#ccc' },
+  cardLoc: { fontSize: 13, color: '#666', flex: 1 },
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 9 },
+  tag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 5 },
+  tagText: { fontSize: 12, fontWeight: '500' },
+
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyText: { fontSize: 15, color: '#999', marginBottom: 8 },
   emptyAction: { fontSize: 15, color: BLUE, fontWeight: '500' },
   error: { color: '#dc2626', padding: 20, textAlign: 'center' },
+
   fab: {
     position: 'absolute',
     right: 20,
-    bottom: 24,
+    bottom: 28,
     backgroundColor: BLUE,
     width: 52,
     height: 52,
     borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,
+    shadowColor: BLUE,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
   },
 })
