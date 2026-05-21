@@ -3,7 +3,7 @@ import {
   View, Text, Pressable, StyleSheet, ActivityIndicator,
   ScrollView, Modal,
 } from 'react-native'
-import { useFocusEffect } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSpace } from '@/context/space'
 import { getEventsForMonth, Event } from '@/lib/events'
@@ -166,7 +166,7 @@ function DayCell({
     <Pressable
       style={({ pressed }) => [
         styles.cell,
-        pressed && events.length > 0 && styles.cellPressed,
+        pressed && styles.cellPressed,
       ]}
       onPress={onPress}
     >
@@ -240,7 +240,10 @@ export default function CalendarScreen() {
 
   const handleCellPress = (dateStr: string) => {
     const dayEvents = eventsByDay[dateStr] ?? []
-    if (dayEvents.length === 0) return
+    if (dayEvents.length === 0) {
+      router.push(`/(app)/events/new?date=${dateStr}`)
+      return
+    }
     if (dayEvents.length === 1) {
       setEventPopup(dayEvents[0])
     } else {
