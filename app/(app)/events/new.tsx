@@ -137,7 +137,7 @@ export default function NewEventScreen() {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Pressable onPress={() => router.back()}>
             <Text style={styles.cancel}>Annuler</Text>
