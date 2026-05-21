@@ -7,16 +7,18 @@ import {
 import { Image } from 'expo-image'
 import * as WebBrowser from 'expo-web-browser'
 import { Ionicons } from '@expo/vector-icons'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
 import { createEvent } from '@/lib/events'
 import { getSpaceMembers, SpaceMember } from '@/lib/spaces'
 import { uploadAttachment, LocalFile } from '@/lib/attachments'
 import { MemberSchedule, getSpaceSchedules, getScheduleSignedUrl } from '@/lib/schedules'
+import { upsertLocation } from '@/lib/locations'
 import CalendarPicker from '@/components/CalendarPicker'
 import TimePicker from '@/components/TimePicker'
 import AttachmentSection from '@/components/AttachmentSection'
+import LocationInput from '@/components/LocationInput'
 
 function parseTimeInput(input: string): string | null {
   const match = input.match(/^(\d{2}):(\d{2})$/)
@@ -35,8 +37,9 @@ function formatDisplayDate(isoDate: string): string {
 export default function NewEventScreen() {
   const { displayName } = useAuth()
   const { space } = useSpace()
+  const { date: dateParam } = useLocalSearchParams<{ date?: string }>()
   const [title, setTitle] = useState('')
-  const [date, setDate] = useState<string | null>(null)
+  const [date, setDate] = useState<string | null>(dateParam ?? null)
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
   const [location, setLocation] = useState('')
@@ -106,22 +109,22 @@ export default function NewEventScreen() {
 
     setLoading(true)
     try {
+      const trimmedLocation = location.trim()
       const event = await createEvent({
         title: title.trim(),
         date,
         start_time: parsedStart,
         end_time: parsedEnd,
-        location: location.trim() || null,
+        location: trimmedLocation || null,
         description: description.trim() || null,
         assigned_to: selectedMembers.join(','),
         created_by: createdBy,
         space_id: space.id,
       })
-      await Promise.all(
-        pendingFiles.map(f =>
-          uploadAttachment(f, event.id, space.id, createdBy)
-        )
-      )
+      await Promise.all([
+        ...pendingFiles.map(f => uploadAttachment(f, event.id, space.id, createdBy)),
+        trimmedLocation ? upsertLocation(trimmedLocation) : Promise.resolve(),
+      ])
       router.back()
     } catch {
       setError('Une erreur est survenue')
@@ -180,13 +183,7 @@ export default function NewEventScreen() {
           </View>
 
           <Text style={styles.label}>LIEU</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Adresse, Zoom, téléphone..."
-            placeholderTextColor="#999"
-            value={location}
-            onChangeText={setLocation}
-          />
+          <LocationInput value={location} onChange={setLocation} />
 
           <Text style={styles.label}>ASSIGNÉ À</Text>
           <View style={styles.memberRow}>
