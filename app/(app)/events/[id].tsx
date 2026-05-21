@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
-import { View, Text, Pressable, StyleSheet, ActivityIndicator, ScrollView } from 'react-native'
-import { router, useLocalSearchParams } from 'expo-router'
+import { useCallback, useState } from 'react'
+import { View, Text, Pressable, StyleSheet, ActivityIndicator, ScrollView, Alert } from 'react-native'
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import { getEvent, Event } from '@/lib/events'
+import { getEvent, deleteEvent, Event } from '@/lib/events'
 import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
 import AttachmentSection from '@/components/AttachmentSection'
@@ -25,12 +25,31 @@ export default function EventDetailScreen() {
   const [event, setEvent] = useState<Event | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     if (!id) return
+    setLoading(true)
     getEvent(id)
       .then(setEvent)
       .finally(() => setLoading(false))
-  }, [id])
+  }, [id]))
+
+  const handleDelete = () => {
+    if (!event) return
+    Alert.alert('Supprimer', 'Supprimer cet événement ?', [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Supprimer', style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteEvent(event.id)
+            router.back()
+          } catch {
+            Alert.alert('Erreur', 'Impossible de supprimer l\'événement')
+          }
+        },
+      },
+    ])
+  }
 
   if (loading) {
     return (
@@ -58,7 +77,12 @@ export default function EventDetailScreen() {
           <Ionicons name="arrow-back" size={22} color="#111" />
         </Pressable>
         <View style={{ flex: 1 }} />
-        <Text style={styles.createdBy}>{event.created_by}</Text>
+        <Pressable
+          onPress={() => router.push(`/(app)/events/edit/${event.id}`)}
+          hitSlop={8}
+        >
+          <Text style={styles.editLink}>Modifier</Text>
+        </Pressable>
       </View>
 
       <View style={styles.content}>
@@ -109,6 +133,10 @@ export default function EventDetailScreen() {
             />
           </View>
         )}
+
+        <Pressable onPress={handleDelete} style={styles.deleteBtn}>
+          <Text style={styles.deleteBtnText}>Supprimer l'événement</Text>
+        </Pressable>
       </View>
     </ScrollView>
   )
@@ -129,7 +157,13 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e5e5e5',
   },
   backButton: { padding: 4 },
-  createdBy: { fontSize: 13, color: '#999' },
+  editLink: { fontSize: 16, color: BLUE },
+  deleteBtn: {
+    marginTop: 40,
+    borderTopWidth: 1, borderTopColor: '#f0f0f0',
+    paddingTop: 20, alignItems: 'center',
+  },
+  deleteBtnText: { fontSize: 16, color: '#dc2626' },
   content: { padding: 20 },
   title: { fontSize: 24, fontWeight: '700', color: '#111', marginBottom: 6 },
   date: { fontSize: 15, color: BLUE, marginBottom: 16 },

@@ -56,6 +56,40 @@ export async function getEvent(id: string): Promise<Event | null> {
   return data as Event
 }
 
+export async function updateEvent(id: string, payload: {
+  title: string
+  date: string
+  start_time: string
+  end_time: string
+  location?: string | null
+  description?: string | null
+  assigned_to?: string | null
+}): Promise<Event> {
+  const { data, error } = await supabase
+    .from('events')
+    .update(payload)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data as Event
+}
+
+export async function deleteEvent(id: string): Promise<void> {
+  const { data: attachments } = await supabase
+    .from('event_attachments')
+    .select('storage_path')
+    .eq('event_id', id)
+  if (attachments?.length) {
+    await supabase.storage
+      .from('event-attachments')
+      .remove(attachments.map((a: { storage_path: string }) => a.storage_path))
+    await supabase.from('event_attachments').delete().eq('event_id', id)
+  }
+  const { error } = await supabase.from('events').delete().eq('id', id)
+  if (error) throw error
+}
+
 export async function createEvent(payload: {
   title: string
   date: string
