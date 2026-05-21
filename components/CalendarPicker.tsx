@@ -4,13 +4,13 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 
-const DAYS_FR = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
+const DAYS_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
 const MONTHS_FR = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
 ]
 
-function buildCells(year: number, month: number): (number | null)[] {
+function buildWeeks(year: number, month: number): (number | null)[][] {
   const firstDay = new Date(year, month, 1).getDay()
   const offset = firstDay === 0 ? 6 : firstDay - 1
   const daysInMonth = new Date(year, month + 1, 0).getDate()
@@ -19,7 +19,9 @@ function buildCells(year: number, month: number): (number | null)[] {
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ]
   while (cells.length % 7 !== 0) cells.push(null)
-  return cells
+  const weeks: (number | null)[][] = []
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7))
+  return weeks
 }
 
 function toDateStr(y: number, m: number, d: number) {
@@ -39,12 +41,13 @@ interface Props {
   onClose: () => void
 }
 
+const BLUE = '#2563EB'
+
 export default function CalendarPicker({ visible, value, onConfirm, onClose }: Props) {
   const initial = value ? new Date(value + 'T00:00:00') : new Date()
   const [viewYear, setViewYear] = useState(initial.getFullYear())
   const [viewMonth, setViewMonth] = useState(initial.getMonth())
   const [selected, setSelected] = useState<string | null>(value)
-
   const fadeAnim = useRef(new Animated.Value(1)).current
 
   const today = new Date()
@@ -63,7 +66,7 @@ export default function CalendarPicker({ visible, value, onConfirm, onClose }: P
     })
   }
 
-  const cells = buildCells(viewYear, viewMonth)
+  const weeks = buildWeeks(viewYear, viewMonth)
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -72,65 +75,80 @@ export default function CalendarPicker({ visible, value, onConfirm, onClose }: P
 
           <View style={s.handle} />
 
-          {/* Mois / navigation */}
+          {/* Navigation mois */}
           <View style={s.header}>
-            <Pressable onPress={() => changeMonth(-1)} style={s.navBtn} hitSlop={8}>
-              <Ionicons name="chevron-back" size={22} color="#111" />
+            <Pressable onPress={() => changeMonth(-1)} hitSlop={12} style={s.navBtn}>
+              <Ionicons name="chevron-back" size={20} color="#555" />
             </Pressable>
             <Animated.Text style={[s.monthTitle, { opacity: fadeAnim }]}>
               {MONTHS_FR[viewMonth]} {viewYear}
             </Animated.Text>
-            <Pressable onPress={() => changeMonth(1)} style={s.navBtn} hitSlop={8}>
-              <Ionicons name="chevron-forward" size={22} color="#111" />
+            <Pressable onPress={() => changeMonth(1)} hitSlop={12} style={s.navBtn}>
+              <Ionicons name="chevron-forward" size={20} color="#555" />
             </Pressable>
           </View>
 
           {/* En-têtes jours */}
-          <View style={s.dayRow}>
+          <View style={s.weekRow}>
             {DAYS_FR.map((d, i) => (
               <View key={i} style={s.dayHeaderCell}>
-                <Text style={s.dayHeaderText}>{d}</Text>
+                <Text style={[s.dayHeaderText, i >= 5 && s.weekendHeader]}>
+                  {d}
+                </Text>
               </View>
             ))}
           </View>
 
-          {/* Grille */}
-          <Animated.View style={[s.grid, { opacity: fadeAnim }]}>
-            {cells.map((day, i) => {
-              if (!day) return <View key={`e-${i}`} style={s.cell} />
-              const dateStr = toDateStr(viewYear, viewMonth, day)
-              const isSel = selected === dateStr
-              const isToday = dateStr === todayStr
-              return (
-                <Pressable key={dateStr} style={s.cell} onPress={() => setSelected(dateStr)}>
-                  <View style={[
-                    s.circle,
-                    isSel && s.circleSelected,
-                    isToday && !isSel && s.circleToday,
-                  ]}>
-                    <Text style={[
-                      s.dayNum,
-                      isSel && s.dayNumSelected,
-                      isToday && !isSel && s.dayNumToday,
-                    ]}>
-                      {day}
-                    </Text>
-                  </View>
-                </Pressable>
-              )
-            })}
+          <View style={s.separator} />
+
+          {/* Grille par semaines */}
+          <Animated.View style={{ opacity: fadeAnim }}>
+            {weeks.map((week, wi) => (
+              <View key={wi} style={s.weekRow}>
+                {week.map((day, di) => {
+                  if (!day) return <View key={di} style={s.cell} />
+                  const dateStr = toDateStr(viewYear, viewMonth, day)
+                  const isSel = selected === dateStr
+                  const isToday = dateStr === todayStr
+                  const isWeekend = di >= 5
+                  return (
+                    <Pressable
+                      key={dateStr}
+                      style={s.cell}
+                      onPress={() => setSelected(dateStr)}
+                    >
+                      <View style={[
+                        s.circle,
+                        isToday && s.circleToday,
+                        isSel && s.circleSel,
+                      ]}>
+                        <Text style={[
+                          s.dayNum,
+                          isWeekend && !isSel && !isToday && s.weekendNum,
+                          (isSel || isToday) && s.dayNumLight,
+                        ]}>
+                          {day}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  )
+                })}
+              </View>
+            ))}
           </Animated.View>
 
           {/* Date sélectionnée */}
-          {selected ? (
-            <Text style={s.selectedLabel}>{formatSelected(selected)}</Text>
-          ) : (
-            <Text style={s.selectedPlaceholder}>Aucune date sélectionnée</Text>
-          )}
+          <View style={s.selectedRow}>
+            {selected ? (
+              <Text style={s.selectedText}>{formatSelected(selected)}</Text>
+            ) : (
+              <Text style={s.selectedPlaceholder}>Aucune date sélectionnée</Text>
+            )}
+          </View>
 
-          {/* Confirmer */}
+          {/* Bouton confirmer */}
           <Pressable
-            style={[s.confirm, !selected && s.confirmDisabled]}
+            style={[s.confirm, !selected && s.confirmOff]}
             disabled={!selected}
             onPress={() => { if (selected) { onConfirm(selected); onClose() } }}
           >
@@ -143,65 +161,64 @@ export default function CalendarPicker({ visible, value, onConfirm, onClose }: P
   )
 }
 
-const BLUE = '#2563EB'
-
 const s = StyleSheet.create({
   backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
   sheet: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    paddingHorizontal: 16, paddingBottom: 40,
   },
   handle: {
-    width: 36, height: 4, borderRadius: 2,
-    backgroundColor: '#ddd',
-    alignSelf: 'center',
-    marginTop: 12, marginBottom: 4,
+    width: 40, height: 4, borderRadius: 2, backgroundColor: '#e0e0e0',
+    alignSelf: 'center', marginTop: 12, marginBottom: 8,
   },
+
+  // Header
   header: {
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
+    paddingVertical: 10, paddingHorizontal: 4,
   },
   navBtn: { padding: 8 },
-  monthTitle: { fontSize: 18, fontWeight: '700', color: '#111' },
-  dayRow: { flexDirection: 'row', marginBottom: 4 },
-  dayHeaderCell: { flex: 1, alignItems: 'center', paddingVertical: 6 },
-  dayHeaderText: { fontSize: 12, fontWeight: '600', color: '#bbb' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 },
+  monthTitle: { fontSize: 17, fontWeight: '700', color: '#111', letterSpacing: 0.2 },
+
+  // Jours
+  weekRow: { flexDirection: 'row' },
+  dayHeaderCell: { flex: 1, alignItems: 'center', paddingVertical: 8 },
+  dayHeaderText: { fontSize: 12, fontWeight: '600', color: '#aaa', letterSpacing: 0.3 },
+  weekendHeader: { color: '#c0bfbf' },
+  separator: { height: 1, backgroundColor: '#f0f0f0', marginBottom: 4 },
+
+  // Cellules
   cell: {
-    width: `${100 / 7}%`,
-    aspectRatio: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  circle: {
-    width: 40, height: 40, borderRadius: 20,
+    flex: 1, height: 48,
     justifyContent: 'center', alignItems: 'center',
   },
-  circleSelected: { backgroundColor: BLUE },
-  circleToday: { borderWidth: 1.5, borderColor: BLUE },
-  dayNum: { fontSize: 15, color: '#111' },
-  dayNumSelected: { color: '#fff', fontWeight: '700' },
-  dayNumToday: { color: BLUE, fontWeight: '600' },
-  selectedLabel: {
-    textAlign: 'center', fontSize: 13, color: '#666',
-    marginBottom: 14,
+  circle: {
+    width: 38, height: 38, borderRadius: 19,
+    justifyContent: 'center', alignItems: 'center',
+    overflow: 'hidden',
   },
-  selectedPlaceholder: {
-    textAlign: 'center', fontSize: 13, color: '#ccc',
-    marginBottom: 14,
-  },
+  circleToday: { backgroundColor: BLUE },
+  circleSel: { backgroundColor: '#111' },
+  dayNum: { fontSize: 15, color: '#222' },
+  weekendNum: { color: '#aaa' },
+  dayNumLight: { color: '#fff', fontWeight: '600' },
+
+  // Sélection
+  selectedRow: { alignItems: 'center', paddingVertical: 12 },
+  selectedText: { fontSize: 13, color: '#555', fontWeight: '500' },
+  selectedPlaceholder: { fontSize: 13, color: '#ccc' },
+
+  // Bouton
   confirm: {
-    backgroundColor: BLUE, borderRadius: 12,
-    padding: 15, alignItems: 'center',
+    backgroundColor: BLUE, borderRadius: 14,
+    paddingVertical: 15, alignItems: 'center',
+    marginTop: 4,
   },
-  confirmDisabled: { backgroundColor: '#d1d5db' },
-  confirmText: { color: '#fff', fontWeight: '600', fontSize: 15 },
+  confirmOff: { backgroundColor: '#e5e7eb' },
+  confirmText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 })

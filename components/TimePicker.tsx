@@ -4,9 +4,9 @@ import {
 } from 'react-native'
 
 const ITEM_H = 52
-const VISIBLE = 5       // nombre d'items visibles (impair pour centrage)
+const VISIBLE = 5
 const COL_H = ITEM_H * VISIBLE
-const PAD = ITEM_H * Math.floor(VISIBLE / 2)  // padding pour centrer le 1er et dernier item
+const PAD = ITEM_H * Math.floor(VISIBLE / 2)
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 const MINUTES = Array.from({ length: 60 }, (_, i) => i)
@@ -25,19 +25,26 @@ function Column({
 }) {
   const ref = useRef<ScrollView>(null)
   const [offset, setOffset] = useState(0)
+  // Vrai pendant tout le geste + momentum — empêche l'effet de re-scroller
+  const isScrollingRef = useRef(false)
+  const hasMomentumRef = useRef(false)
+  const dragTimerRef = useRef<ReturnType<typeof setTimeout>>()
 
-  // Positionne au bon endroit à l'ouverture
+  // S'exécute quand visible devient true (ouverture) ET quand selected change
+  // (le parent met à jour ses valeurs via son propre useEffect, qui tourne après).
   useEffect(() => {
-    if (!visible) return
+    if (!visible || isScrollingRef.current) return
     const idx = values.indexOf(selected)
+    const y = (idx >= 0 ? idx : 0) * ITEM_H
     const timer = setTimeout(() => {
-      ref.current?.scrollTo({ y: idx * ITEM_H, animated: false })
-      setOffset(idx * ITEM_H)
-    }, 60)
+      ref.current?.scrollTo({ y, animated: false })
+      setOffset(y)
+    }, 50)
     return () => clearTimeout(timer)
-  }, [visible])
+  }, [visible, selected])
 
-  const handleEnd = (y: number) => {
+  const commitValue = (y: number) => {
+    isScrollingRef.current = false
     const idx = Math.round(y / ITEM_H)
     const clamped = Math.max(0, Math.min(idx, values.length - 1))
     onChange(values[clamped])
@@ -49,17 +56,35 @@ function Column({
         ref={ref}
         showsVerticalScrollIndicator={false}
         snapToInterval={ITEM_H}
-        decelerationRate="fast"
+        decelerationRate={0.994}
         scrollEventThrottle={16}
         onScroll={e => setOffset(e.nativeEvent.contentOffset.y)}
-        onMomentumScrollEnd={e => handleEnd(e.nativeEvent.contentOffset.y)}
-        onScrollEndDrag={e => handleEnd(e.nativeEvent.contentOffset.y)}
+        onScrollBeginDrag={() => {
+          isScrollingRef.current = true
+          hasMomentumRef.current = false
+          clearTimeout(dragTimerRef.current)
+        }}
+        onScrollEndDrag={e => {
+          const y = e.nativeEvent.contentOffset.y
+          // Attendre de voir si du momentum suit. Si oui,
+          // onMomentumScrollBegin annulera ce timer.
+          dragTimerRef.current = setTimeout(() => {
+            if (!hasMomentumRef.current) commitValue(y)
+          }, 60)
+        }}
+        onMomentumScrollBegin={() => {
+          hasMomentumRef.current = true
+          clearTimeout(dragTimerRef.current)
+        }}
+        onMomentumScrollEnd={e => {
+          hasMomentumRef.current = false
+          commitValue(e.nativeEvent.contentOffset.y)
+        }}
         contentContainerStyle={{ paddingVertical: PAD }}
       >
         {values.map((v, idx) => {
           const itemCenter = idx * ITEM_H + ITEM_H / 2
           const dist = Math.abs(offset + ITEM_H / 2 - itemCenter)
-          // Opacité et taille selon la distance au centre
           const ratio = Math.max(0, 1 - dist / (ITEM_H * 1.8))
           const opacity = 0.2 + 0.8 * ratio
           const fontSize = 18 + 12 * ratio
@@ -69,8 +94,11 @@ function Column({
               key={v}
               style={col.item}
               onPress={() => {
+                // Verrouiller pendant l'animation programmatique
+                isScrollingRef.current = true
                 ref.current?.scrollTo({ y: idx * ITEM_H, animated: true })
                 onChange(v)
+                setTimeout(() => { isScrollingRef.current = false }, 350)
               }}
             >
               <Text style={[col.text, { opacity, fontSize, fontWeight: ratio > 0.8 ? '700' : '400' }]}>
@@ -81,35 +109,20 @@ function Column({
         })}
       </ScrollView>
 
-      {/* Bande de sélection — par-dessus le scroll, fond transparent */}
       <View style={col.band} pointerEvents="none" />
     </View>
   )
 }
 
 const col = StyleSheet.create({
-  wrapper: {
-    height: COL_H,
-    width: 80,
-    overflow: 'hidden',
-  },
+  wrapper: { height: COL_H, width: 80, overflow: 'hidden' },
   band: {
-    position: 'absolute',
-    top: PAD,
-    height: ITEM_H,
-    left: 0, right: 0,
+    position: 'absolute', top: PAD, height: ITEM_H, left: 0, right: 0,
     backgroundColor: 'transparent',
-    borderTopWidth: 1, borderBottomWidth: 1,
-    borderColor: '#2563EB',
+    borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#2563EB',
   },
-  item: {
-    height: ITEM_H,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    color: '#111',
-  },
+  item: { height: ITEM_H, justifyContent: 'center', alignItems: 'center' },
+  text: { color: '#111' },
 })
 
 // ── Composant principal ───────────────────────────────────────────────────────
@@ -128,6 +141,8 @@ export default function TimePicker({
   const [hours, setHours] = useState(0)
   const [minutes, setMinutes] = useState(0)
 
+  // useEffect (et non useLayoutEffect) : les colonnes dépendent de [visible, selected],
+  // donc elles se re-positionnent automatiquement quand ce state est mis à jour.
   useEffect(() => {
     if (!visible) return
     if (value) {
@@ -135,9 +150,8 @@ export default function TimePicker({
       setHours(h ?? 0)
       setMinutes(m ?? 0)
     } else {
-      const now = new Date()
-      setHours(now.getHours())
-      setMinutes(now.getMinutes())
+      setHours(6)
+      setMinutes(0)
     }
   }, [visible])
 
@@ -148,19 +162,9 @@ export default function TimePicker({
           <Text style={s.title}>{title}</Text>
 
           <View style={s.columns}>
-            <Column
-              values={HOURS}
-              selected={hours}
-              onChange={setHours}
-              visible={visible}
-            />
+            <Column values={HOURS} selected={hours} onChange={setHours} visible={visible} />
             <Text style={s.colon}>:</Text>
-            <Column
-              values={MINUTES}
-              selected={minutes}
-              onChange={setMinutes}
-              visible={visible}
-            />
+            <Column values={MINUTES} selected={minutes} onChange={setMinutes} visible={visible} />
           </View>
 
           <Pressable
@@ -190,15 +194,9 @@ const s = StyleSheet.create({
     paddingVertical: 28, paddingHorizontal: 32,
     alignItems: 'center', width: 300,
   },
-  title: {
-    fontSize: 16, fontWeight: '700', color: '#111', marginBottom: 20,
-  },
-  columns: {
-    flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 28,
-  },
-  colon: {
-    fontSize: 28, fontWeight: '700', color: '#111', marginTop: -8,
-  },
+  title: { fontSize: 16, fontWeight: '700', color: '#111', marginBottom: 20 },
+  columns: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 28 },
+  colon: { fontSize: 28, fontWeight: '700', color: '#111', marginTop: -8 },
   confirm: {
     backgroundColor: BLUE, borderRadius: 10,
     paddingVertical: 13, paddingHorizontal: 48,
