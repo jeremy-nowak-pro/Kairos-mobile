@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   View, Text, TextInput, Pressable, StyleSheet,
-  ScrollView, Alert, ActivityIndicator,
+  ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
@@ -12,7 +12,6 @@ import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
 import { MemberSchedule, getSpaceSchedules, uploadSchedule, deleteSchedule, getScheduleSignedUrl } from '@/lib/schedules'
 import { LocalFile } from '@/lib/attachments'
-import { useEffect } from 'react'
 
 async function pickScheduleFile(): Promise<LocalFile | null> {
   return new Promise(resolve => {
@@ -22,7 +21,7 @@ async function pickScheduleFile(): Promise<LocalFile | null> {
         onPress: async () => {
           const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
           if (status !== 'granted') {
-            Alert.alert('Permission refusée', 'Autorise l\'accès à la galerie dans les paramètres.')
+            Alert.alert('Permission refusée', "Autorise l'accès à la galerie dans les paramètres.")
             resolve(null); return
           }
           const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.85 })
@@ -91,16 +90,16 @@ export default function ProfileEditScreen() {
     if (!file) return
     setScheduleUploading(true)
     try {
-      const s = await uploadSchedule(space.id, user.id, file)
-      setSchedule(s)
-      if (s.mime_type?.startsWith('image/')) {
-        const url = await getScheduleSignedUrl(s.storage_path).catch(() => null)
+      const updated = await uploadSchedule(space.id, user.id, file)
+      setSchedule(updated)
+      if (updated.mime_type?.startsWith('image/')) {
+        const url = await getScheduleSignedUrl(updated.storage_path).catch(() => null)
         setPreviewUri(url)
       } else {
         setPreviewUri(null)
       }
     } catch {
-      Alert.alert('Erreur', 'L\'upload a échoué')
+      Alert.alert('Erreur', "L'upload a échoué")
     }
     setScheduleUploading(false)
   }
@@ -125,133 +124,175 @@ export default function ProfileEditScreen() {
   }
 
   return (
-    <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <View style={s.header}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={s.cancel}>Annuler</Text>
-        </Pressable>
-        <Text style={s.title}>Modifier le profil</Text>
-        <View style={{ width: 64 }} />
-      </View>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 48 }}>
 
-      <View style={s.form}>
-        <Text style={s.label}>PSEUDO</Text>
-        <TextInput
-          style={s.input}
-          value={name}
-          onChangeText={setName}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-
-        <Text style={s.label}>EMAIL</Text>
-        <Text style={s.emailValue}>{user?.email}</Text>
-
-        <Text style={s.label}>MON EMPLOI DU TEMPS</Text>
-        {schedule ? (
-          <View style={s.scheduleCard}>
-            {previewUri ? (
-              <Image source={{ uri: previewUri }} style={s.scheduleImage} contentFit="cover" />
-            ) : (
-              <View style={s.scheduleDocPlaceholder}>
-                <Ionicons name="document-text-outline" size={32} color="#999" />
-              </View>
-            )}
-            <View style={s.scheduleFooter}>
-              <Text style={s.scheduleDate}>
-                Mis à jour le {new Date(schedule.updated_at).toLocaleDateString('fr-FR', {
-                  day: 'numeric', month: 'long', year: 'numeric',
-                })}
-              </Text>
-              <View style={s.scheduleActions}>
-                <Pressable onPress={handleReplaceSchedule} disabled={scheduleUploading} hitSlop={8}>
-                  {scheduleUploading
-                    ? <ActivityIndicator size="small" color={BLUE} />
-                    : <Text style={s.replaceLink}>Remplacer</Text>
-                  }
-                </Pressable>
-                <Pressable onPress={handleDeleteSchedule} hitSlop={8}>
-                  <Ionicons name="close-circle" size={20} color="#d1d5db" />
-                </Pressable>
-              </View>
-            </View>
-          </View>
-        ) : (
-          <Pressable style={s.scheduleAddBtn} onPress={handleReplaceSchedule} disabled={scheduleUploading}>
-            {scheduleUploading
-              ? <ActivityIndicator size="small" color={BLUE} />
-              : <>
-                  <Ionicons name="add" size={16} color={BLUE} />
-                  <Text style={s.scheduleAddText}>Ajouter mon emploi du temps</Text>
-                </>
+        <View style={s.header}>
+          <Pressable onPress={() => router.back()} hitSlop={8}>
+            <Text style={s.cancel}>Annuler</Text>
+          </Pressable>
+          <Text style={s.title}>Modifier le profil</Text>
+          <Pressable onPress={handleSave} disabled={saving} hitSlop={8}>
+            {saving
+              ? <ActivityIndicator size="small" color="#2563EB" />
+              : <Text style={s.done}>Enregistrer</Text>
             }
           </Pressable>
-        )}
+        </View>
 
-        {error && <Text style={s.error}>{error}</Text>}
+        <View style={s.section}>
+          <Text style={s.label}>PSEUDO</Text>
+          <View style={s.inputWrapper}>
+            <TextInput
+              style={s.input}
+              value={name}
+              onChangeText={text => { setName(text); setError(null) }}
+              autoCapitalize="words"
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={handleSave}
+            />
+          </View>
+          {error && <Text style={s.error}>{error}</Text>}
+        </View>
 
-        <Pressable style={s.saveBtn} onPress={handleSave} disabled={saving}>
-          {saving
-            ? <ActivityIndicator color="#fff" />
-            : <Text style={s.saveBtnText}>Enregistrer</Text>
-          }
-        </Pressable>
-      </View>
-    </ScrollView>
+        <View style={s.section}>
+          <Text style={s.label}>EMAIL</Text>
+          <Text style={s.staticValue}>{user?.email}</Text>
+        </View>
+
+        <View style={s.section}>
+          <Text style={s.label}>EMPLOI DU TEMPS</Text>
+          {schedule ? (
+            <View style={s.scheduleCard}>
+              {previewUri ? (
+                <Image source={{ uri: previewUri }} style={s.scheduleImage} contentFit="cover" />
+              ) : (
+                <View style={s.scheduleDoc}>
+                  <Ionicons name="document-text-outline" size={28} color="#999" />
+                  <Text style={s.scheduleDocName} numberOfLines={1}>{schedule.filename}</Text>
+                </View>
+              )}
+              <View style={s.scheduleFooter}>
+                <Text style={s.scheduleDate}>
+                  {new Date(schedule.updated_at).toLocaleDateString('fr-FR', {
+                    day: 'numeric', month: 'long', year: 'numeric',
+                  })}
+                </Text>
+                <View style={s.scheduleActions}>
+                  <Pressable onPress={handleReplaceSchedule} disabled={scheduleUploading} hitSlop={8}>
+                    {scheduleUploading
+                      ? <ActivityIndicator size="small" color="#2563EB" />
+                      : <Text style={s.replaceLink}>Remplacer</Text>
+                    }
+                  </Pressable>
+                  <Pressable onPress={handleDeleteSchedule} hitSlop={8}>
+                    <Ionicons name="trash-outline" size={17} color="#d1d5db" />
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <Pressable style={s.scheduleAddBtn} onPress={handleReplaceSchedule} disabled={scheduleUploading}>
+              {scheduleUploading
+                ? <ActivityIndicator size="small" color="#2563EB" />
+                : <>
+                    <Ionicons name="add-circle-outline" size={18} color="#2563EB" />
+                    <Text style={s.scheduleAddText}>Ajouter mon emploi du temps</Text>
+                  </>
+              }
+            </Pressable>
+          )}
+        </View>
+
+      </ScrollView>
+    </KeyboardAvoidingView>
   )
 }
 
-const BLUE = '#2563EB'
-
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingTop: 56, paddingBottom: 16,
-    borderBottomWidth: 1, borderBottomColor: '#e5e5e5',
-  },
-  cancel: { color: BLUE, fontSize: 16, width: 64 },
-  title: { fontSize: 17, fontWeight: '600', color: '#111' },
+  container: { flex: 1, backgroundColor: '#f2f2f7' },
 
-  form: { padding: 20 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 56,
+    paddingBottom: 16,
+    backgroundColor: '#f2f2f7',
+  },
+  cancel: { color: '#555', fontSize: 16, width: 80 },
+  title: { fontSize: 17, fontWeight: '600', color: '#111' },
+  done: { color: '#2563EB', fontSize: 16, fontWeight: '600', width: 80, textAlign: 'right' },
+
+  section: {
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 14,
+    padding: 16,
+  },
   label: {
-    fontSize: 11, fontWeight: '600', color: '#999',
-    letterSpacing: 0.5, marginBottom: 6, marginTop: 20,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#999',
+    letterSpacing: 0.5,
+    marginBottom: 10,
+  },
+  inputWrapper: {
+    borderWidth: 1,
+    borderColor: '#e5e5ea',
+    borderRadius: 10,
+    backgroundColor: '#fafafa',
   },
   input: {
-    borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 8,
-    padding: 12, fontSize: 16, color: '#111', backgroundColor: '#fafafa',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#111',
   },
-  emailValue: { fontSize: 16, color: '#bbb' },
+  staticValue: { fontSize: 16, color: '#bbb' },
+  error: { color: '#dc2626', fontSize: 13, marginTop: 8 },
 
   scheduleCard: {
-    borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 10, overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e5e5ea',
+    borderRadius: 10,
+    overflow: 'hidden',
   },
   scheduleImage: { width: '100%', height: 180 },
-  scheduleDocPlaceholder: {
-    height: 100, backgroundColor: '#f9f9f9',
-    justifyContent: 'center', alignItems: 'center',
+  scheduleDoc: {
+    height: 90,
+    backgroundColor: '#f9f9f9',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
+  scheduleDocName: { fontSize: 14, color: '#666', maxWidth: '60%' },
   scheduleFooter: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 12, paddingVertical: 10,
-    borderTopWidth: 1, borderTopColor: '#f0f0f0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#f0f0f0',
   },
   scheduleDate: { fontSize: 12, color: '#999', flex: 1 },
-  scheduleActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  replaceLink: { fontSize: 14, color: BLUE },
+  scheduleActions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  replaceLink: { fontSize: 14, color: '#2563EB' },
 
   scheduleAddBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    borderWidth: 1, borderColor: '#e5e5e5', borderStyle: 'dashed',
-    borderRadius: 8, padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#e5e5ea',
+    borderStyle: 'dashed',
+    borderRadius: 10,
+    padding: 14,
   },
-  scheduleAddText: { fontSize: 14, color: BLUE },
-
-  error: { color: '#dc2626', fontSize: 13, marginTop: 12 },
-  saveBtn: {
-    backgroundColor: BLUE, borderRadius: 10,
-    padding: 16, alignItems: 'center', marginTop: 32,
-  },
-  saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  scheduleAddText: { fontSize: 14, color: '#2563EB' },
 })

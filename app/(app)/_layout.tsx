@@ -1,10 +1,19 @@
+import { useEffect } from 'react'
 import { Redirect, Tabs } from 'expo-router'
 import { useAuth } from '@/context/auth'
-import { ActivityIndicator, View } from 'react-native'
+import { useSpace } from '@/context/space'
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { registerPushToken } from '@/lib/notifications'
+import ChatPanel from '@/components/ChatPanel'
 
 export default function AppLayout() {
-  const { session, loading } = useAuth()
+  const { session, loading, user } = useAuth()
+  const { space } = useSpace()
+
+  useEffect(() => {
+    if (user && space) registerPushToken(space.id, user.id).catch(() => {})
+  }, [user?.id, space?.id])
 
   if (loading) {
     return (
@@ -17,13 +26,15 @@ export default function AppLayout() {
   if (!session) return <Redirect href="/(auth)/login" />
 
   return (
+    <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#fff',
+          backgroundColor: Platform.OS === 'android' ? '#f2f2f7' : '#fff',
           borderTopColor: '#e5e5e5',
-          borderTopWidth: 1,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          elevation: 0,
         },
         tabBarActiveTintColor: '#2563EB',
         tabBarInactiveTintColor: '#999',
@@ -60,5 +71,7 @@ export default function AppLayout() {
       />
       <Tabs.Screen name="dashboard" options={{ href: null }} />
     </Tabs>
+    <ChatPanel />
+    </View>
   )
 }

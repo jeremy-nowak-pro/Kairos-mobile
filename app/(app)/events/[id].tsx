@@ -1,13 +1,15 @@
-import { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   View, Text, Pressable, StyleSheet, ActivityIndicator,
-  ScrollView, Alert, Modal,
+  ScrollView, Alert, Modal, FlatList, Animated, Dimensions, Easing,
 } from 'react-native'
+import { PanGestureHandler, State } from 'react-native-gesture-handler'
 import { Image } from 'expo-image'
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { getEvent, deleteEvent, Event } from '@/lib/events'
-import { getAttachments, getSignedUrl, Attachment } from '@/lib/attachments'
+import { getAttachments, Attachment } from '@/lib/attachments'
+import { getImageUrl } from '@/lib/imageCache'
 import { userColor } from '@/lib/userColor'
 
 function formatDate(dateStr: string): string {
@@ -20,6 +22,28 @@ function formatTime(t: string): string {
   return t.slice(0, 5)
 }
 
+function SectionCard({ children }: { children: React.ReactNode }) {
+  return <View style={styles.sectionCard}>{children}</View>
+}
+
+function InfoRow({ icon, children, last }: {
+  icon: string
+  children: React.ReactNode
+  last?: boolean
+}) {
+  return (
+    <>
+      <View style={styles.infoRow}>
+        <View style={styles.infoIcon}>
+          <Ionicons name={icon as any} size={17} color="#555" />
+        </View>
+        <View style={{ flex: 1 }}>{children}</View>
+      </View>
+      {!last && <View style={styles.rowDivider} />}
+    </>
+  )
+}
+
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const [event, setEvent] = useState<Event | null>(null)
@@ -27,6 +51,45 @@ export default function EventDetailScreen() {
   const [imageUrls, setImageUrls] = useState<string[]>([])
   const [docs, setDocs] = useState<Attachment[]>([])
   const [viewerUri, setViewerUri] = useState<string | null>(null)
+
+  const screenWidth = Dimensions.get('window').width
+  const translateX = useRef(new Animated.Value(0)).current
+  const contentAnim = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    if (!event) return
+    contentAnim.setValue(0)
+    Animated.timing(contentAnim, {
+      toValue: 1,
+      duration: 380,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start()
+  }, [event?.id])
+
+  const onGestureEvent = Animated.event(
+    [{ nativeEvent: { translationX: translateX } }],
+    { useNativeDriver: true }
+  )
+
+  const onHandlerStateChange = ({ nativeEvent }: any) => {
+    if (nativeEvent.state === State.END) {
+      if (nativeEvent.translationX > screenWidth * 0.35 || nativeEvent.velocityX > 500) {
+        Animated.timing(translateX, {
+          toValue: screenWidth,
+          duration: 180,
+          useNativeDriver: true,
+        }).start(() => router.back())
+      } else {
+        Animated.spring(translateX, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 20,
+        }).start()
+      }
+    }
+  }
 
   useFocusEffect(useCallback(() => {
     if (!id) return
@@ -41,7 +104,7 @@ export default function EventDetailScreen() {
         const nonImgs = atts.filter(a => !a.mime_type?.startsWith('image/'))
         setDocs(nonImgs)
         const urls = await Promise.all(
-          imgs.map(a => getSignedUrl(a.storage_path).catch(() => null))
+          imgs.map(a => getImageUrl(a.storage_path).catch(() => null))
         )
         setImageUrls(urls.filter((u): u is string => u !== null))
       })
@@ -68,7 +131,7 @@ export default function EventDetailScreen() {
 
   const openDoc = async (att: Attachment) => {
     try {
-      const url = await getSignedUrl(att.storage_path)
+      const url = await getImageUrl(att.storage_path)
       const { default: WebBrowser } = await import('expo-web-browser')
       await WebBrowser.openBrowserAsync(url)
     } catch {
@@ -92,115 +155,154 @@ export default function EventDetailScreen() {
   }
 
   const color = userColor(event.assigned_to)
-  const hasImages = imageUrls.length > 0
-  const hasDocs = docs.length > 0
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={22} color="#111" />
-        </Pressable>
-        <View style={{ flex: 1 }} />
-        <Pressable onPress={() => router.push(`/(app)/events/edit/${event.id}`)} hitSlop={8}>
-          <Text style={styles.editLink}>Modifier</Text>
-        </Pressable>
-      </View>
+    <PanGestureHandler
+      onGestureEvent={onGestureEvent}
+      onHandlerStateChange={onHandlerStateChange}
+      activeOffsetX={[-9999, 10]}
+      failOffsetY={[-20, 20]}
+    >
+    <Animated.View style={[styles.shadow, { transform: [{ translateX }] }]}>
+      <View style={styles.container}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
 
-      <View style={[styles.colorBar, { backgroundColor: color.text }]} />
-
-      <View style={styles.content}>
-        <Text style={styles.title}>{event.title}</Text>
-
-        {/* Date/heure — miniature à droite si une seule image */}
-        <View style={imageUrls.length === 1 ? styles.mainRow : undefined}>
-          <View style={imageUrls.length === 1 ? styles.dateTimeCol : undefined}>
-            <Text style={styles.date}>{formatDate(event.date)}</Text>
-            <View style={styles.timeRow}>
-              <Ionicons name="time-outline" size={15} color="#888" />
-              <Text style={styles.timeText}>
-                {formatTime(event.start_time)} – {formatTime(event.end_time)}
-              </Text>
-            </View>
-          </View>
-
-          {imageUrls.length === 1 && (
-            <Pressable onPress={() => setViewerUri(imageUrls[0])}>
-              <Image source={{ uri: imageUrls[0] }} style={styles.thumb} contentFit="cover" />
-            </Pressable>
-          )}
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
+            <Ionicons name="chevron-back" size={24} color={BLUE} />
+          </Pressable>
+          <View style={{ flex: 1 }} />
+          <Pressable onPress={() => router.push(`/(app)/events/edit/${event.id}`)} hitSlop={8}>
+            <Text style={styles.editLink}>Modifier</Text>
+          </Pressable>
         </View>
 
-        {/* Plusieurs images : grille centrée sous la date/heure */}
-        {imageUrls.length > 1 && (
-          <View style={styles.thumbRow}>
-            {imageUrls.slice(0, 4).map((uri, i) => (
-              <Pressable key={i} onPress={() => setViewerUri(uri)}>
-                <Image source={{ uri }} style={styles.thumb} contentFit="cover" />
-              </Pressable>
-            ))}
-          </View>
-        )}
+        <Animated.View style={{
+          opacity: contentAnim,
+          transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
+        }}>
 
-        <View style={styles.divider} />
+        <View style={[styles.titleCard, { borderLeftColor: color.text }]}>
+          <Text style={styles.title}>{event.title}</Text>
+        </View>
 
-        {event.location ? (
-          <View style={styles.row}>
-            <Ionicons name="location-outline" size={15} color="#888" />
-            <Text style={styles.rowText}>{event.location}</Text>
-          </View>
-        ) : null}
+        <View style={styles.content}>
 
-        {event.assigned_to ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>ASSIGNÉ À</Text>
-            <View style={styles.tagRow}>
-              {event.assigned_to.split(',').map(n => n.trim()).filter(Boolean).map(name => {
-                const c = userColor(name)
-                return (
-                  <View key={name} style={[styles.tag, { backgroundColor: c.bg }]}>
-                    <Text style={[styles.tagText, { color: c.text }]}>{name}</Text>
+          {/* Date + heure */}
+          <SectionCard>
+            <InfoRow icon="calendar-outline">
+              <Text style={styles.infoText}>{formatDate(event.date)}</Text>
+            </InfoRow>
+            <InfoRow icon="time-outline" last>
+              <Text style={styles.infoText}>
+                {formatTime(event.start_time)} – {formatTime(event.end_time)}
+              </Text>
+            </InfoRow>
+          </SectionCard>
+
+          {/* Lieu */}
+          {event.location ? (
+            <SectionCard>
+              <InfoRow icon="location-outline" last>
+                <Text style={styles.infoText}>{event.location}</Text>
+              </InfoRow>
+            </SectionCard>
+          ) : null}
+
+          {/* Assigné à */}
+          {event.assigned_to ? (
+            <>
+              <Text style={styles.groupLabel}>ASSIGNÉ À</Text>
+              <SectionCard>
+                <InfoRow icon="person-outline" last>
+                  <View style={styles.tagRow}>
+                    {event.assigned_to.split(',').map(n => n.trim()).filter(Boolean).map(name => {
+                      const c = userColor(name)
+                      return (
+                        <View key={name} style={[styles.tag, { backgroundColor: c.bg }]}>
+                          <Text style={[styles.tagText, { color: c.text }]}>{name}</Text>
+                        </View>
+                      )
+                    })}
                   </View>
-                )
-              })}
-            </View>
-          </View>
-        ) : null}
+                </InfoRow>
+              </SectionCard>
+            </>
+          ) : null}
 
-        {event.description ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>DESCRIPTION</Text>
-            <Text style={styles.description}>{event.description}</Text>
-          </View>
-        ) : null}
-
-        {hasDocs && (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>PIÈCES JOINTES</Text>
-            {docs.map(att => (
-              <Pressable
-                key={att.id}
-                style={({ pressed }) => [styles.docRow, pressed && { opacity: 0.6 }]}
-                onPress={() => openDoc(att)}
-              >
-                <View style={styles.docIcon}>
-                  <Ionicons
-                    name={att.mime_type === 'application/pdf' ? 'document-text-outline' : 'document-outline'}
-                    size={18}
-                    color="#666"
-                  />
+          {/* Description */}
+          {event.description ? (
+            <>
+              <Text style={styles.groupLabel}>DESCRIPTION</Text>
+              <SectionCard>
+                <View style={styles.descRow}>
+                  <Text style={styles.descText}>{event.description}</Text>
                 </View>
-                <Text style={styles.docName} numberOfLines={1}>{att.filename}</Text>
-                <Ionicons name="chevron-forward" size={14} color="#ccc" />
-              </Pressable>
-            ))}
-          </View>
-        )}
+              </SectionCard>
+            </>
+          ) : null}
 
-        <Pressable onPress={handleDelete} style={styles.deleteBtn}>
-          <Text style={styles.deleteBtnText}>Supprimer l'événement</Text>
-        </Pressable>
-      </View>
+          {/* Images */}
+          {imageUrls.length > 0 && (
+            imageUrls.length === 1 ? (
+              <Pressable onPress={() => setViewerUri(imageUrls[0])} style={styles.imageSingleWrap}>
+                <Image source={{ uri: imageUrls[0] }} style={styles.imageSingle} contentFit="cover" />
+              </Pressable>
+            ) : (
+              <FlatList
+                horizontal
+                data={imageUrls.slice(0, 4)}
+                keyExtractor={(_, i) => String(i)}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.imageStripContent}
+                style={styles.imageStrip}
+                renderItem={({ item: uri }) => (
+                  <Pressable onPress={() => setViewerUri(uri)}>
+                    <Image source={{ uri }} style={styles.imageStripThumb} contentFit="cover" />
+                  </Pressable>
+                )}
+              />
+            )
+          )}
+
+          {/* Pièces jointes */}
+          {docs.length > 0 && (
+            <>
+              <Text style={styles.groupLabel}>PIÈCES JOINTES</Text>
+              <SectionCard>
+                {docs.map((att, i) => (
+                  <View key={att.id}>
+                    <Pressable
+                      style={({ pressed }) => [styles.docRow, pressed && { opacity: 0.6 }]}
+                      onPress={() => openDoc(att)}
+                    >
+                      <View style={styles.docIcon}>
+                        <Ionicons
+                          name={att.mime_type === 'application/pdf' ? 'document-text-outline' : 'document-outline'}
+                          size={18} color="#555"
+                        />
+                      </View>
+                      <Text style={styles.docName} numberOfLines={1}>{att.filename}</Text>
+                      <Ionicons name="chevron-forward" size={16} color="#c0c0c0" />
+                    </Pressable>
+                    {i < docs.length - 1 && <View style={styles.rowDivider} />}
+                  </View>
+                ))}
+              </SectionCard>
+            </>
+          )}
+
+          {/* Supprimer */}
+          <View style={styles.deleteSection}>
+            <Pressable onPress={handleDelete} style={styles.deleteBtn}>
+              <Ionicons name="trash-outline" size={16} color="#dc2626" />
+              <Text style={styles.deleteBtnText}>Supprimer l'événement</Text>
+            </Pressable>
+          </View>
+
+        </View>
+        </Animated.View>
+      </ScrollView>
 
       {viewerUri && (
         <Modal visible transparent animationType="fade" onRequestClose={() => setViewerUri(null)}>
@@ -212,75 +314,116 @@ export default function EventDetailScreen() {
           </Pressable>
         </Modal>
       )}
-    </ScrollView>
+
+      </View>
+    </Animated.View>
+    </PanGestureHandler>
   )
 }
 
 const BLUE = '#2563EB'
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  shadow: {
+    flex: 1,
+    backgroundColor: '#f2f2f7',
+    borderTopLeftRadius: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: -8, height: 0 },
+    shadowOpacity: 0.14,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  container: { flex: 1, backgroundColor: '#f2f2f7', borderTopLeftRadius: 14, overflow: 'hidden' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  notFound: { fontSize: 16, color: '#999', marginBottom: 12 },
+  back: { fontSize: 15, color: BLUE },
+
   header: {
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, paddingTop: 56, paddingBottom: 16,
-    borderBottomWidth: 1, borderBottomColor: '#e5e5e5',
+    paddingHorizontal: 16, paddingTop: 56, paddingBottom: 10,
   },
-  backButton: { padding: 4 },
+  backBtn: { padding: 4 },
   editLink: { fontSize: 16, color: BLUE },
-  colorBar: { height: 4 },
-  content: { padding: 20 },
-
-  title: { fontSize: 22, fontWeight: '700', color: '#111', marginBottom: 12 },
-
-  mainRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 14 },
-  dateTimeCol: { flex: 1 },
-  date: { fontSize: 15, color: BLUE, marginBottom: 6 },
-  timeRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  timeText: { fontSize: 14, color: '#555' },
-
-  thumbCol: {},
-  thumbRow: {
-    flexDirection: 'row', justifyContent: 'center',
-    gap: 8, marginTop: 12,
+  titleCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginBottom: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+    borderLeftWidth: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.07,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  thumb: { width: 88, height: 88, borderRadius: 10 },
-  thumbMore: {
-    backgroundColor: '#f0f0f0',
+  title: { fontSize: 24, fontWeight: '700', color: '#111', lineHeight: 30 },
+
+  content: { paddingHorizontal: 16, paddingTop: 4 },
+
+  sectionCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  infoRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 13, paddingHorizontal: 16, gap: 12,
+  },
+  infoIcon: {
+    width: 30, height: 30, borderRadius: 7,
+    backgroundColor: '#f2f2f7',
     justifyContent: 'center', alignItems: 'center',
   },
-  thumbMoreText: { fontSize: 14, color: '#666', fontWeight: '600' },
-
-  divider: { height: 1, backgroundColor: '#f0f0f0', marginTop: 16, marginBottom: 14 },
-
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  rowText: { fontSize: 14, color: '#444', flex: 1 },
-
-  section: { marginTop: 18 },
-  sectionLabel: {
-    fontSize: 11, fontWeight: '600', color: '#999',
-    letterSpacing: 0.5, marginBottom: 8,
+  infoText: { fontSize: 15, color: '#222' },
+  rowDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: '#e5e5e5',
+    marginLeft: 58,
   },
+
+  groupLabel: {
+    fontSize: 12, fontWeight: '600', color: '#8e8e93',
+    letterSpacing: 0.4, marginBottom: 8, marginLeft: 4,
+  },
+
+  imageSingleWrap: { borderRadius: 12, overflow: 'hidden', marginBottom: 12 },
+  imageSingle: { width: '100%', height: 220 },
+  imageStrip: { marginBottom: 12 },
+  imageStripContent: { gap: 8 },
+  imageStripThumb: { width: 160, height: 160, borderRadius: 10 },
+
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  tag: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4 },
-  tagText: { fontSize: 13 },
-  description: { fontSize: 15, color: '#444', lineHeight: 22 },
+  tag: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 5 },
+  tagText: { fontSize: 13, fontWeight: '500' },
+
+  descRow: { paddingHorizontal: 16, paddingVertical: 14 },
+  descText: { fontSize: 15, color: '#333', lineHeight: 22 },
 
   docRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#f5f5f5',
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 12, paddingHorizontal: 16, gap: 12,
   },
   docIcon: {
-    width: 34, height: 34, borderRadius: 6,
-    backgroundColor: '#f5f5f5', justifyContent: 'center', alignItems: 'center',
+    width: 34, height: 34, borderRadius: 7,
+    backgroundColor: '#f2f2f7',
+    justifyContent: 'center', alignItems: 'center',
   },
   docName: { flex: 1, fontSize: 14, color: '#333' },
 
-  deleteBtn: {
-    marginTop: 40, borderTopWidth: 1, borderTopColor: '#f0f0f0',
-    paddingTop: 20, alignItems: 'center',
+  deleteSection: {
+    marginTop: 48,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#d1d1d6',
   },
-  deleteBtnText: { fontSize: 16, color: '#dc2626' },
+  deleteBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 7, paddingVertical: 18,
+  },
+  deleteBtnText: { fontSize: 15, color: '#dc2626' },
 
   viewerBackdrop: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   viewerImage: { width: '100%', height: '85%' },
@@ -288,7 +431,4 @@ const styles = StyleSheet.create({
     position: 'absolute', top: 56, right: 20,
     backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 20,
   },
-
-  notFound: { fontSize: 16, color: '#999', marginBottom: 12 },
-  back: { fontSize: 15, color: BLUE },
 })
