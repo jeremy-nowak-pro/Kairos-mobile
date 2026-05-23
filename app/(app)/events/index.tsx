@@ -3,7 +3,7 @@ import {
   View, Text, FlatList, Pressable, StyleSheet, ActivityIndicator, Animated, Easing,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { router, useFocusEffect } from 'expo-router'
+import { router, useFocusEffect, useNavigation } from 'expo-router'
 import { useSpace } from '@/context/space'
 import { getUpcomingEvents, Event } from '@/lib/events'
 import { userColor } from '@/lib/userColor'
@@ -18,7 +18,7 @@ function formatTime(t: string): string {
   return t.slice(0, 5)
 }
 
-function EventCard({ event, delay }: { event: Event; delay: number }) {
+function EventCard({ event, delay, animKey }: { event: Event; delay: number; animKey: number }) {
   const color = userColor(event.assigned_to)
   const anim = useRef(new Animated.Value(0)).current
 
@@ -26,6 +26,8 @@ function EventCard({ event, delay }: { event: Event; delay: number }) {
   const translateX = slideAnim.interpolate({ inputRange: [0, 1], outputRange: [260, 0] })
 
   useEffect(() => {
+    anim.setValue(0)
+    slideAnim.setValue(0)
     const t = setTimeout(() => {
       Animated.parallel([
         Animated.timing(anim, {
@@ -43,7 +45,7 @@ function EventCard({ event, delay }: { event: Event; delay: number }) {
       ]).start()
     }, delay)
     return () => clearTimeout(t)
-  }, [])
+  }, [animKey])
 
   return (
     <Animated.View style={{ opacity: anim, transform: [{ translateX }] }}>
@@ -88,14 +90,25 @@ function EventCard({ event, delay }: { event: Event; delay: number }) {
 
 export default function EventsScreen() {
   const { space } = useSpace()
+  const navigation = useNavigation()
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [focusKey, setFocusKey] = useState(0)
+  const returningFromChild = useRef(false)
+
+  useEffect(() => {
+    return navigation.addListener('state' as any, (e: any) => {
+      if ((e.data?.state?.index ?? 0) > 0) returningFromChild.current = true
+    })
+  }, [navigation])
 
   useFocusEffect(
     useCallback(() => {
       if (!space) return
-      if (events.length === 0) setLoading(true)
+      if (!returningFromChild.current) setFocusKey(k => k + 1)
+      returningFromChild.current = false
+      setLoading(true)
       getUpcomingEvents(space.id)
         .then(data => {
           setEvents(data)
@@ -115,7 +128,7 @@ export default function EventsScreen() {
         )}
       </View>
 
-      {loading ? (
+      {loading && events.length === 0 ? (
         <ActivityIndicator style={{ marginTop: 48 }} />
       ) : error ? (
         <Text style={styles.error}>{error}</Text>
@@ -130,7 +143,7 @@ export default function EventsScreen() {
         <FlatList
           data={events}
           keyExtractor={e => e.id}
-          renderItem={({ item, index }) => <EventCard event={item} delay={80 + index * 150} />}
+          renderItem={({ item, index }) => <EventCard event={item} delay={80 + index * 150} animKey={focusKey} />}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
         />
