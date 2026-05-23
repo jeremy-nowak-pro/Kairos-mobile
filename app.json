@@ -20,7 +20,12 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.jeremypro.kairosmobile"
+      "package": "com.jeremypro.kairosmobile",
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "androidNavigationBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#f2f2f7"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -29,6 +34,13 @@
     "plugins": [
       "expo-router",
       "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#2563EB"
+        }
+      ],
       [
         "expo-image-picker",
         {

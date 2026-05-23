@@ -1,53 +1,161 @@
-# CLAUDE.md
+# CLAUDE.md — kairos-mobile
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+App familiale React Native (Expo) pour gérer des événements partagés, listes de courses et chat en temps réel. Multi-tenant via le concept de `space` (un espace par couple/famille).
+
+---
 
 ## Commandes
 
 ```bash
-npm start          # Démarrage Expo (scanner QR avec Expo Go)
+npm start          # Expo dev server (QR code → Expo Go)
 npm run ios        # Simulateur iOS
 npm run android    # Simulateur Android
+npm test           # Jest
 ```
 
-## Contexte projet
+> **Expo HAS CHANGED** — avant d'écrire du code, consulter les docs versionnées : https://docs.expo.dev/versions/v54.0.0/
 
-Kairos Mobile est la version React Native (Expo) de Kairos — une app familiale pour gérer des événements et des listes de courses.
+---
 
-Version web existante : `/Users/jeremy/Documents/dev/kairos` (Next.js + Supabase). Le backend Next.js est réutilisé tel quel. Cette app mobile le consomme via ses API routes.
+## Stack technique
 
-## Architecture cible
+| Couche | Tech |
+|---|---|
+| Framework | Expo SDK 54, React Native 0.81.5, React 19 |
+| Language | TypeScript strict (`@/*` alias → racine) |
+| Routing | Expo Router 6 (file-based, même logique que Next.js App Router) |
+| Backend | Supabase (Auth + PostgreSQL + Realtime + Storage) |
+| Auth tokens | `expo-secure-store` avec chunking (limite 2KB contournée) |
+| Images | `expo-image` (jamais `<Image>` de react-native) |
+| Icônes | `@expo/vector-icons` — Ionicons |
+| Animations | Expo `Animated` API (pas de Reanimated) |
+| Styles | `StyleSheet.create()` — pas de Tailwind, pas de NativeWind |
+| Tests | Jest + jest-expo preset |
+| Build | EAS Build (dev / preview / production) |
 
-- **Expo SDK 54**, React 19, TypeScript strict
-- **Auth** : Supabase Auth (remplace le JWT custom du web)
-- **Données** : Supabase directement + API routes Next.js existantes pour la logique métier
-- **Notifications push** : Expo Push Notifications (remplace le webhook Discord)
-- **Multi-tenant** : concept de `space` — chaque couple a son espace isolé via RLS Supabase
+---
 
-## Modèle de données à construire
+## Architecture
 
-- `spaces` — un espace par couple, avec un code d'invitation
+### Navigation (Expo Router)
+
+```
+app/
+├── index.tsx           # Guard: redirige selon auth + space
+├── _layout.tsx         # Root: AuthProvider + SpaceProvider
+├── (auth)/             # Stack — login, register
+├── (onboarding)/       # Stack — create space, join space
+└── (app)/              # Tabs — app principale (protégée)
+    ├── events/         # Liste, détail, création, édition
+    ├── calendar.tsx    # Vue mois
+    ├── shopping.tsx    # Listes de courses
+    └── profile/        # Profil, membres, emplois du temps
+```
+
+**Flux de redirection dans `app/index.tsx` :**
+1. Pas de session → `/(auth)/login`
+2. Session sans space → `/(onboarding)`
+3. Session + space → `/(app)/events`
+
+### State management
+
+Uniquement React Context — pas de Redux, pas de Zustand.
+
+- **`context/auth.tsx`** — `useAuth()` : session, user, displayName, signIn/signUp/signOut
+- **`context/space.tsx`** — `useSpace()` : espace courant, refresh()
+
+Les deux hooks throwent si utilisés hors de leur Provider.
+
+### Data layer (`lib/`)
+
+Chaque fichier expose des fonctions async typées qui appellent Supabase directement. Pas de BFF, pas de middleware.
+
+| Fichier | Responsabilité |
+|---|---|
+| `supabase.ts` | Client Supabase + adapteur SecureStore chunké |
+| `spaces.ts` | Création/jointure d'espace via RPC Supabase |
+| `events.ts` | CRUD événements, cascade delete (attachments + storage) |
+| `shopping.ts` | Listes/items + **cache local** (expo-file-system) + photos |
+| `chat.ts` | Messages, subscription Realtime, compteur non-lus |
+| `attachments.ts` | Upload/delete fichiers → bucket `event-attachments` |
+| `schedules.ts` | PDFs emplois du temps → bucket `schedules` (upsert par user) |
+| `notifications.ts` | Token Expo push, envoi via `exp.host/--/api/v2/push/send` |
+| `locations.ts` | Historique lieux autocomplete (tri par `used_count`) |
+| `imageCache.ts` | Cache URLs signées Supabase Storage |
+| `userColor.ts` | Couleur déterministe par nom (cycle de 4) |
+
+**Pattern offline (shopping) :** écriture cache silencieuse, fallback sur `Documents/sc_*.json` en cas d'erreur réseau.
+
+### Auth (Supabase)
+
+- Email/password standard
+- `expo-secure-store` avec chunking maison (clés `${key}.0`, `${key}.1`... par blocs de 1900 octets)
+- `display_name` stocké dans `user_metadata` Supabase
+- `detectSessionInUrl: false` (pas de parsing d'URL deep link)
+
+### RLS
+
+Toutes les tables sont protégées par Row-Level Security Supabase. Chaque requête est automatiquement scopée au `space_id` de l'utilisateur connecté. Ne jamais bypasser le client Supabase avec la service key côté client.
+
+### Tables principales
+
+- `spaces` — espace avec code d'invitation
 - `space_members` — liaison user ↔ space
-- `events` — ajouter `space_id` (existait sans dans le web)
-- `shopping_lists` / `shopping_items` — ajouter `space_id`
-- `push_tokens` — token Expo par appareil, lié à l'utilisateur
+- `events` + `event_attachments` — événements du space
+- `shopping_lists` + `shopping_items` — listes avec photos optionnelles
+- `chat_messages` + `chat_reads` — messagerie temps réel
+- `push_tokens` — tokens Expo par appareil
+- `schedules` — emplois du temps (PDFs/images)
+- `location_history` — historique lieux autocomplete
+
+---
 
 ## Conventions React Native
 
-- Pas de composants web (`<div>`, `<img>`, `<a>`) — utiliser `<View>`, `<Image>`, `<Pressable>`
-- Navigation : `expo-router` (file-based, même logique que Next.js App Router)
-- Styles : `StyleSheet.create()` — pas de Tailwind (non supporté nativement)
-- Images : `expo-image` obligatoire — jamais `<Image>` de react-native directement
-- Caméra / photos : `expo-image-picker`
-- Stockage sécurisé des tokens : `expo-secure-store`
+- Jamais `<div>`, `<img>`, `<a>` — utiliser `<View>`, `<Image from expo-image>`, `<Pressable>`
+- Styles : `StyleSheet.create()` uniquement
+- Images : `expo-image` obligatoire
+- Navigation : `expo-router` — `Link`, `useRouter()`, `useLocalSearchParams()`
+- Animations : `Animated` d'expo — pas de bibliothèque externe
+- Dates : `toLocaleDateString('fr-FR', {...})` — interface en français
 
-## Ce qui change par rapport au web
+## Palette couleurs
 
-| Web (kairos) | Mobile (kairos-mobile) |
+```
+Primary    #2563EB  (bleu)
+Error      #dc2626  (rouge)
+Success    #34c759  (vert)
+Bg light   #f2f2f7
+Bg card    #ffffff
+Text main  #111111
+Text secondary #999999
+Border     #e5e5e5
+```
+
+---
+
+## Composants notables
+
+| Composant | Description |
 |---|---|
-| JWT cookie httpOnly | expo-secure-store |
-| `next/image` | expo-image |
-| `next/link` | expo-router Link |
-| FullCalendar | react-native-calendars |
-| Tailwind CSS | StyleSheet.create() |
-| Discord webhook | Expo Push Notifications |
+| `ChatPanel` | Drawer droit animé, pan gesture, subscription Realtime |
+| `TimePicker` | Scroll snap custom (pas de lib) |
+| `CalendarPicker` | Modal date picker custom |
+| `LocationInput` | Autocomplete avec historique local |
+| `AttachmentSection` | Upload + liste fichiers event |
+
+---
+
+## Build & deploy
+
+- **EAS Build** : `development` (APK interne) / `preview` (APK interne) / `production` (stores)
+- Android package : `com.jeremypro.kairosmobile`
+- EAS project ID : `ad4c8d9b-3498-474a-9173-066087734c73`
+- Push notifications : nécessite un **native dev build** (pas Expo Go)
+- Nouvelle architecture React Native activée (`newArchEnabled: true`)
+
+---
+
+## Projet web associé
+
+`/Users/jeremy/Documents/dev/kairos` — Next.js + Supabase, même base de données.

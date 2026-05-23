@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   View, Text, Pressable, StyleSheet, ActivityIndicator,
   ScrollView, Modal,
 } from 'react-native'
+import { PanGestureHandler, State } from 'react-native-gesture-handler'
 import { Image } from 'expo-image'
 import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -297,6 +298,14 @@ export default function CalendarScreen() {
 
   const weeks = useMemo(() => buildWeeks(viewYear, viewMonth), [viewYear, viewMonth])
 
+  const onSwipeStateChange = ({ nativeEvent }: any) => {
+    if (dayPopup || eventPopup) return
+    if (nativeEvent.state === State.END) {
+      if (nativeEvent.translationX < -60 || nativeEvent.velocityX < -300) goNext()
+      else if (nativeEvent.translationX > 60 || nativeEvent.velocityX > 300) goPrev()
+    }
+  }
+
   const handleCellPress = (dateStr: string) => {
     const dayEvents = eventsByDay[dateStr] ?? []
     if (dayEvents.length === 0) {
@@ -312,6 +321,12 @@ export default function CalendarScreen() {
 
   return (
     <View style={styles.container}>
+      <PanGestureHandler
+        onHandlerStateChange={onSwipeStateChange}
+        activeOffsetX={[-15, 15]}
+        failOffsetY={[-15, 15]}
+      >
+      <View style={{ flex: 1 }}>
       <View style={styles.header}>
         <Text style={styles.title}>Calendrier</Text>
         {!loading && (
@@ -364,6 +379,9 @@ export default function CalendarScreen() {
           </View>
         </ScrollView>
       )}
+
+      </View>
+      </PanGestureHandler>
 
       {/* Day list popup (2+ events) */}
       <PopupModal visible={!!dayPopup} onClose={() => setDayPopup(null)}>
