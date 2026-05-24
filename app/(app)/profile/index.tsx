@@ -97,33 +97,28 @@ export default function ProfileScreen() {
   return (
     <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 48 }}>
 
-      {/* Header */}
       <View style={s.header}>
         <Text style={s.headerTitle}>Profil</Text>
         <Pressable style={s.editBtn} onPress={() => router.push('/(app)/profile/edit')} hitSlop={8}>
-          <Ionicons name="pencil-outline" size={18} color="#555" />
+          <Ionicons name="pencil-outline" size={18} color="rgba(150,175,220,0.6)" />
         </Pressable>
       </View>
 
-      {/* Hero */}
       <View style={s.hero}>
         <Avatar name={name} size={80} />
         <Text style={s.heroName}>{name}</Text>
         <Text style={s.heroEmail}>{user?.email}</Text>
       </View>
 
-      {/* Espace */}
       <View style={s.card}>
-        <View style={s.cardHeader}>
-          <Text style={s.cardLabel}>MON ESPACE</Text>
-        </View>
+        <Text style={s.cardLabel}>MON ESPACE</Text>
         <Text style={s.spaceName}>{space?.name ?? '—'}</Text>
 
         <View style={s.divider} />
 
-        <Text style={s.membersLabel}>Membres</Text>
+        <Text style={s.sectionLabel}>Membres</Text>
         {loadingMembers ? (
-          <ActivityIndicator style={{ marginVertical: 12 }} />
+          <ActivityIndicator style={{ marginVertical: 12 }} color="rgba(150,175,220,0.6)" />
         ) : (
           <View style={s.membersList}>
             {members.map(m => (
@@ -140,21 +135,18 @@ export default function ProfileScreen() {
 
         <View style={s.divider} />
 
-        <Text style={s.membersLabel}>Code d'invitation</Text>
+        <Text style={s.sectionLabel}>Code d'invitation</Text>
         <Pressable style={s.inviteRow} onPress={handleShareCode}>
           <Text style={s.inviteCode}>{space?.invite_code ?? '—'}</Text>
           <View style={s.inviteShareBtn}>
-            <Ionicons name="share-outline" size={15} color="#2563EB" />
+            <Ionicons name="share-outline" size={15} color="rgba(180,210,255,0.7)" />
             <Text style={s.inviteShareText}>Partager</Text>
           </View>
         </Pressable>
       </View>
 
-      {/* Emploi du temps */}
       <View style={s.card}>
-        <View style={s.cardHeader}>
-          <Text style={s.cardLabel}>MON EMPLOI DU TEMPS</Text>
-        </View>
+        <Text style={s.cardLabel}>MON EMPLOI DU TEMPS</Text>
         {schedule ? (
           <Pressable
             onPress={() => previewUri
@@ -168,68 +160,67 @@ export default function ProfileScreen() {
               <Image source={{ uri: previewUri }} style={s.scheduleImage} contentFit="cover" />
             ) : (
               <View style={s.scheduleDoc}>
-                <Ionicons name="document-text-outline" size={28} color="#999" />
+                <Ionicons name="document-text-outline" size={28} color="rgba(150,175,220,0.5)" />
                 <Text style={s.scheduleDocName} numberOfLines={1}>{schedule.filename}</Text>
               </View>
             )}
             <View style={s.scheduleFooter}>
               <Text style={s.scheduleDate}>Mis à jour le {formattedDate}</Text>
-              <Ionicons name="expand-outline" size={14} color="#bbb" />
+              <Ionicons name="expand-outline" size={14} color="rgba(140,170,255,0.3)" />
             </View>
           </Pressable>
         ) : (
           <Pressable style={s.scheduleEmpty} onPress={() => router.push('/(app)/profile/edit')}>
-            <Ionicons name="add-circle-outline" size={20} color="#bbb" />
+            <Ionicons name="add-circle-outline" size={20} color="rgba(150,175,220,0.4)" />
             <Text style={s.scheduleEmptyText}>Ajouter mon emploi du temps</Text>
           </Pressable>
         )}
       </View>
 
-      {/* Déconnexion */}
+      <Pressable style={s.notifBtn} onPress={() => setNotifOpen(true)}>
+        <Ionicons name="notifications-outline" size={17} color="rgba(180,210,255,0.7)" />
+        <Text style={s.notifBtnText}>Envoyer une notification</Text>
+      </Pressable>
+
       <Pressable style={s.signOutBtn} onPress={signOut}>
-        <Ionicons name="log-out-outline" size={18} color="#dc2626" />
         <Text style={s.signOutText}>Se déconnecter</Text>
       </Pressable>
 
-      {/* Modal notification */}
-      <Modal visible={notifOpen} transparent animationType="slide" onRequestClose={() => setNotifOpen(false)}>
+      <Modal
+        visible={notifOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setNotifOpen(false)}
+        onShow={() => setTimeout(() => notifInputRef.current?.focus(), 100)}
+      >
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <Pressable style={s.notifBackdrop} onPress={() => setNotifOpen(false)}>
             <Pressable style={s.notifSheet} onPress={() => {}}>
-              <View style={s.sheetHandle} />
-              <Text style={s.notifTitle}>Message à l'espace</Text>
-              <Text style={s.notifSubtitle}>
-                Tous les membres de {space?.name ?? 'l\'espace'} recevront une notification.
-              </Text>
+              <Text style={s.notifSheetTitle}>Notification</Text>
               <TextInput
                 ref={notifInputRef}
                 style={s.notifInput}
-                placeholder="Tape ton message..."
-                placeholderTextColor="#aaa"
+                placeholder="Message à envoyer..."
+                placeholderTextColor="rgba(160,185,230,0.4)"
                 value={notifMessage}
                 onChangeText={setNotifMessage}
                 multiline
-                autoFocus
-                maxLength={200}
                 returnKeyType="send"
               />
-              <Text style={s.notifCount}>{notifMessage.length}/200</Text>
               <Pressable
-                style={[s.notifSendBtn, !notifMessage.trim() && s.notifSendBtnDisabled]}
+                style={[s.notifSendBtn, (!notifMessage.trim() || notifSending) && s.notifSendBtnDisabled]}
                 onPress={handleSendNotification}
                 disabled={!notifMessage.trim() || notifSending}
               >
                 {notifSending
-                  ? <ActivityIndicator color="#fff" />
-                  : <Text style={s.notifSendBtnText}>Envoyer</Text>
-                }
+                  ? <ActivityIndicator color="rgba(180,210,255,0.9)" />
+                  : <Text style={s.notifSendBtnText}>Envoyer</Text>}
               </Pressable>
             </Pressable>
           </Pressable>
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Viewer plein écran */}
       {viewerUri && (
         <Modal visible transparent animationType="fade" onRequestClose={() => setViewerUri(null)}>
           <Pressable style={s.viewerBackdrop} onPress={() => setViewerUri(null)}>
@@ -245,7 +236,7 @@ export default function ProfileScreen() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f2f2f7' },
+  container: { flex: 1, backgroundColor: '#070818' },
 
   header: {
     flexDirection: 'row',
@@ -255,14 +246,13 @@ const s = StyleSheet.create({
     paddingTop: 56,
     paddingBottom: 8,
   },
-  headerTitle: { fontSize: 28, fontWeight: '700', color: '#111' },
+  headerTitle: { fontSize: 28, fontWeight: '700', color: '#dce8ff' },
   editBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#e5e5ea',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: 'rgba(15,28,80,0.6)',
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.18)',
   },
 
   hero: {
@@ -272,184 +262,134 @@ const s = StyleSheet.create({
   },
   avatar: { justifyContent: 'center', alignItems: 'center' },
   avatarText: { fontWeight: '700' },
-  heroName: { fontSize: 22, fontWeight: '700', color: '#111', marginTop: 4 },
-  heroEmail: { fontSize: 14, color: '#888' },
+  heroName: { fontSize: 22, fontWeight: '700', color: '#dce8ff', marginTop: 4 },
+  heroEmail: { fontSize: 14, color: 'rgba(150,175,220,0.45)' },
 
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(12,20,60,0.85)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.18)',
+    borderRadius: 14,
     marginHorizontal: 16,
     marginBottom: 12,
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  cardHeader: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 4,
-  },
-  cardLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#999',
-    letterSpacing: 0.5,
-  },
-  spaceName: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#111',
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    paddingTop: 6,
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: '#e5e5ea',
-    marginHorizontal: 16,
-  },
-  membersLabel: {
-    fontSize: 12,
-    color: '#999',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  membersList: { paddingHorizontal: 16, paddingBottom: 12, gap: 10 },
-  memberRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  memberInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  memberName: { fontSize: 15, color: '#111', fontWeight: '500' },
-  memberBadge: {
-    fontSize: 11,
-    color: '#888',
-    backgroundColor: '#f2f2f7',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  inviteRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  inviteCode: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111',
-    letterSpacing: 2,
-    fontVariant: ['tabular-nums'],
-  },
-  inviteShareBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  inviteShareText: { fontSize: 13, color: '#2563EB', fontWeight: '500' },
-
-  scheduleImage: { width: '100%', height: 180 },
-  scheduleDoc: {
-    height: 90,
-    backgroundColor: '#f9f9f9',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  scheduleDocName: { fontSize: 14, color: '#666', maxWidth: '60%' },
-  scheduleFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#f0f0f0',
-  },
-  scheduleDate: { fontSize: 12, color: '#999' },
-  scheduleEmpty: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
     padding: 16,
   },
-  scheduleEmptyText: { fontSize: 14, color: '#bbb' },
+  cardLabel: {
+    fontSize: 11, fontWeight: '600',
+    color: 'rgba(150,175,220,0.45)',
+    letterSpacing: 0.8,
+    marginBottom: 10,
+  },
+  spaceName: { fontSize: 18, fontWeight: '600', color: '#dce8ff', marginBottom: 4 },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(140,170,255,0.12)',
+    marginVertical: 14,
+  },
+  sectionLabel: {
+    fontSize: 13, fontWeight: '600',
+    color: 'rgba(150,175,220,0.55)',
+    marginBottom: 10,
+  },
+  membersList: { gap: 10 },
+  memberRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  memberInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  memberName: { fontSize: 15, color: '#dce8ff' },
+  memberBadge: {
+    fontSize: 10, color: 'rgba(180,210,255,0.6)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.3)',
+    borderRadius: 4,
+    paddingHorizontal: 6, paddingVertical: 2,
+  },
+  inviteRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+  },
+  inviteCode: {
+    fontSize: 22, fontWeight: '300', letterSpacing: 4,
+    color: '#dce8ff',
+  },
+  inviteShareBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  inviteShareText: { fontSize: 14, color: 'rgba(180,210,255,0.7)' },
+
+  scheduleImage: { width: '100%', height: 180, borderRadius: 8, marginBottom: 8 },
+  scheduleDoc: {
+    height: 80,
+    backgroundColor: 'rgba(15,28,80,0.6)',
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  scheduleDocName: { fontSize: 14, color: 'rgba(150,175,220,0.6)', maxWidth: '60%' },
+  scheduleFooter: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+  },
+  scheduleDate: { fontSize: 12, color: 'rgba(150,175,220,0.4)' },
+  scheduleEmpty: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingVertical: 12, justifyContent: 'center',
+  },
+  scheduleEmptyText: { fontSize: 14, color: 'rgba(150,175,220,0.4)' },
 
   notifBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginHorizontal: 16,
-    marginBottom: 12,
-    padding: 14,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    marginHorizontal: 16, marginBottom: 10,
+    backgroundColor: 'rgba(12,20,60,0.85)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.18)',
     borderRadius: 14,
-    backgroundColor: '#2563EB',
+    padding: 16,
   },
-  notifBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-
-  notifBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  notifSheet: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    paddingBottom: 40,
-  },
-  sheetHandle: {
-    width: 36,
-    height: 4,
-    backgroundColor: '#ddd',
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 16,
-  },
-  notifTitle: { fontSize: 17, fontWeight: '700', color: '#111', marginBottom: 4 },
-  notifSubtitle: { fontSize: 14, color: '#888', marginBottom: 16 },
-  notifInput: {
-    borderWidth: 1,
-    borderColor: '#e5e5ea',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 16,
-    color: '#111',
-    minHeight: 100,
-    textAlignVertical: 'top',
-    backgroundColor: '#fafafa',
-  },
-  notifCount: { fontSize: 12, color: '#bbb', textAlign: 'right', marginTop: 6, marginBottom: 16 },
-  notifSendBtn: {
-    backgroundColor: '#2563EB',
-    borderRadius: 12,
-    padding: 14,
-    alignItems: 'center',
-  },
-  notifSendBtnDisabled: { opacity: 0.4 },
-  notifSendBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  notifBtnText: { fontSize: 15, color: 'rgba(180,210,255,0.7)' },
 
   signOutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginHorizontal: 16,
-    marginTop: 4,
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: '#fff',
+    marginHorizontal: 16, marginTop: 8,
+    padding: 16, alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(224,85,85,0.3)',
+    borderRadius: 14,
   },
-  signOutText: { fontSize: 15, color: '#dc2626', fontWeight: '500' },
+  signOutText: { fontSize: 15, color: '#e05555' },
+
+  notifBackdrop: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  notifSheet: {
+    backgroundColor: 'rgba(10,16,48,0.98)',
+    borderTopLeftRadius: 16, borderTopRightRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.2)',
+    padding: 20, paddingBottom: 40,
+  },
+  notifSheetTitle: {
+    fontSize: 16, fontWeight: '600', color: '#dce8ff', marginBottom: 14,
+  },
+  notifInput: {
+    backgroundColor: 'rgba(15,28,80,0.6)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.25)',
+    borderRadius: 10,
+    padding: 14,
+    fontSize: 15,
+    color: '#e8f0ff',
+    minHeight: 80,
+    textAlignVertical: 'top',
+    marginBottom: 14,
+  },
+  notifSendBtn: {
+    backgroundColor: 'rgba(25,55,140,0.5)',
+    borderRadius: 10, padding: 14, alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(120,160,255,0.3)',
+  },
+  notifSendBtnDisabled: { opacity: 0.4 },
+  notifSendBtnText: { color: 'rgba(200,220,255,0.95)', fontSize: 15, fontWeight: '500' },
 
   viewerBackdrop: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   viewerImage: { width: '100%', height: '85%' },
-  viewerClose: {
-    position: 'absolute',
-    top: 56,
-    right: 20,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 20,
-  },
+  viewerClose: { position: 'absolute', top: 56, right: 20, backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 20 },
 })

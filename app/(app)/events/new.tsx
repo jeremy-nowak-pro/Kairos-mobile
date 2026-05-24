@@ -28,7 +28,6 @@ function parseTimeInput(input: string): string | null {
   return `${h}:${m}:00`
 }
 
-
 function formatDisplayDate(isoDate: string): string {
   const d = new Date(isoDate + 'T00:00:00')
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -54,7 +53,6 @@ export default function NewEventScreen() {
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
   const [scheduleViewerUri, setScheduleViewerUri] = useState<string | null>(null)
   const [scheduleLoadingId, setScheduleLoadingId] = useState<string | null>(null)
-
   const [members, setMembers] = useState<SpaceMember[]>([])
   const [selectedMembers, setSelectedMembers] = useState<string[]>(
     displayName ? [displayName] : []
@@ -76,12 +74,10 @@ export default function NewEventScreen() {
     getSpaceMembers()
       .then(m => {
         setMembers(m)
-        // Pre-select current user
         const me = m.find(member => member.display_name === displayName)
         if (me) setSelectedMembers([me.display_name])
       })
       .catch(() => {
-        // Fallback to current user only
         if (displayName) setSelectedMembers([displayName])
       })
   }, [displayName])
@@ -97,24 +93,19 @@ export default function NewEventScreen() {
   const handleCreate = async () => {
     if (!space) return
     setError(null)
-
     const parsedStart = parseTimeInput(startTime)
     const parsedEnd = parseTimeInput(endTime)
-
     if (!title.trim()) { setError('Le titre est requis'); return }
     if (!date) { setError('La date est requise'); return }
     if (!parsedStart) { setError('Heure de début invalide — format HH:MM'); return }
     if (!parsedEnd) { setError('Heure de fin invalide — format HH:MM'); return }
-    if (selectedMembers.length === 0) { setError('Assigne l\'événement à au moins une personne'); return }
-
+    if (selectedMembers.length === 0) { setError("Assigne l'événement à au moins une personne"); return }
     setLoading(true)
     try {
       const trimmedLocation = location.trim()
       const event = await createEvent({
-        title: title.trim(),
-        date,
-        start_time: parsedStart,
-        end_time: parsedEnd,
+        title: title.trim(), date,
+        start_time: parsedStart, end_time: parsedEnd,
         location: trimmedLocation || null,
         description: description.trim() || null,
         assigned_to: selectedMembers.join(','),
@@ -133,10 +124,7 @@ export default function NewEventScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Pressable onPress={() => router.back()}>
@@ -151,7 +139,7 @@ export default function NewEventScreen() {
           <TextInput
             style={styles.input}
             placeholder="Réunion, anniversaire, sortie..."
-            placeholderTextColor="#999"
+            placeholderTextColor="rgba(160,185,230,0.4)"
             value={title}
             onChangeText={setTitle}
           />
@@ -209,11 +197,8 @@ export default function NewEventScreen() {
             )}
           </View>
 
-          <Pressable
-            style={styles.scheduleBtn}
-            onPress={() => setScheduleModalOpen(true)}
-          >
-            <Ionicons name="calendar-outline" size={15} color={BLUE} />
+          <Pressable style={styles.scheduleBtn} onPress={() => setScheduleModalOpen(true)}>
+            <Ionicons name="calendar-outline" size={15} color="rgba(180,210,255,0.6)" />
             <Text style={styles.scheduleBtnText}>Consulter les emplois du temps</Text>
           </Pressable>
 
@@ -221,7 +206,7 @@ export default function NewEventScreen() {
           <TextInput
             style={[styles.input, styles.textarea]}
             placeholder="Notes, ordre du jour..."
-            placeholderTextColor="#999"
+            placeholderTextColor="rgba(160,185,230,0.4)"
             value={description}
             onChangeText={setDescription}
             multiline
@@ -241,7 +226,7 @@ export default function NewEventScreen() {
 
           <Pressable style={styles.button} onPress={handleCreate} disabled={loading}>
             {loading
-              ? <ActivityIndicator color="#fff" />
+              ? <ActivityIndicator color="rgba(180,210,255,0.9)" />
               : <Text style={styles.buttonText}>+ Créer l'événement</Text>
             }
           </Pressable>
@@ -277,7 +262,6 @@ export default function NewEventScreen() {
         onClose={() => setEndPickerOpen(false)}
       />
 
-      {/* Schedule list modal */}
       <Modal
         visible={scheduleModalOpen}
         transparent
@@ -291,31 +275,31 @@ export default function NewEventScreen() {
               <Text style={styles.sheetEmpty}>Aucun membre dans l'espace</Text>
             )}
             {members.map(m => {
-              const s = schedules[m.user_id]
+              const sc = schedules[m.user_id]
               return (
                 <View key={m.user_id} style={styles.sheetRow}>
                   <Text style={styles.sheetMemberName}>{m.display_name}</Text>
-                  {s ? (
+                  {sc ? (
                     <Pressable
                       style={styles.sheetViewBtn}
                       disabled={scheduleLoadingId === m.user_id}
                       onPress={async () => {
                         setScheduleLoadingId(m.user_id)
                         try {
-                          const url = await getScheduleSignedUrl(s.storage_path)
-                          if (s.mime_type?.startsWith('image/')) {
+                          const url = await getScheduleSignedUrl(sc.storage_path)
+                          if (sc.mime_type?.startsWith('image/')) {
                             setScheduleViewerUri(url)
                           } else {
                             await WebBrowser.openBrowserAsync(url)
                           }
                         } catch {
-                          Alert.alert('Erreur', 'Impossible d\'ouvrir le fichier')
+                          Alert.alert('Erreur', "Impossible d'ouvrir le fichier")
                         }
                         setScheduleLoadingId(null)
                       }}
                     >
                       {scheduleLoadingId === m.user_id
-                        ? <ActivityIndicator size="small" color={BLUE} />
+                        ? <ActivityIndicator size="small" color="rgba(180,210,255,0.8)" />
                         : <Text style={styles.sheetViewBtnText}>Voir</Text>
                       }
                     </Pressable>
@@ -325,17 +309,13 @@ export default function NewEventScreen() {
                 </View>
               )
             })}
-            <Pressable
-              style={styles.sheetClose}
-              onPress={() => setScheduleModalOpen(false)}
-            >
+            <Pressable style={styles.sheetClose} onPress={() => setScheduleModalOpen(false)}>
               <Text style={styles.sheetCloseText}>Fermer</Text>
             </Pressable>
           </Pressable>
         </Pressable>
       </Modal>
 
-      {/* Schedule image viewer */}
       {scheduleViewerUri && (
         <Modal
           visible
@@ -343,19 +323,9 @@ export default function NewEventScreen() {
           animationType="fade"
           onRequestClose={() => setScheduleViewerUri(null)}
         >
-          <Pressable
-            style={styles.viewerBackdrop}
-            onPress={() => setScheduleViewerUri(null)}
-          >
-            <Image
-              source={{ uri: scheduleViewerUri }}
-              style={styles.viewerImage}
-              contentFit="contain"
-            />
-            <Pressable
-              style={styles.viewerClose}
-              onPress={() => setScheduleViewerUri(null)}
-            >
+          <Pressable style={styles.viewerBackdrop} onPress={() => setScheduleViewerUri(null)}>
+            <Image source={{ uri: scheduleViewerUri }} style={styles.viewerImage} contentFit="contain" />
+            <Pressable style={styles.viewerClose} onPress={() => setScheduleViewerUri(null)}>
               <Ionicons name="close-circle" size={32} color="#fff" />
             </Pressable>
           </Pressable>
@@ -365,90 +335,107 @@ export default function NewEventScreen() {
   )
 }
 
-const BLUE = '#2563EB'
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#070818' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingTop: 56, paddingBottom: 16,
-    borderBottomWidth: 1, borderBottomColor: '#e5e5e5',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(140,170,255,0.15)',
   },
-  cancel: { color: BLUE, fontSize: 16, width: 64 },
-  title: { fontSize: 18, fontWeight: '600', color: '#111' },
+  cancel: { color: 'rgba(180,210,255,0.7)', fontSize: 16, width: 64 },
+  title: { fontSize: 18, fontWeight: '600', color: '#dce8ff' },
   form: { padding: 20 },
   label: {
-    fontSize: 11, fontWeight: '600', color: '#999',
-    letterSpacing: 0.5, marginBottom: 6, marginTop: 16,
+    fontSize: 11, fontWeight: '600', color: 'rgba(150,175,220,0.45)',
+    letterSpacing: 0.8, marginBottom: 6, marginTop: 16,
   },
   input: {
-    borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 8,
-    padding: 12, fontSize: 16, color: '#111', backgroundColor: '#fafafa',
+    backgroundColor: 'rgba(15,28,80,0.6)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.25)',
+    borderRadius: 8,
+    padding: 12, fontSize: 15, color: '#e8f0ff',
   },
   dateButton: {
-    borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 8,
-    padding: 12, backgroundColor: '#fafafa',
+    backgroundColor: 'rgba(15,28,80,0.6)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.25)',
+    borderRadius: 8,
+    padding: 12,
   },
-  dateText: { fontSize: 16, color: '#111' },
-  datePlaceholder: { fontSize: 16, color: '#999' },
+  dateText: { fontSize: 15, color: '#dce8ff' },
+  datePlaceholder: { fontSize: 15, color: 'rgba(160,185,230,0.4)' },
   textarea: { height: 96, textAlignVertical: 'top' },
   row: { flexDirection: 'row', gap: 12 },
   rowItem: { flex: 1 },
   memberRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
   memberBtn: {
-    borderWidth: 1.5, borderColor: '#e5e5e5', borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.25)',
+    borderRadius: 8,
     paddingHorizontal: 16, paddingVertical: 10,
+    backgroundColor: 'rgba(15,28,80,0.4)',
   },
-  memberBtnActive: { borderColor: BLUE, backgroundColor: '#EFF6FF' },
-  memberBtnText: { fontSize: 15, color: '#555' },
-  memberBtnTextActive: { fontSize: 15, color: BLUE, fontWeight: '600' },
+  memberBtnActive: {
+    borderColor: 'rgba(120,160,255,0.5)',
+    backgroundColor: 'rgba(25,55,140,0.5)',
+  },
+  memberBtnText: { fontSize: 14, color: 'rgba(150,175,220,0.55)' },
+  memberBtnTextActive: { fontSize: 14, color: 'rgba(200,220,255,0.95)', fontWeight: '600' },
   button: {
-    backgroundColor: BLUE, borderRadius: 10,
+    backgroundColor: 'rgba(25,55,140,0.5)',
+    borderRadius: 10,
     padding: 16, alignItems: 'center', marginTop: 24,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(120,160,255,0.3)',
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  buttonText: { color: 'rgba(200,220,255,0.95)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
   attachmentSection: {
     marginTop: 20,
-    borderTopWidth: 1, borderTopColor: '#e5e5e5',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(140,170,255,0.12)',
     paddingTop: 16,
   },
   scheduleBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     marginTop: 8, marginBottom: 4,
   },
-  scheduleBtnText: { fontSize: 13, color: BLUE },
-  error: { color: '#dc2626', fontSize: 14, marginTop: 12 },
+  scheduleBtnText: { fontSize: 13, color: 'rgba(180,210,255,0.6)' },
+  error: { color: '#e05555', fontSize: 14, marginTop: 12 },
 
-  // Schedule modal
   backdrop: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end',
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(10,16,48,0.98)',
     borderTopLeftRadius: 16, borderTopRightRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.2)',
     padding: 20, paddingBottom: 40,
   },
-  sheetTitle: { fontSize: 16, fontWeight: '700', color: '#111', marginBottom: 16 },
-  sheetEmpty: { fontSize: 14, color: '#999', marginBottom: 16 },
+  sheetTitle: { fontSize: 16, fontWeight: '700', color: '#dce8ff', marginBottom: 16 },
+  sheetEmpty: { fontSize: 14, color: 'rgba(150,175,220,0.4)', marginBottom: 16 },
   sheetRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#f5f5f5',
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(140,170,255,0.1)',
   },
-  sheetMemberName: { fontSize: 16, color: '#111', fontWeight: '500' },
+  sheetMemberName: { fontSize: 16, color: '#dce8ff', fontWeight: '500' },
   sheetViewBtn: {
-    backgroundColor: '#EFF6FF', borderRadius: 6,
-    paddingHorizontal: 14, paddingVertical: 7, minWidth: 60, alignItems: 'center',
+    backgroundColor: 'rgba(25,55,140,0.5)',
+    borderRadius: 6, paddingHorizontal: 14, paddingVertical: 7, minWidth: 60,
+    alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(120,160,255,0.3)',
   },
-  sheetViewBtnText: { fontSize: 14, color: BLUE, fontWeight: '600' },
-  sheetNoSchedule: { fontSize: 14, color: '#bbb' },
+  sheetViewBtnText: { fontSize: 14, color: 'rgba(200,220,255,0.95)', fontWeight: '600' },
+  sheetNoSchedule: { fontSize: 14, color: 'rgba(150,175,220,0.35)' },
   sheetClose: { marginTop: 16, padding: 12, alignItems: 'center' },
-  sheetCloseText: { fontSize: 16, color: '#666' },
+  sheetCloseText: { fontSize: 16, color: 'rgba(150,175,220,0.5)' },
 
-  // Image viewer
-  viewerBackdrop: {
-    flex: 1, backgroundColor: '#000',
-    justifyContent: 'center', alignItems: 'center',
-  },
+  viewerBackdrop: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   viewerImage: { width: '100%', height: '85%' },
   viewerClose: {
     position: 'absolute', top: 56, right: 20,

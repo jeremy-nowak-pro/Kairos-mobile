@@ -1,31 +1,83 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
+import { BlurView } from 'expo-blur'
+import MeshBackground from '@/components/MeshBackground'
 
 export default function OnboardingScreen() {
   const router = useRouter()
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Bienvenue sur Kairos</Text>
-      <Text style={styles.subtitle}>Créez votre espace ou rejoignez celui de votre partenaire.</Text>
+    <View style={styles.root}>
+      <MeshBackground />
+      <View style={styles.content}>
+        <Text style={styles.title}>Kairos</Text>
+        <Text style={styles.subtitle}>Votre espace partagé</Text>
 
-      <Pressable style={styles.buttonPrimary} onPress={() => router.push('/(onboarding)/create')}>
-        <Text style={styles.buttonPrimaryText}>Créer notre espace</Text>
-      </Pressable>
+        <Text style={styles.intro}>Créez votre espace ou rejoignez celui de votre partenaire.</Text>
 
-      <Pressable style={styles.buttonSecondary} onPress={() => router.push('/(onboarding)/join')}>
-        <Text style={styles.buttonSecondaryText}>Rejoindre avec un code</Text>
-      </Pressable>
+        <BlurView intensity={22} tint="dark" style={styles.card}>
+          <Pressable style={styles.row} onPress={() => router.push('/(onboarding)/create')}>
+            <Text style={styles.rowText}>Créer notre espace</Text>
+          </Pressable>
+          <View style={styles.divider} />
+          <Pressable style={styles.row} onPress={() => router.push('/(onboarding)/join')}>
+            <Text style={styles.rowText}>Rejoindre avec un code</Text>
+          </Pressable>
+        </BlurView>
+      </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 32, backgroundColor: '#fff' },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 8 },
-  subtitle: { fontSize: 15, color: '#666', marginBottom: 48, lineHeight: 22 },
-  buttonPrimary: { backgroundColor: '#111', borderRadius: 10, padding: 16, alignItems: 'center', marginBottom: 12 },
-  buttonPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  buttonSecondary: { borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 10, padding: 16, alignItems: 'center' },
-  buttonSecondaryText: { color: '#111', fontSize: 16 },
+  root: { flex: 1, backgroundColor: '#070818' },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 28,
+  },
+  title: {
+    fontSize: 44,
+    fontWeight: '300',
+    marginBottom: 6,
+    textAlign: 'center',
+    color: '#dce8ff',
+    letterSpacing: 7,
+  },
+  subtitle: {
+    fontSize: 12,
+    textAlign: 'center',
+    color: 'rgba(150,175,220,0.45)',
+    letterSpacing: 2.5,
+    textTransform: 'uppercase',
+    marginBottom: 44,
+  },
+  intro: {
+    fontSize: 14,
+    textAlign: 'center',
+    color: 'rgba(150,175,220,0.6)',
+    lineHeight: 22,
+    marginBottom: 28,
+  },
+  card: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.35)',
+  },
+  row: {
+    padding: 18,
+    backgroundColor: 'rgba(15,28,80,0.6)',
+    alignItems: 'center',
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(140,170,255,0.2)',
+  },
+  rowText: {
+    fontSize: 15,
+    color: 'rgba(200,220,255,0.95)',
+    fontWeight: '400',
+    letterSpacing: 0.3,
+  },
 })

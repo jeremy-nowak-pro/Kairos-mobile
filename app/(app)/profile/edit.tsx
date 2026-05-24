@@ -134,7 +134,7 @@ export default function ProfileEditScreen() {
           <Text style={s.title}>Modifier le profil</Text>
           <Pressable onPress={handleSave} disabled={saving} hitSlop={8}>
             {saving
-              ? <ActivityIndicator size="small" color="#2563EB" />
+              ? <ActivityIndicator size="small" color="rgba(180,210,255,0.8)" />
               : <Text style={s.done}>Enregistrer</Text>
             }
           </Pressable>
@@ -142,17 +142,16 @@ export default function ProfileEditScreen() {
 
         <View style={s.section}>
           <Text style={s.label}>PSEUDO</Text>
-          <View style={s.inputWrapper}>
-            <TextInput
-              style={s.input}
-              value={name}
-              onChangeText={text => { setName(text); setError(null) }}
-              autoCapitalize="words"
-              autoCorrect={false}
-              returnKeyType="done"
-              onSubmitEditing={handleSave}
-            />
-          </View>
+          <TextInput
+            style={s.input}
+            value={name}
+            onChangeText={text => { setName(text); setError(null) }}
+            placeholderTextColor="rgba(160,185,230,0.4)"
+            autoCapitalize="words"
+            autoCorrect={false}
+            returnKeyType="done"
+            onSubmitEditing={handleSave}
+          />
           {error && <Text style={s.error}>{error}</Text>}
         </View>
 
@@ -169,7 +168,7 @@ export default function ProfileEditScreen() {
                 <Image source={{ uri: previewUri }} style={s.scheduleImage} contentFit="cover" />
               ) : (
                 <View style={s.scheduleDoc}>
-                  <Ionicons name="document-text-outline" size={28} color="#999" />
+                  <Ionicons name="document-text-outline" size={28} color="rgba(150,175,220,0.5)" />
                   <Text style={s.scheduleDocName} numberOfLines={1}>{schedule.filename}</Text>
                 </View>
               )}
@@ -182,12 +181,12 @@ export default function ProfileEditScreen() {
                 <View style={s.scheduleActions}>
                   <Pressable onPress={handleReplaceSchedule} disabled={scheduleUploading} hitSlop={8}>
                     {scheduleUploading
-                      ? <ActivityIndicator size="small" color="#2563EB" />
+                      ? <ActivityIndicator size="small" color="rgba(180,210,255,0.8)" />
                       : <Text style={s.replaceLink}>Remplacer</Text>
                     }
                   </Pressable>
                   <Pressable onPress={handleDeleteSchedule} hitSlop={8}>
-                    <Ionicons name="trash-outline" size={17} color="#d1d5db" />
+                    <Ionicons name="trash-outline" size={17} color="rgba(224,85,85,0.6)" />
                   </Pressable>
                 </View>
               </View>
@@ -195,9 +194,9 @@ export default function ProfileEditScreen() {
           ) : (
             <Pressable style={s.scheduleAddBtn} onPress={handleReplaceSchedule} disabled={scheduleUploading}>
               {scheduleUploading
-                ? <ActivityIndicator size="small" color="#2563EB" />
+                ? <ActivityIndicator size="small" color="rgba(180,210,255,0.8)" />
                 : <>
-                    <Ionicons name="add-circle-outline" size={18} color="#2563EB" />
+                    <Ionicons name="add-circle-outline" size={18} color="rgba(150,175,220,0.5)" />
                     <Text style={s.scheduleAddText}>Ajouter mon emploi du temps</Text>
                   </>
               }
@@ -211,7 +210,7 @@ export default function ProfileEditScreen() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f2f2f7' },
+  container: { flex: 1, backgroundColor: '#070818' },
 
   header: {
     flexDirection: 'row',
@@ -220,57 +219,55 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 56,
     paddingBottom: 16,
-    backgroundColor: '#f2f2f7',
   },
-  cancel: { color: '#555', fontSize: 16, width: 80 },
-  title: { fontSize: 17, fontWeight: '600', color: '#111' },
-  done: { color: '#2563EB', fontSize: 16, fontWeight: '600', width: 80, textAlign: 'right' },
+  cancel: { color: 'rgba(150,175,220,0.55)', fontSize: 16, width: 80 },
+  title: { fontSize: 17, fontWeight: '600', color: '#dce8ff' },
+  done: { color: 'rgba(180,210,255,0.8)', fontSize: 16, fontWeight: '600', width: 80, textAlign: 'right' },
 
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(12,20,60,0.85)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.18)',
     marginHorizontal: 16,
     marginBottom: 12,
     borderRadius: 14,
     padding: 16,
   },
   label: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#999',
-    letterSpacing: 0.5,
+    fontSize: 11, fontWeight: '600',
+    color: 'rgba(150,175,220,0.45)',
+    letterSpacing: 0.8,
     marginBottom: 10,
   },
-  inputWrapper: {
-    borderWidth: 1,
-    borderColor: '#e5e5ea',
-    borderRadius: 10,
-    backgroundColor: '#fafafa',
-  },
   input: {
+    backgroundColor: 'rgba(15,28,80,0.6)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.25)',
+    borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#111',
+    color: '#e8f0ff',
   },
-  staticValue: { fontSize: 16, color: '#bbb' },
-  error: { color: '#dc2626', fontSize: 13, marginTop: 8 },
+  staticValue: { fontSize: 16, color: 'rgba(150,175,220,0.35)' },
+  error: { color: '#e05555', fontSize: 13, marginTop: 8 },
 
   scheduleCard: {
-    borderWidth: 1,
-    borderColor: '#e5e5ea',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.2)',
     borderRadius: 10,
     overflow: 'hidden',
   },
   scheduleImage: { width: '100%', height: 180 },
   scheduleDoc: {
     height: 90,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: 'rgba(15,28,80,0.6)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
-  scheduleDocName: { fontSize: 14, color: '#666', maxWidth: '60%' },
+  scheduleDocName: { fontSize: 14, color: 'rgba(150,175,220,0.6)', maxWidth: '60%' },
   scheduleFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -278,21 +275,22 @@ const s = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: 'rgba(140,170,255,0.12)',
   },
-  scheduleDate: { fontSize: 12, color: '#999', flex: 1 },
+  scheduleDate: { fontSize: 12, color: 'rgba(150,175,220,0.4)', flex: 1 },
   scheduleActions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  replaceLink: { fontSize: 14, color: '#2563EB' },
+  replaceLink: { fontSize: 14, color: 'rgba(180,210,255,0.7)' },
 
   scheduleAddBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    borderWidth: 1,
-    borderColor: '#e5e5ea',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.2)',
     borderStyle: 'dashed',
     borderRadius: 10,
     padding: 14,
+    justifyContent: 'center',
   },
-  scheduleAddText: { fontSize: 14, color: '#2563EB' },
+  scheduleAddText: { fontSize: 14, color: 'rgba(150,175,220,0.5)' },
 })

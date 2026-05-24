@@ -26,18 +26,18 @@ export default function AppLayout() {
   if (!session) return <Redirect href="/(auth)/login" />
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f2f2f7' }}>
+    <View style={{ flex: 1, backgroundColor: '#070818' }}>
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Platform.OS === 'android' ? '#f2f2f7' : '#fff',
-          borderTopColor: '#e5e5e5',
+          backgroundColor: '#070818',
+          borderTopColor: 'rgba(140,170,255,0.15)',
           borderTopWidth: StyleSheet.hairlineWidth,
           elevation: 0,
         },
-        tabBarActiveTintColor: '#2563EB',
-        tabBarInactiveTintColor: '#999',
+        tabBarActiveTintColor: '#7BA4FF',
+        tabBarInactiveTintColor: 'rgba(150,175,220,0.4)',
         tabBarLabelStyle: { fontSize: 12 },
       }}
     >
