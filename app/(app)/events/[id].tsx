@@ -180,10 +180,7 @@ export default function EventDetailScreen() {
           </Pressable>
         </View>
 
-        <Animated.View style={{
-          opacity: contentAnim,
-          transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
-        }}>
+        <Animated.View style={{ opacity: contentAnim }}>
 
         <BlurView intensity={22} tint="light" style={[styles.titleCard, { borderLeftColor: color.text }]}>
           <Text style={styles.title}>{event.title}</Text>
