@@ -25,7 +25,7 @@ function formatTime(t: string): string {
 }
 
 function SectionCard({ children }: { children: React.ReactNode }) {
-  return <BlurView intensity={22} tint="light" style={styles.sectionCard}>{children}</BlurView>
+  return <BlurView intensity={40} tint="light" style={styles.sectionCard}>{children}</BlurView>
 }
 
 function InfoRow({ icon, children, last }: {
@@ -185,7 +185,7 @@ export default function EventDetailScreen() {
           transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
         }}>
 
-        <BlurView intensity={22} tint="light" style={[styles.titleCard, { borderLeftColor: color.text }]}>
+        <BlurView intensity={40} tint="light" style={[styles.titleCard, { borderLeftColor: color.text }]}>
           <Text style={styles.title}>{event.title}</Text>
         </BlurView>
 
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   editLink: { fontSize: 16, color: 'rgba(255,255,255,0.92)' },
 
   titleCard: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.22)',
     overflow: 'hidden',
     borderRadius: 12,
     marginHorizontal: 16,
@@ -350,19 +350,19 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     borderLeftWidth: 5,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.38)',
+    borderColor: 'rgba(255,255,255,0.45)',
   },
   title: { fontSize: 24, fontWeight: '700', color: '#ffffff', lineHeight: 30 },
 
   content: { paddingHorizontal: 16, paddingTop: 4 },
 
   sectionCard: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.18)',
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.38)',
+    borderColor: 'rgba(255,255,255,0.45)',
   },
   infoRow: {
     flexDirection: 'row', alignItems: 'center',
