@@ -53,7 +53,6 @@ function EventCard({ event, delay, animKey }: { event: Event; delay: number; ani
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
       onPress={() => router.push(`/(app)/events/${event.id}`)}
     >
-      <BlurView intensity={22} tint="light" style={StyleSheet.absoluteFill} />
       <View style={[styles.cardBar, { backgroundColor: color.text }]} />
       <View style={styles.cardBody}>
         <Text style={styles.cardTitle} numberOfLines={1}>{event.title}</Text>
@@ -181,13 +180,13 @@ const styles = StyleSheet.create({
 
   card: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(60,25,90,0.42)',
     borderRadius: 12,
     marginHorizontal: 16,
     marginBottom: 8,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.38)',
+    borderColor: 'rgba(200,160,255,0.20)',
   },
   cardPressed: { opacity: 0.7 },
   cardBar: { width: 4 },

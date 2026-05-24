@@ -10,7 +10,6 @@ import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
 import { SpaceMember, getSpaceMembers } from '@/lib/spaces'
 import { MemberSchedule, getSpaceSchedules, getScheduleSignedUrl } from '@/lib/schedules'
-import { BlurView } from 'expo-blur'
 import { userColor } from '@/lib/userColor'
 import { sendSpaceNotification } from '@/lib/notifications'
 
@@ -111,7 +110,7 @@ export default function ProfileScreen() {
         <Text style={s.heroEmail}>{user?.email}</Text>
       </View>
 
-      <BlurView intensity={22} tint="light" style={s.card}>
+      <View style={s.card}>
         <Text style={s.cardLabel}>MON ESPACE</Text>
         <Text style={s.spaceName}>{space?.name ?? '—'}</Text>
 
@@ -144,9 +143,9 @@ export default function ProfileScreen() {
             <Text style={s.inviteShareText}>Partager</Text>
           </View>
         </Pressable>
-      </BlurView>
+      </View>
 
-      <BlurView intensity={22} tint="light" style={s.card}>
+      <View style={s.card}>
         <Text style={s.cardLabel}>MON EMPLOI DU TEMPS</Text>
         {schedule ? (
           <Pressable
@@ -176,7 +175,7 @@ export default function ProfileScreen() {
             <Text style={s.scheduleEmptyText}>Ajouter mon emploi du temps</Text>
           </Pressable>
         )}
-      </BlurView>
+      </View>
 
       <Pressable style={s.notifBtn} onPress={() => setNotifOpen(true)}>
         <Ionicons name="notifications-outline" size={17} color="rgba(255,255,255,0.85)" />
@@ -267,10 +266,9 @@ const s = StyleSheet.create({
   heroEmail: { fontSize: 14, color: 'rgba(255,255,255,0.75)' },
 
   card: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    overflow: 'hidden',
+    backgroundColor: 'rgba(60,25,90,0.42)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.38)',
+    borderColor: 'rgba(200,160,255,0.20)',
     borderRadius: 14,
     marginHorizontal: 16,
     marginBottom: 12,

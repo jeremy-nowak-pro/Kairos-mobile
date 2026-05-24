@@ -8,7 +8,6 @@ import { Image } from 'expo-image'
 import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSpace } from '@/context/space'
-import { BlurView } from 'expo-blur'
 import { getEventsForMonth, Event } from '@/lib/events'
 import { getAttachments, getSignedUrl } from '@/lib/attachments'
 import { userColor } from '@/lib/userColor'
@@ -66,7 +65,7 @@ function EventDetailPopup({ event, onClose }: { event: Event; onClose: () => voi
   }, [event.id])
 
   return (
-    <BlurView intensity={28} tint="light" style={styles.popup}>
+    <View style={styles.popup}>
       <View style={[styles.popupAccent, { backgroundColor: color.text }]} />
 
       <View style={styles.popupHeader}>
@@ -148,7 +147,7 @@ function EventDetailPopup({ event, onClose }: { event: Event; onClose: () => voi
           </Pressable>
         </Modal>
       )}
-    </BlurView>
+    </View>
   )
 }
 
@@ -161,7 +160,7 @@ function DayListPopup({
   onClose: () => void
 }) {
   return (
-    <BlurView intensity={28} tint="light" style={styles.popup}>
+    <View style={styles.popup}>
       <View style={styles.popupHeader}>
         <Text style={styles.popupTitle}>{formatShortDate(dateStr)}</Text>
         <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={8}>
@@ -182,7 +181,7 @@ function DayListPopup({
           <Ionicons name="chevron-forward" size={16} color="rgba(140,170,255,0.3)" />
         </Pressable>
       ))}
-    </BlurView>
+    </View>
   )
 }
 
@@ -441,10 +440,10 @@ const styles = StyleSheet.create({
   },
   popupWrapper: { width: '100%', maxWidth: 360 },
   popup: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(60,25,90,0.55)',
     borderRadius: 16, padding: 20, overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.50)',
+    borderColor: 'rgba(200,160,255,0.22)',
   },
   popupAccent: { height: 4, marginHorizontal: -20, marginTop: -20, marginBottom: 14 },
   popupHeader: {
