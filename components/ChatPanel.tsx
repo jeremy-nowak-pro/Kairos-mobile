@@ -6,6 +6,7 @@ import {
 } from 'react-native'
 import { PanGestureHandler, State } from 'react-native-gesture-handler'
 import { Ionicons } from '@expo/vector-icons'
+import { BlurView } from 'expo-blur'
 import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
 import { userColor } from '@/lib/userColor'
@@ -189,8 +190,10 @@ export default function ChatPanel() {
           failOffsetY={[-20, 20]}
         >
           <Animated.View style={[styles.handle, { top: handleTop }]}>
+            <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} />
+            <View style={[StyleSheet.absoluteFill, styles.handleTint]} />
             <Pressable style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} onPress={openChat}>
-              <Ionicons name="chatbubbles" size={20} color="rgba(255,255,255,0.90)" />
+              <Ionicons name="chatbubbles" size={20} color="rgba(200,220,255,0.90)" />
               {unread > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text>
@@ -289,15 +292,20 @@ const styles = StyleSheet.create({
     right: 0,
     width: 46,
     height: 64,
-    backgroundColor: 'rgba(255,255,255,0.92)',
     borderTopLeftRadius: 16,
     borderBottomLeftRadius: 16,
+    overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
     borderRightWidth: 0,
-    borderColor: 'rgba(255,255,255,0.55)',
+    borderColor: 'rgba(140,180,255,0.25)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 200,
+  },
+  handleTint: {
+    backgroundColor: 'rgba(30,55,140,0.25)',
+    borderTopLeftRadius: 16,
+    borderBottomLeftRadius: 16,
   },
   badge: {
     position: 'absolute',

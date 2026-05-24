@@ -151,10 +151,12 @@ export default function EventsScreen() {
       )}
 
       <Pressable
-        style={styles.fab}
+        style={({ pressed }) => [styles.fab, pressed && { opacity: 0.75 }]}
         onPress={() => router.push('/(app)/events/new')}
       >
-        <Ionicons name="add" size={28} color="rgba(255,255,255,0.85)" />
+        <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, styles.fabTint]} />
+        <Ionicons name="add" size={26} color="rgba(200,220,255,0.95)" />
       </Pressable>
     </View>
   )
@@ -209,13 +211,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     bottom: 28,
-    backgroundColor: 'rgba(255,255,255,0.92)',
     width: 52,
     height: 52,
     borderRadius: 26,
+    overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.55)',
+    borderColor: 'rgba(140,180,255,0.35)',
+  },
+  fabTint: {
+    backgroundColor: 'rgba(30,55,140,0.30)',
+    borderRadius: 26,
   },
 })
