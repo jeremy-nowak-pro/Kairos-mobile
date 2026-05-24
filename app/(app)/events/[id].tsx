@@ -168,12 +168,13 @@ export default function EventDetailScreen() {
     <Animated.View style={[styles.shadow, { transform: [{ translateX }] }]}>
       <View style={styles.container}>
       <LinearGradient
-        colors={['#2a1250', '#1a0e30', '#2e1028', '#3a1520']}
-        locations={[0, 0.35, 0.70, 1]}
-        start={{ x: 0.2, y: 0 }}
-        end={{ x: 0.8, y: 1 }}
+        colors={['#3a1f5c', '#1a0e30', '#1a0e30', '#2a1438']}
+        locations={[0, 0.25, 0.6, 1]}
+        start={{ x: 0.7, y: -0.3 }}
+        end={{ x: 0.2, y: 1.2 }}
         style={StyleSheet.absoluteFill}
       />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: color.text, opacity: 0.07 }]} />
       <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
 
         <View style={styles.header}>
