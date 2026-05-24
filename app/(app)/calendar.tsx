@@ -72,18 +72,18 @@ function EventDetailPopup({ event, onClose }: { event: Event; onClose: () => voi
       <View style={styles.popupHeader}>
         <Text style={styles.popupTitle}>{event.title}</Text>
         <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={8}>
-          <Ionicons name="close" size={20} color="rgba(50,35,80,0.70)" />
+          <Ionicons name="close" size={20} color="rgba(255,255,255,0.80)" />
         </Pressable>
       </View>
 
       <View style={thumbs.length === 1 ? styles.popupMainRow : undefined}>
         <View style={thumbs.length === 1 ? styles.popupDateTimeCol : undefined}>
           <View style={styles.popupRow}>
-            <Ionicons name="calendar-outline" size={15} color="rgba(50,35,80,0.60)" />
+            <Ionicons name="calendar-outline" size={15} color="rgba(255,255,255,0.70)" />
             <Text style={styles.popupRowText}>{formatFullDate(event.date)}</Text>
           </View>
           <View style={[styles.popupRow, { marginBottom: 0 }]}>
-            <Ionicons name="time-outline" size={15} color="rgba(50,35,80,0.60)" />
+            <Ionicons name="time-outline" size={15} color="rgba(255,255,255,0.70)" />
             <Text style={styles.popupRowText}>
               {formatTime(event.start_time)} – {formatTime(event.end_time)}
             </Text>
@@ -111,17 +111,17 @@ function EventDetailPopup({ event, onClose }: { event: Event; onClose: () => voi
 
       {event.location ? (
         <View style={styles.popupRow}>
-          <Ionicons name="location-outline" size={15} color="rgba(50,35,80,0.60)" />
+          <Ionicons name="location-outline" size={15} color="rgba(255,255,255,0.70)" />
           <Text style={styles.popupRowText}>{event.location}</Text>
         </View>
       ) : null}
       <View style={styles.popupRow}>
-        <Ionicons name="person-outline" size={15} color="rgba(50,35,80,0.60)" />
+        <Ionicons name="person-outline" size={15} color="rgba(255,255,255,0.70)" />
         <Text style={styles.popupRowText}>{event.created_by}</Text>
       </View>
       {assignees.length > 0 && (
         <View style={[styles.popupRow, { marginBottom: 0 }]}>
-          <Ionicons name="checkmark-circle-outline" size={15} color="rgba(50,35,80,0.60)" />
+          <Ionicons name="checkmark-circle-outline" size={15} color="rgba(255,255,255,0.70)" />
           <View style={styles.tagRow}>
             {assignees.map(name => {
               const c = userColor(name)
@@ -165,7 +165,7 @@ function DayListPopup({
       <View style={styles.popupHeader}>
         <Text style={styles.popupTitle}>{formatShortDate(dateStr)}</Text>
         <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={8}>
-          <Ionicons name="close" size={20} color="rgba(50,35,80,0.70)" />
+          <Ionicons name="close" size={20} color="rgba(255,255,255,0.80)" />
         </Pressable>
       </View>
       {events.map(e => (
@@ -322,11 +322,11 @@ export default function CalendarScreen() {
 
       <View style={styles.monthNav}>
         <Pressable onPress={goPrev} style={styles.navBtn}>
-          <Ionicons name="chevron-back" size={22} color="rgba(110,55,180,0.85)" />
+          <Ionicons name="chevron-back" size={22} color="rgba(255,255,255,0.92)" />
         </Pressable>
         <Text style={styles.monthTitle}>{MONTHS_FR[viewMonth]} {viewYear}</Text>
         <Pressable onPress={goNext} style={styles.navBtn}>
-          <Ionicons name="chevron-forward" size={22} color="rgba(110,55,180,0.85)" />
+          <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.92)" />
         </Pressable>
       </View>
 
@@ -339,7 +339,7 @@ export default function CalendarScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 32 }} color="rgba(50,35,80,0.70)" />
+        <ActivityIndicator style={{ marginTop: 32 }} color="rgba(255,255,255,0.80)" />
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.grid}>
@@ -394,14 +394,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(255,255,255,0.30)',
   },
-  title: { fontSize: 26, fontWeight: '700', color: '#1e1a36' },
-  eventCount: { fontSize: 13, color: 'rgba(50,35,80,0.65)', marginTop: 2 },
+  title: { fontSize: 26, fontWeight: '700', color: '#ffffff' },
+  eventCount: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
   monthNav: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 8, paddingVertical: 12,
   },
   navBtn: { padding: 8 },
-  monthTitle: { fontSize: 17, fontWeight: '600', color: '#1e1a36' },
+  monthTitle: { fontSize: 17, fontWeight: '600', color: '#ffffff' },
   dayHeaders: {
     flexDirection: 'row',
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
     paddingBottom: 6, paddingHorizontal: 4,
   },
   dayHeaderCell: { flex: 1, alignItems: 'center' },
-  dayHeaderText: { fontSize: 11, color: 'rgba(70,50,100,0.50)', fontWeight: '600' },
+  dayHeaderText: { fontSize: 11, color: 'rgba(255,255,255,0.55)', fontWeight: '600' },
   grid: { paddingHorizontal: 4 },
   weekRow: {
     flexDirection: 'row',
@@ -427,13 +427,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', marginBottom: 3,
   },
   dayNumToday: { backgroundColor: 'rgba(120,70,190,0.20)' },
-  dayNum: { fontSize: 13, color: 'rgba(110,55,180,0.75)' },
+  dayNum: { fontSize: 13, color: 'rgba(255,255,255,0.85)' },
   dayNumHighlight: { color: '#7040a8', fontWeight: '700' },
   chip: {
     borderRadius: 4, paddingHorizontal: 4, paddingVertical: 2, marginBottom: 2,
   },
   chipTitle: { fontSize: 10, fontWeight: '600' },
-  moreText: { fontSize: 10, color: 'rgba(70,50,100,0.50)', paddingLeft: 4 },
+  moreText: { fontSize: 10, color: 'rgba(255,255,255,0.55)', paddingLeft: 4 },
 
   backdrop: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.6)',
@@ -451,7 +451,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'flex-start', marginBottom: 12,
   },
-  popupTitle: { fontSize: 17, fontWeight: '700', color: '#1e1a36', flex: 1, marginRight: 12 },
+  popupTitle: { fontSize: 17, fontWeight: '700', color: '#ffffff', flex: 1, marginRight: 12 },
   closeBtn: { padding: 2 },
   popupMainRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 10 },
   popupDateTimeCol: { flex: 1 },
@@ -466,12 +466,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   popupRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  popupRowText: { fontSize: 13, color: 'rgba(110,55,180,0.80)', flex: 1 },
+  popupRowText: { fontSize: 13, color: 'rgba(255,255,255,0.88)', flex: 1 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, flex: 1 },
   tag: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
   tagText: { fontSize: 12, fontWeight: '500' },
   popupDescription: {
-    fontSize: 13, color: 'rgba(50,35,80,0.70)', lineHeight: 20,
+    fontSize: 13, color: 'rgba(255,255,255,0.80)', lineHeight: 20,
     marginTop: 10, paddingTop: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(0,0,0,0.08)',
@@ -488,6 +488,6 @@ const styles = StyleSheet.create({
   },
   eventAccent: { width: 3, height: 36, borderRadius: 2 },
   dayListInfo: { flex: 1 },
-  dayListTitle: { fontSize: 14, fontWeight: '600', color: '#1e1a36' },
-  dayListTime: { fontSize: 12, color: 'rgba(50,35,80,0.60)', marginTop: 2 },
+  dayListTitle: { fontSize: 14, fontWeight: '600', color: '#ffffff' },
+  dayListTime: { fontSize: 12, color: 'rgba(255,255,255,0.70)', marginTop: 2 },
 })

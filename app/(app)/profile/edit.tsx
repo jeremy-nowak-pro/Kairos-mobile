@@ -135,7 +135,7 @@ export default function ProfileEditScreen() {
           <Text style={s.title}>Modifier le profil</Text>
           <Pressable onPress={handleSave} disabled={saving} hitSlop={8}>
             {saving
-              ? <ActivityIndicator size="small" color="rgba(110,55,180,0.85)" />
+              ? <ActivityIndicator size="small" color="rgba(255,255,255,0.92)" />
               : <Text style={s.done}>Enregistrer</Text>
             }
           </Pressable>
@@ -147,7 +147,7 @@ export default function ProfileEditScreen() {
             style={s.input}
             value={name}
             onChangeText={text => { setName(text); setError(null) }}
-            placeholderTextColor="rgba(100,75,130,0.45)"
+            placeholderTextColor="rgba(255,255,255,0.38)"
             autoCapitalize="words"
             autoCorrect={false}
             returnKeyType="done"
@@ -169,7 +169,7 @@ export default function ProfileEditScreen() {
                 <Image source={{ uri: previewUri }} style={s.scheduleImage} contentFit="cover" />
               ) : (
                 <View style={s.scheduleDoc}>
-                  <Ionicons name="document-text-outline" size={28} color="rgba(50,35,80,0.60)" />
+                  <Ionicons name="document-text-outline" size={28} color="rgba(255,255,255,0.70)" />
                   <Text style={s.scheduleDocName} numberOfLines={1}>{schedule.filename}</Text>
                 </View>
               )}
@@ -182,7 +182,7 @@ export default function ProfileEditScreen() {
                 <View style={s.scheduleActions}>
                   <Pressable onPress={handleReplaceSchedule} disabled={scheduleUploading} hitSlop={8}>
                     {scheduleUploading
-                      ? <ActivityIndicator size="small" color="rgba(110,55,180,0.85)" />
+                      ? <ActivityIndicator size="small" color="rgba(255,255,255,0.92)" />
                       : <Text style={s.replaceLink}>Remplacer</Text>
                     }
                   </Pressable>
@@ -195,9 +195,9 @@ export default function ProfileEditScreen() {
           ) : (
             <Pressable style={s.scheduleAddBtn} onPress={handleReplaceSchedule} disabled={scheduleUploading}>
               {scheduleUploading
-                ? <ActivityIndicator size="small" color="rgba(110,55,180,0.85)" />
+                ? <ActivityIndicator size="small" color="rgba(255,255,255,0.92)" />
                 : <>
-                    <Ionicons name="add-circle-outline" size={18} color="rgba(50,35,80,0.60)" />
+                    <Ionicons name="add-circle-outline" size={18} color="rgba(255,255,255,0.70)" />
                     <Text style={s.scheduleAddText}>Ajouter mon emploi du temps</Text>
                   </>
               }
@@ -221,9 +221,9 @@ const s = StyleSheet.create({
     paddingTop: 56,
     paddingBottom: 16,
   },
-  cancel: { color: 'rgba(50,35,80,0.55)', fontSize: 16, width: 80 },
-  title: { fontSize: 17, fontWeight: '600', color: '#1e1a36' },
-  done: { color: 'rgba(110,55,180,0.85)', fontSize: 16, fontWeight: '600', width: 80, textAlign: 'right' },
+  cancel: { color: 'rgba(255,255,255,0.65)', fontSize: 16, width: 80 },
+  title: { fontSize: 17, fontWeight: '600', color: '#ffffff' },
+  done: { color: 'rgba(255,255,255,0.92)', fontSize: 16, fontWeight: '600', width: 80, textAlign: 'right' },
 
   section: {
     backgroundColor: 'rgba(255,255,255,0.12)',
@@ -237,7 +237,7 @@ const s = StyleSheet.create({
   },
   label: {
     fontSize: 11, fontWeight: '600',
-    color: 'rgba(50,35,80,0.65)',
+    color: 'rgba(255,255,255,0.75)',
     letterSpacing: 0.8,
     marginBottom: 10,
   },
@@ -249,9 +249,9 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#1e1a36',
+    color: '#ffffff',
   },
-  staticValue: { fontSize: 16, color: 'rgba(70,50,100,0.45)' },
+  staticValue: { fontSize: 16, color: 'rgba(255,255,255,0.50)' },
   error: { color: '#e05555', fontSize: 13, marginTop: 8 },
 
   scheduleCard: {
@@ -269,7 +269,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
-  scheduleDocName: { fontSize: 14, color: 'rgba(50,35,80,0.70)', maxWidth: '60%' },
+  scheduleDocName: { fontSize: 14, color: 'rgba(255,255,255,0.80)', maxWidth: '60%' },
   scheduleFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -279,9 +279,9 @@ const s = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(0,0,0,0.08)',
   },
-  scheduleDate: { fontSize: 12, color: 'rgba(70,50,100,0.50)', flex: 1 },
+  scheduleDate: { fontSize: 12, color: 'rgba(255,255,255,0.55)', flex: 1 },
   scheduleActions: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  replaceLink: { fontSize: 14, color: 'rgba(110,55,180,0.75)' },
+  replaceLink: { fontSize: 14, color: 'rgba(255,255,255,0.85)' },
 
   scheduleAddBtn: {
     flexDirection: 'row',
@@ -294,5 +294,5 @@ const s = StyleSheet.create({
     padding: 14,
     justifyContent: 'center',
   },
-  scheduleAddText: { fontSize: 14, color: 'rgba(50,35,80,0.60)' },
+  scheduleAddText: { fontSize: 14, color: 'rgba(255,255,255,0.70)' },
 })

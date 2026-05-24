@@ -36,7 +36,7 @@ function InfoRow({ icon, children, last }: {
     <>
       <View style={styles.infoRow}>
         <View style={styles.infoIcon}>
-          <Ionicons name={icon as any} size={17} color="rgba(50,35,80,0.70)" />
+          <Ionicons name={icon as any} size={17} color="rgba(255,255,255,0.80)" />
         </View>
         <View style={{ flex: 1 }}>{children}</View>
       </View>
@@ -141,7 +141,7 @@ export default function EventDetailScreen() {
   }
 
   if (loading) {
-    return <View style={styles.centered}><ActivityIndicator color="rgba(50,35,80,0.70)" /></View>
+    return <View style={styles.centered}><ActivityIndicator color="rgba(255,255,255,0.80)" /></View>
   }
 
   if (!event) {
@@ -170,7 +170,7 @@ export default function EventDetailScreen() {
 
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
-            <Ionicons name="chevron-back" size={24} color="rgba(110,55,180,0.85)" />
+            <Ionicons name="chevron-back" size={24} color="rgba(255,255,255,0.92)" />
           </Pressable>
           <View style={{ flex: 1 }} />
           <Pressable onPress={() => router.push(`/(app)/events/edit/${event.id}`)} hitSlop={8}>
@@ -274,7 +274,7 @@ export default function EventDetailScreen() {
                       <View style={styles.docIcon}>
                         <Ionicons
                           name={att.mime_type === 'application/pdf' ? 'document-text-outline' : 'document-outline'}
-                          size={18} color="rgba(50,35,80,0.70)"
+                          size={18} color="rgba(255,255,255,0.80)"
                         />
                       </View>
                       <Text style={styles.docName} numberOfLines={1}>{att.filename}</Text>
@@ -328,15 +328,15 @@ const styles = StyleSheet.create({
   },
   container: { flex: 1, backgroundColor: 'transparent', borderTopLeftRadius: 14, overflow: 'hidden' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'transparent' },
-  notFound: { fontSize: 16, color: 'rgba(50,35,80,0.65)', marginBottom: 12 },
-  backLink: { fontSize: 15, color: 'rgba(110,55,180,0.75)' },
+  notFound: { fontSize: 16, color: 'rgba(255,255,255,0.75)', marginBottom: 12 },
+  backLink: { fontSize: 15, color: 'rgba(255,255,255,0.85)' },
 
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingTop: 56, paddingBottom: 10,
   },
   backBtn: { padding: 4 },
-  editLink: { fontSize: 16, color: 'rgba(110,55,180,0.85)' },
+  editLink: { fontSize: 16, color: 'rgba(255,255,255,0.92)' },
 
   titleCard: {
     backgroundColor: 'rgba(255,255,255,0.12)',
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.38)',
   },
-  title: { fontSize: 24, fontWeight: '700', color: '#1e1a36', lineHeight: 30 },
+  title: { fontSize: 24, fontWeight: '700', color: '#ffffff', lineHeight: 30 },
 
   content: { paddingHorizontal: 16, paddingTop: 4 },
 
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.38)',
     justifyContent: 'center', alignItems: 'center',
   },
-  infoText: { fontSize: 15, color: '#1e1a36' },
+  infoText: { fontSize: 15, color: '#ffffff' },
   rowDivider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: 'rgba(0,0,0,0.08)',
@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
   },
 
   groupLabel: {
-    fontSize: 11, fontWeight: '600', color: 'rgba(50,35,80,0.65)',
+    fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.75)',
     letterSpacing: 0.8, marginBottom: 8, marginLeft: 4,
   },
 
@@ -394,7 +394,7 @@ const styles = StyleSheet.create({
   tagText: { fontSize: 13, fontWeight: '500' },
 
   descRow: { paddingHorizontal: 16, paddingVertical: 14 },
-  descText: { fontSize: 15, color: 'rgba(110,55,180,0.85)', lineHeight: 22 },
+  descText: { fontSize: 15, color: 'rgba(255,255,255,0.92)', lineHeight: 22 },
 
   docRow: {
     flexDirection: 'row', alignItems: 'center',
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.38)',
     justifyContent: 'center', alignItems: 'center',
   },
-  docName: { flex: 1, fontSize: 14, color: '#1e1a36' },
+  docName: { flex: 1, fontSize: 14, color: '#ffffff' },
 
   deleteSection: {
     marginTop: 48,
