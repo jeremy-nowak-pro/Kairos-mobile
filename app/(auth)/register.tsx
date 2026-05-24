@@ -138,14 +138,14 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.60)',
+    borderColor: 'rgba(255,255,255,0.38)',
     marginBottom: 14,
   },
   input: {
     padding: 16,
     fontSize: 15,
     color: '#1e1a36',
-    backgroundColor: 'rgba(255,255,255,0.60)',
+    backgroundColor: 'rgba(255,255,255,0.38)',
   },
   divider: {
     height: StyleSheet.hairlineWidth,
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   passwordRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.60)',
+    backgroundColor: 'rgba(255,255,255,0.38)',
   },
   passwordInput: {
     flex: 1,
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.50)',
   },
-  buttonText: { color: 'rgba(255,255,255,0.95)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
+  buttonText: { color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
   error: { color: '#e05555', marginBottom: 10, fontSize: 13, textAlign: 'center' },
   link: {
     marginTop: 22,

@@ -363,14 +363,14 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8, marginBottom: 6, marginTop: 16,
   },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.60)',
+    backgroundColor: 'rgba(255,255,255,0.38)',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.50)',
     borderRadius: 8,
     padding: 12, fontSize: 15, color: '#1e1a36',
   },
   dateButton: {
-    backgroundColor: 'rgba(255,255,255,0.60)',
+    backgroundColor: 'rgba(255,255,255,0.38)',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.50)',
     borderRadius: 8,
@@ -387,14 +387,14 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.50)',
     borderRadius: 8,
     paddingHorizontal: 16, paddingVertical: 10,
-    backgroundColor: 'rgba(255,255,255,0.45)',
+    backgroundColor: 'rgba(255,255,255,0.38)',
   },
   memberBtnActive: {
     borderColor: 'rgba(120,160,255,0.5)',
     backgroundColor: 'rgba(110,55,180,0.70)',
   },
   memberBtnText: { fontSize: 14, color: 'rgba(50,35,80,0.55)' },
-  memberBtnTextActive: { fontSize: 14, color: 'rgba(255,255,255,0.95)', fontWeight: '600' },
+  memberBtnTextActive: { fontSize: 14, color: 'rgba(255,255,255,0.85)', fontWeight: '600' },
   button: {
     backgroundColor: 'rgba(110,55,180,0.70)',
     borderRadius: 10,
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.50)',
   },
-  buttonText: { color: 'rgba(255,255,255,0.95)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
+  buttonText: { color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
   attachmentSection: {
     marginTop: 20,
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
 
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   sheet: {
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    backgroundColor: 'rgba(255,255,255,0.85)',
     borderTopLeftRadius: 16, borderTopRightRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.40)',
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.50)',
   },
-  sheetViewBtnText: { fontSize: 14, color: 'rgba(255,255,255,0.95)', fontWeight: '600' },
+  sheetViewBtnText: { fontSize: 14, color: 'rgba(255,255,255,0.85)', fontWeight: '600' },
   sheetNoSchedule: { fontSize: 14, color: 'rgba(70,50,100,0.45)' },
   sheetClose: { marginTop: 16, padding: 12, alignItems: 'center' },
   sheetCloseText: { fontSize: 16, color: 'rgba(50,35,80,0.60)' },

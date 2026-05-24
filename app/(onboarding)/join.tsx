@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.60)',
+    borderColor: 'rgba(255,255,255,0.38)',
     marginBottom: 14,
   },
   input: {
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 8,
     color: '#1e1a36',
-    backgroundColor: 'rgba(255,255,255,0.60)',
+    backgroundColor: 'rgba(255,255,255,0.38)',
   },
   button: {
     backgroundColor: 'rgba(110,55,180,0.70)',
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.50)',
   },
-  buttonText: { color: 'rgba(255,255,255,0.95)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
+  buttonText: { color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
   error: { color: '#e05555', marginBottom: 10, fontSize: 13, textAlign: 'center' },
   link: { marginTop: 22, textAlign: 'center', color: 'rgba(70,50,100,0.50)', fontSize: 13 },
 })

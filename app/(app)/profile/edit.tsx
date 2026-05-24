@@ -225,9 +225,9 @@ const s = StyleSheet.create({
   done: { color: 'rgba(110,55,180,0.85)', fontSize: 16, fontWeight: '600', width: 80, textAlign: 'right' },
 
   section: {
-    backgroundColor: 'rgba(255,255,255,0.82)',
+    backgroundColor: 'rgba(255,255,255,0.65)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.45)',
+    borderColor: 'rgba(255,255,255,0.38)',
     marginHorizontal: 16,
     marginBottom: 12,
     borderRadius: 14,
@@ -240,7 +240,7 @@ const s = StyleSheet.create({
     marginBottom: 10,
   },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.60)',
+    backgroundColor: 'rgba(255,255,255,0.38)',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.50)',
     borderRadius: 10,
@@ -261,7 +261,7 @@ const s = StyleSheet.create({
   scheduleImage: { width: '100%', height: 180 },
   scheduleDoc: {
     height: 90,
-    backgroundColor: 'rgba(255,255,255,0.60)',
+    backgroundColor: 'rgba(255,255,255,0.38)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
