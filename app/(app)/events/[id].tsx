@@ -412,11 +412,9 @@ const styles = StyleSheet.create({
     gap: 8, marginTop: 32, marginBottom: 8,
     paddingVertical: 16,
     borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(224,85,85,0.45)',
-    backgroundColor: 'rgba(224,85,85,0.12)',
+    backgroundColor: 'rgba(200,40,40,0.75)',
   },
-  deleteBtnText: { fontSize: 15, fontWeight: '500', color: '#e05555' },
+  deleteBtnText: { fontSize: 15, fontWeight: '600', color: '#ffffff' },
 
   viewerBackdrop: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   viewerImage: { width: '100%', height: '85%' },
