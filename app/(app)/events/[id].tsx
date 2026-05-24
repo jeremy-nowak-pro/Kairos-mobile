@@ -317,7 +317,7 @@ export default function EventDetailScreen() {
 const styles = StyleSheet.create({
   shadow: {
     flex: 1,
-    backgroundColor: '#070818',
+    backgroundColor: 'transparent',
     borderTopLeftRadius: 14,
     shadowColor: '#000',
     shadowOffset: { width: -8, height: 0 },
@@ -325,8 +325,8 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-  container: { flex: 1, backgroundColor: '#070818', borderTopLeftRadius: 14, overflow: 'hidden' },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#070818' },
+  container: { flex: 1, backgroundColor: 'transparent', borderTopLeftRadius: 14, overflow: 'hidden' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'transparent' },
   notFound: { fontSize: 16, color: 'rgba(150,175,220,0.45)', marginBottom: 12 },
   backLink: { fontSize: 15, color: 'rgba(180,210,255,0.7)' },
 

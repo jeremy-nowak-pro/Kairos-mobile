@@ -546,7 +546,7 @@ export default function ShoppingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#070818' },
+  container: { flex: 1, backgroundColor: 'transparent' },
 
   header: {
     paddingHorizontal: 20,
