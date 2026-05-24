@@ -1,75 +1,81 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import {
   View, Text, TextInput, Pressable,
   StyleSheet, ActivityIndicator, useWindowDimensions,
-  Animated, Easing,
 } from 'react-native'
 import { Link, router } from 'expo-router'
 import { useAuth } from '@/context/auth'
 import { BlurView } from 'expo-blur'
-import { LinearGradient } from 'expo-linear-gradient'
+import { Canvas, Fill, Shader, Skia, useClock } from '@shopify/react-native-skia'
+import { useDerivedValue } from 'react-native-reanimated'
 
 // ── Mesh gradient background ─────────────────────────────────────────────────
 
-const STEPS = 32
-const INPUT = Array.from({ length: STEPS + 1 }, (_, i) => i / STEPS)
+const SKSL = `
+uniform float2 iResolution;
+uniform float iTime;
 
-function sinPoints(amplitude: number, phase = 0): number[] {
-  return INPUT.map(t => Math.sin(t * Math.PI * 2 + phase) * amplitude)
+float blob(float2 p, float2 center, float spread) {
+  float2 d = p - center;
+  return exp(-(d.x * d.x + d.y * d.y) / spread);
 }
 
-function useOscillator(duration: number) {
-  const anim = useRef(new Animated.Value(0)).current
-  useEffect(() => {
-    Animated.loop(
-      Animated.timing(anim, { toValue: 1, duration, easing: Easing.linear, useNativeDriver: true })
-    ).start()
-  }, [])
-  return anim
+half4 main(float2 fragCoord) {
+  float2 uv = fragCoord / iResolution;
+  float t = iTime * 0.00025;
+
+  float wx = sin(uv.y * 5.0 + t * 2.1) * 0.07 + sin(uv.x * 4.0 + t * 1.5) * 0.05;
+  float wy = cos(uv.x * 4.5 - t * 1.8) * 0.06 + cos(uv.y * 3.0 + t * 1.2) * 0.05;
+  float2 d = uv + float2(wx, wy);
+
+  float2 b1 = float2(0.25 + sin(t * 1.1) * 0.30, 0.30 + cos(t * 0.7) * 0.22);
+  float2 b2 = float2(0.75 + cos(t * 0.9) * 0.22, 0.25 + sin(t * 1.3) * 0.25);
+  float2 b3 = float2(0.50 + sin(t * 1.5) * 0.28, 0.72 + cos(t * 0.8) * 0.18);
+  float2 b4 = float2(0.18 + cos(t * 0.6) * 0.18, 0.62 + sin(t * 1.0) * 0.22);
+  float2 b5 = float2(0.82 + sin(t * 0.8) * 0.15, 0.78 + cos(t * 1.2) * 0.18);
+
+  float spread = 0.12;
+  float w1 = blob(d, b1, spread);
+  float w2 = blob(d, b2, spread);
+  float w3 = blob(d, b3, spread);
+  float w4 = blob(d, b4, spread);
+  float w5 = blob(d, b5, spread);
+
+  float3 c1 = float3(0.133, 0.282, 0.722);
+  float3 c2 = float3(0.212, 0.188, 0.690);
+  float3 c3 = float3(0.290, 0.102, 0.667);
+  float3 c4 = float3(0.102, 0.235, 0.729);
+  float3 c5 = float3(0.369, 0.086, 0.635);
+  float3 bg = float3(0.027, 0.031, 0.094);
+
+  float wTotal = w1 + w2 + w3 + w4 + w5;
+  float3 col = (c1 * w1 + c2 * w2 + c3 * w3 + c4 * w4 + c5 * w5) / (wTotal + 0.0001);
+  float coverage = clamp(wTotal * 1.5, 0.0, 1.0);
+  col = mix(bg, col, coverage);
+
+  return half4(col, 1.0);
 }
+`
+
+const effect = Skia.RuntimeEffect.Make(SKSL)
 
 function MeshBackground() {
   const { width, height } = useWindowDimensions()
-  const W = width * 2.2
-  const H = height * 2.2
-  const ox = -width * 0.6
-  const oy = -height * 0.6
+  const clock = useClock()
 
-  const a1 = useOscillator(14000)
-  const a2 = useOscillator(9500)
-  const a3 = useOscillator(18000)
-  const a4 = useOscillator(12000)
-  const a5 = useOscillator(16000)
+  const uniforms = useDerivedValue(() => ({
+    iResolution: [width, height] as [number, number],
+    iTime: clock.value,
+  }))
 
-  const tx1 = a1.interpolate({ inputRange: INPUT, outputRange: sinPoints(width * 0.38) })
-  const ty1 = a1.interpolate({ inputRange: INPUT, outputRange: sinPoints(height * 0.22, Math.PI * 0.6) })
-
-  const tx2 = a2.interpolate({ inputRange: INPUT, outputRange: sinPoints(width * 0.28, Math.PI * 0.5) })
-  const ty2 = a2.interpolate({ inputRange: INPUT, outputRange: sinPoints(height * 0.42) })
-
-  const tx3 = a3.interpolate({ inputRange: INPUT, outputRange: sinPoints(width * 0.44, Math.PI) })
-  const ty3 = a3.interpolate({ inputRange: INPUT, outputRange: sinPoints(height * 0.3, Math.PI * 0.25) })
-
-  const tx4 = a4.interpolate({ inputRange: INPUT, outputRange: sinPoints(width * 0.32, Math.PI * 0.75) })
-  const ty4 = a4.interpolate({ inputRange: INPUT, outputRange: sinPoints(height * 0.28, Math.PI * 1.4) })
-
-  const tx5 = a5.interpolate({ inputRange: INPUT, outputRange: sinPoints(width * 0.22, Math.PI * 1.1) })
-  const ty5 = a5.interpolate({ inputRange: INPUT, outputRange: sinPoints(height * 0.36, Math.PI * 0.4) })
-
-  const layer = (tx: Animated.AnimatedInterpolation<number>, ty: Animated.AnimatedInterpolation<number>, colors: readonly [string, string, ...string[]], start: { x: number; y: number }, end: { x: number; y: number }) => (
-    <Animated.View style={[styles.layer, { width: W, height: H, left: ox, top: oy, transform: [{ translateX: tx }, { translateY: ty }] }]}>
-      <LinearGradient colors={colors} style={StyleSheet.absoluteFill} start={start} end={end} />
-    </Animated.View>
-  )
+  if (!effect) return <View style={[StyleSheet.absoluteFill, { backgroundColor: '#070818' }]} />
 
   return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: '#04060f', overflow: 'hidden' }]}>
-      {layer(tx1, ty1, ['#2a0d5e', '#150630', 'transparent'], { x: 0, y: 0 }, { x: 1, y: 1 })}
-      {layer(tx2, ty2, ['#0d2d6e', '#060f28', 'transparent'], { x: 1, y: 0 }, { x: 0, y: 1 })}
-      {layer(tx3, ty3, ['#1a0a50', '#0a0520', 'transparent'], { x: 0.5, y: 0 }, { x: 0.5, y: 1 })}
-      {layer(tx4, ty4, ['#0a2850', '#040e20', 'transparent'], { x: 0, y: 1 }, { x: 1, y: 0 })}
-      {layer(tx5, ty5, ['#1e0845', '#0d0328', 'transparent'], { x: 1, y: 0.5 }, { x: 0, y: 0.5 })}
-    </View>
+    <Canvas style={StyleSheet.absoluteFill}>
+      <Fill>
+        <Shader source={effect} uniforms={uniforms} />
+      </Fill>
+    </Canvas>
   )
 }
 
@@ -107,7 +113,7 @@ export default function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="Email"
-            placeholderTextColor="rgba(160,180,220,0.35)"
+            placeholderTextColor="rgba(160,185,230,0.55)"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -118,7 +124,7 @@ export default function LoginScreen() {
             <TextInput
               style={styles.passwordInput}
               placeholder="Mot de passe"
-              placeholderTextColor="rgba(160,180,220,0.35)"
+              placeholderTextColor="rgba(160,185,230,0.55)"
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
@@ -146,15 +152,11 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#04060f' },
+  root: { flex: 1, backgroundColor: '#070818' },
   content: {
     flex: 1,
     justifyContent: 'center',
     padding: 28,
-  },
-  layer: {
-    position: 'absolute',
-    opacity: 0.9,
   },
   title: {
     fontSize: 44,
@@ -176,23 +178,23 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(140,170,255,0.18)',
+    borderColor: 'rgba(140,170,255,0.35)',
     marginBottom: 14,
   },
   input: {
     padding: 16,
     fontSize: 15,
-    color: '#ccd8f0',
-    backgroundColor: 'rgba(8,16,48,0.35)',
+    color: '#e8f0ff',
+    backgroundColor: 'rgba(15,28,80,0.6)',
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(140,170,255,0.1)',
+    backgroundColor: 'rgba(140,170,255,0.2)',
   },
   passwordRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(8,16,48,0.35)',
+    backgroundColor: 'rgba(15,28,80,0.6)',
   },
   passwordInput: {
     flex: 1,

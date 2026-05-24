@@ -119,18 +119,60 @@ Toutes les tables sont protégées par Row-Level Security Supabase. Chaque requ�
 - Animations : `Animated` d'expo — pas de bibliothèque externe
 - Dates : `toLocaleDateString('fr-FR', {...})` — interface en français
 
-## Palette couleurs
+## Design system — thème sombre (glassmorphisme)
+
+L'app utilise un thème sombre avec un fond mesh-gradient animé et des surfaces en verre (BlurView).
+
+### Fond
 
 ```
-Primary    #2563EB  (bleu)
-Error      #dc2626  (rouge)
-Success    #34c759  (vert)
-Bg light   #f2f2f7
-Bg card    #ffffff
-Text main  #111111
-Text secondary #999999
-Border     #e5e5e5
+Bg base          #070818   fond quasi-noir, derrière tout
+Mesh gradient    palette analogue bleu-indigo-violet (5 couches sinusoïdales)
+  — bleu royal   #2248b8
+  — bleu-indigo  #3530b0
+  — indigo       #4a1aaa
+  — cobalt       #1a3cba
+  — violet       #5e16a2
 ```
+
+### Surfaces verre (BlurView)
+
+```
+Card tint        dark, intensity 22
+Card bg          rgba(8, 16, 48, 0.35)
+Card border      rgba(140, 170, 255, 0.18)   hairlineWidth
+```
+
+### Texte
+
+```
+Text primary     #dce8ff
+Text secondary   rgba(150, 175, 220, 0.45)
+Text placeholder rgba(160, 180, 220, 0.35)
+```
+
+### Actions
+
+```
+Button bg        rgba(25, 55, 140, 0.5)
+Button border    rgba(120, 160, 255, 0.3)    hairlineWidth
+Button text      rgba(200, 220, 255, 0.95)
+```
+
+### États
+
+```
+Error            #e05555
+Success          #34c759
+Primary action   #2563EB   (hors contexte glassmorphisme, ex: badges)
+```
+
+### Règles
+
+- `BlurView` toujours avec `overflow: 'hidden'` sur le conteneur
+- Bordures : `StyleSheet.hairlineWidth` uniquement, jamais de `borderWidth: 1` arbitraire
+- Pas de `shadow-*` — le verre se distingue par la bordure et le blur, pas l'ombre
+- Le fond mesh-gradient est le seul endroit avec de la couleur saturée ; le reste de l'UI reste sobre
 
 ---
 
