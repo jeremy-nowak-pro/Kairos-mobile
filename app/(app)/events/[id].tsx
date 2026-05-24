@@ -167,14 +167,7 @@ export default function EventDetailScreen() {
     >
     <Animated.View style={[styles.shadow, { transform: [{ translateX }] }]}>
       <View style={styles.container}>
-      <LinearGradient
-        colors={['#3a1f5c', '#1a0e30', '#1a0e30', '#2a1438']}
-        locations={[0, 0.25, 0.6, 1]}
-        start={{ x: 0.7, y: -0.3 }}
-        end={{ x: 0.2, y: 1.2 }}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: color.text, opacity: 0.07 }]} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#e00000' }]} />
       <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
 
         <View style={styles.header}>
@@ -335,7 +328,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-  container: { flex: 1, backgroundColor: '#1a0e30', borderTopLeftRadius: 14, overflow: 'hidden' },
+  container: { flex: 1, backgroundColor: '#e00000', borderTopLeftRadius: 14, overflow: 'hidden' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   notFound: { fontSize: 16, color: 'rgba(255,255,255,0.75)', marginBottom: 12 },
   backLink: { fontSize: 15, color: 'rgba(255,255,255,0.85)' },
