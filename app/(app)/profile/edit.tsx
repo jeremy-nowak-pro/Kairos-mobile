@@ -10,6 +10,7 @@ import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
+import { BlurView } from 'expo-blur'
 import { MemberSchedule, getSpaceSchedules, uploadSchedule, deleteSchedule, getScheduleSignedUrl } from '@/lib/schedules'
 import { LocalFile } from '@/lib/attachments'
 
@@ -140,7 +141,7 @@ export default function ProfileEditScreen() {
           </Pressable>
         </View>
 
-        <View style={s.section}>
+        <BlurView intensity={22} tint="light" style={s.section}>
           <Text style={s.label}>PSEUDO</Text>
           <TextInput
             style={s.input}
@@ -153,14 +154,14 @@ export default function ProfileEditScreen() {
             onSubmitEditing={handleSave}
           />
           {error && <Text style={s.error}>{error}</Text>}
-        </View>
+        </BlurView>
 
-        <View style={s.section}>
+        <BlurView intensity={22} tint="light" style={s.section}>
           <Text style={s.label}>EMAIL</Text>
           <Text style={s.staticValue}>{user?.email}</Text>
-        </View>
+        </BlurView>
 
-        <View style={s.section}>
+        <BlurView intensity={22} tint="light" style={s.section}>
           <Text style={s.label}>EMPLOI DU TEMPS</Text>
           {schedule ? (
             <View style={s.scheduleCard}>
@@ -202,7 +203,7 @@ export default function ProfileEditScreen() {
               }
             </Pressable>
           )}
-        </View>
+        </BlurView>
 
       </ScrollView>
     </KeyboardAvoidingView>
@@ -225,7 +226,8 @@ const s = StyleSheet.create({
   done: { color: 'rgba(110,55,180,0.85)', fontSize: 16, fontWeight: '600', width: 80, textAlign: 'right' },
 
   section: {
-    backgroundColor: 'rgba(255,255,255,0.65)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.38)',
     marginHorizontal: 16,

@@ -11,6 +11,7 @@ import { getEvent, deleteEvent, Event } from '@/lib/events'
 import { getAttachments, Attachment } from '@/lib/attachments'
 import { getImageUrl } from '@/lib/imageCache'
 import { userColor } from '@/lib/userColor'
+import { BlurView } from 'expo-blur'
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('fr-FR', {
@@ -23,7 +24,7 @@ function formatTime(t: string): string {
 }
 
 function SectionCard({ children }: { children: React.ReactNode }) {
-  return <View style={styles.sectionCard}>{children}</View>
+  return <BlurView intensity={22} tint="light" style={styles.sectionCard}>{children}</BlurView>
 }
 
 function InfoRow({ icon, children, last }: {
@@ -182,9 +183,9 @@ export default function EventDetailScreen() {
           transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
         }}>
 
-        <View style={[styles.titleCard, { borderLeftColor: color.text }]}>
+        <BlurView intensity={22} tint="light" style={[styles.titleCard, { borderLeftColor: color.text }]}>
           <Text style={styles.title}>{event.title}</Text>
-        </View>
+        </BlurView>
 
         <View style={styles.content}>
 
@@ -338,7 +339,8 @@ const styles = StyleSheet.create({
   editLink: { fontSize: 16, color: 'rgba(110,55,180,0.85)' },
 
   titleCard: {
-    backgroundColor: 'rgba(255,255,255,0.65)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    overflow: 'hidden',
     borderRadius: 12,
     marginHorizontal: 16,
     marginBottom: 20,
@@ -353,7 +355,7 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 16, paddingTop: 4 },
 
   sectionCard: {
-    backgroundColor: 'rgba(255,255,255,0.65)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
