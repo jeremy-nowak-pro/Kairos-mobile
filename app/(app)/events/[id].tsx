@@ -11,7 +11,6 @@ import { getEvent, deleteEvent, Event } from '@/lib/events'
 import { getAttachments, Attachment } from '@/lib/attachments'
 import { getImageUrl } from '@/lib/imageCache'
 import { userColor } from '@/lib/userColor'
-import { BlurView } from 'expo-blur'
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('fr-FR', {
@@ -24,7 +23,7 @@ function formatTime(t: string): string {
 }
 
 function SectionCard({ children }: { children: React.ReactNode }) {
-  return <BlurView intensity={40} tint="light" style={styles.sectionCard}>{children}</BlurView>
+  return <View style={styles.sectionCard}>{children}</View>
 }
 
 function InfoRow({ icon, children, last }: {
@@ -183,9 +182,9 @@ export default function EventDetailScreen() {
           transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
         }}>
 
-        <BlurView intensity={40} tint="light" style={[styles.titleCard, { borderLeftColor: color.text }]}>
+        <View style={[styles.titleCard, { borderLeftColor: color.text }]}>
           <Text style={styles.title}>{event.title}</Text>
-        </BlurView>
+        </View>
 
         <View style={styles.content}>
 
@@ -339,8 +338,7 @@ const styles = StyleSheet.create({
   editLink: { fontSize: 16, color: 'rgba(255,255,255,0.92)' },
 
   titleCard: {
-    backgroundColor: 'rgba(255,255,255,0.22)',
-    overflow: 'hidden',
+    backgroundColor: 'rgba(60,25,90,0.42)',
     borderRadius: 12,
     marginHorizontal: 16,
     marginBottom: 20,
@@ -348,19 +346,19 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     borderLeftWidth: 5,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.45)',
+    borderColor: 'rgba(200,160,255,0.20)',
   },
   title: { fontSize: 24, fontWeight: '700', color: '#ffffff', lineHeight: 30 },
 
   content: { paddingHorizontal: 16, paddingTop: 4 },
 
   sectionCard: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: 'rgba(60,25,90,0.42)',
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.45)',
+    borderColor: 'rgba(200,160,255,0.20)',
   },
   infoRow: {
     flexDirection: 'row', alignItems: 'center',
