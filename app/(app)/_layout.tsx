@@ -4,8 +4,22 @@ import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { BlurView } from 'expo-blur'
 import { registerPushToken } from '@/lib/notifications'
 import ChatPanel from '@/components/ChatPanel'
+
+function TabBarBackground() {
+  return (
+    <BlurView
+      intensity={50}
+      tint="dark"
+      style={[
+        StyleSheet.absoluteFill,
+        { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: 'rgba(255,255,255,0.18)' },
+      ]}
+    />
+  )
+}
 
 export default function AppLayout() {
   const { session, loading, user } = useAuth()
@@ -32,14 +46,14 @@ export default function AppLayout() {
         headerShown: false,
         sceneStyle: { backgroundColor: 'transparent' },
         tabBarStyle: {
-          backgroundColor: 'rgba(255,255,255,0.88)',
-          borderTopColor: 'rgba(0,0,0,0.08)',
-          borderTopWidth: StyleSheet.hairlineWidth,
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
           elevation: 0,
         },
-        tabBarActiveTintColor: '#7040a8',
-        tabBarInactiveTintColor: 'rgba(70,50,100,0.50)',
-        tabBarLabelStyle: { fontSize: 12 },
+        tabBarBackground: () => <TabBarBackground />,
+        tabBarActiveTintColor: '#ffffff',
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.50)',
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
       }}
     >
       <Tabs.Screen
