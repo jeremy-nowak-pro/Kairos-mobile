@@ -33,9 +33,9 @@ half4 main(float2 fragCoord) {
   float w5 = blob(d, b5, spread);
 
   float3 c1 = float3(0.231, 0.118, 0.471);
-  float3 c2 = float3(0.439, 0.220, 0.659);
+  float3 c2 = float3(0.420, 0.502, 0.780);
   float3 c3 = float3(0.627, 0.282, 0.471);
-  float3 c4 = float3(0.533, 0.125, 0.565);
+  float3 c4 = float3(0.831, 0.627, 0.596);
   float3 c5 = float3(0.784, 0.408, 0.345);
   float3 bg = float3(0.102, 0.055, 0.188);
 
