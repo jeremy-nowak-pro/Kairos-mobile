@@ -19,6 +19,7 @@ import CalendarPicker from '@/components/CalendarPicker'
 import TimePicker from '@/components/TimePicker'
 import AttachmentSection from '@/components/AttachmentSection'
 import LocationInput from '@/components/LocationInput'
+import MeshBackground from '@/components/MeshBackground'
 
 function parseTimeInput(input: string): string | null {
   const match = input.match(/^(\d{2}):(\d{2})$/)
@@ -124,7 +125,8 @@ export default function NewEventScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: '#070818' }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <MeshBackground />
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Pressable onPress={() => router.back()}>
@@ -336,7 +338,7 @@ export default function NewEventScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#070818' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingTop: 56, paddingBottom: 16,

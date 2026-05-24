@@ -6,6 +6,7 @@ import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { registerPushToken } from '@/lib/notifications'
 import ChatPanel from '@/components/ChatPanel'
+import MeshBackground from '@/components/MeshBackground'
 
 export default function AppLayout() {
   const { session, loading, user } = useAuth()
@@ -27,11 +28,13 @@ export default function AppLayout() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#070818' }}>
+    <MeshBackground />
     <Tabs
+      sceneStyle={{ backgroundColor: 'transparent' }}
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#070818',
+          backgroundColor: 'rgba(7,8,24,0.88)',
           borderTopColor: 'rgba(140,170,255,0.15)',
           borderTopWidth: StyleSheet.hairlineWidth,
           elevation: 0,

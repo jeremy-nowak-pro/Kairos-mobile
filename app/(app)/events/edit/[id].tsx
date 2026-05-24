@@ -347,8 +347,8 @@ export default function EditEventScreen() {
 }
 
 const styles = StyleSheet.create({
-  loadingCenter: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#070818' },
-  container: { flex: 1, backgroundColor: '#070818' },
+  loadingCenter: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'transparent' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingTop: 56, paddingBottom: 16,
