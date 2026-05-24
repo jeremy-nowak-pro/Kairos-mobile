@@ -127,7 +127,7 @@ export default function EditEventScreen() {
   }
 
   if (!loaded) {
-    return <View style={styles.loadingCenter}><ActivityIndicator color="rgba(150,175,220,0.6)" /></View>
+    return <View style={styles.loadingCenter}><ActivityIndicator color="rgba(50,35,80,0.70)" /></View>
   }
 
   const createdBy = displayName ?? 'moi'
@@ -148,7 +148,7 @@ export default function EditEventScreen() {
           <TextInput
             style={styles.input}
             placeholder="Réunion, anniversaire, sortie..."
-            placeholderTextColor="rgba(160,185,230,0.4)"
+            placeholderTextColor="rgba(100,75,130,0.45)"
             value={title}
             onChangeText={setTitle}
           />
@@ -215,7 +215,7 @@ export default function EditEventScreen() {
           <TextInput
             style={[styles.input, styles.textarea]}
             placeholder="Notes, ordre du jour..."
-            placeholderTextColor="rgba(160,185,230,0.4)"
+            placeholderTextColor="rgba(100,75,130,0.45)"
             value={description}
             onChangeText={setDescription}
             multiline
@@ -310,7 +310,7 @@ export default function EditEventScreen() {
                       }}
                     >
                       {scheduleLoadingId === m.user_id
-                        ? <ActivityIndicator size="small" color="rgba(180,210,255,0.8)" />
+                        ? <ActivityIndicator size="small" color="rgba(110,55,180,0.85)" />
                         : <Text style={styles.sheetViewBtnText}>Voir</Text>
                       }
                     </Pressable>
@@ -353,60 +353,60 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingTop: 56, paddingBottom: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(140,170,255,0.15)',
+    borderBottomColor: 'rgba(255,255,255,0.30)',
   },
-  cancel: { color: 'rgba(180,210,255,0.7)', fontSize: 16, width: 64 },
-  title: { fontSize: 18, fontWeight: '600', color: '#dce8ff' },
+  cancel: { color: 'rgba(110,55,180,0.75)', fontSize: 16, width: 64 },
+  title: { fontSize: 18, fontWeight: '600', color: '#1e1a36' },
   form: { padding: 20 },
   label: {
-    fontSize: 11, fontWeight: '600', color: 'rgba(150,175,220,0.45)',
+    fontSize: 11, fontWeight: '600', color: 'rgba(50,35,80,0.65)',
     letterSpacing: 0.8, marginBottom: 6, marginTop: 16,
   },
   input: {
-    backgroundColor: 'rgba(15,28,80,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.60)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(140,170,255,0.25)',
+    borderColor: 'rgba(255,255,255,0.50)',
     borderRadius: 8,
-    padding: 12, fontSize: 15, color: '#e8f0ff',
+    padding: 12, fontSize: 15, color: '#1e1a36',
   },
   dateButton: {
-    backgroundColor: 'rgba(15,28,80,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.60)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(140,170,255,0.25)',
+    borderColor: 'rgba(255,255,255,0.50)',
     borderRadius: 8,
     padding: 12,
   },
-  dateText: { fontSize: 15, color: '#dce8ff' },
-  datePlaceholder: { fontSize: 15, color: 'rgba(160,185,230,0.4)' },
+  dateText: { fontSize: 15, color: '#1e1a36' },
+  datePlaceholder: { fontSize: 15, color: 'rgba(100,75,130,0.45)' },
   textarea: { height: 96, textAlignVertical: 'top' },
   row: { flexDirection: 'row', gap: 12 },
   rowItem: { flex: 1 },
   memberRow: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
   memberBtn: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(140,170,255,0.25)',
+    borderColor: 'rgba(255,255,255,0.50)',
     borderRadius: 8,
     paddingHorizontal: 16, paddingVertical: 10,
-    backgroundColor: 'rgba(15,28,80,0.4)',
+    backgroundColor: 'rgba(255,255,255,0.45)',
   },
   memberBtnActive: {
     borderColor: 'rgba(120,160,255,0.5)',
-    backgroundColor: 'rgba(25,55,140,0.5)',
+    backgroundColor: 'rgba(110,55,180,0.70)',
   },
-  memberBtnText: { fontSize: 14, color: 'rgba(150,175,220,0.55)' },
-  memberBtnTextActive: { fontSize: 14, color: 'rgba(200,220,255,0.95)', fontWeight: '600' },
+  memberBtnText: { fontSize: 14, color: 'rgba(50,35,80,0.55)' },
+  memberBtnTextActive: { fontSize: 14, color: 'rgba(255,255,255,0.95)', fontWeight: '600' },
   button: {
-    backgroundColor: 'rgba(25,55,140,0.5)',
+    backgroundColor: 'rgba(110,55,180,0.70)',
     borderRadius: 10,
     padding: 16, alignItems: 'center', marginTop: 24,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(120,160,255,0.3)',
+    borderColor: 'rgba(255,255,255,0.50)',
   },
-  buttonText: { color: 'rgba(200,220,255,0.95)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
+  buttonText: { color: 'rgba(255,255,255,0.95)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
   attachmentSection: {
     marginTop: 20,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(140,170,255,0.12)',
+    borderTopColor: 'rgba(0,0,0,0.08)',
     paddingTop: 16,
   },
   scheduleBtn: {
@@ -418,32 +418,32 @@ const styles = StyleSheet.create({
 
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   sheet: {
-    backgroundColor: 'rgba(10,16,48,0.98)',
+    backgroundColor: 'rgba(255,255,255,0.95)',
     borderTopLeftRadius: 16, borderTopRightRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(140,170,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.40)',
     padding: 20, paddingBottom: 40,
   },
-  sheetTitle: { fontSize: 16, fontWeight: '700', color: '#dce8ff', marginBottom: 16 },
-  sheetEmpty: { fontSize: 14, color: 'rgba(150,175,220,0.4)', marginBottom: 16 },
+  sheetTitle: { fontSize: 16, fontWeight: '700', color: '#1e1a36', marginBottom: 16 },
+  sheetEmpty: { fontSize: 14, color: 'rgba(70,50,100,0.50)', marginBottom: 16 },
   sheetRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(140,170,255,0.1)',
   },
-  sheetMemberName: { fontSize: 16, color: '#dce8ff', fontWeight: '500' },
+  sheetMemberName: { fontSize: 16, color: '#1e1a36', fontWeight: '500' },
   sheetViewBtn: {
-    backgroundColor: 'rgba(25,55,140,0.5)',
+    backgroundColor: 'rgba(110,55,180,0.70)',
     borderRadius: 6, paddingHorizontal: 14, paddingVertical: 7, minWidth: 60,
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(120,160,255,0.3)',
+    borderColor: 'rgba(255,255,255,0.50)',
   },
-  sheetViewBtnText: { fontSize: 14, color: 'rgba(200,220,255,0.95)', fontWeight: '600' },
-  sheetNoSchedule: { fontSize: 14, color: 'rgba(150,175,220,0.35)' },
+  sheetViewBtnText: { fontSize: 14, color: 'rgba(255,255,255,0.95)', fontWeight: '600' },
+  sheetNoSchedule: { fontSize: 14, color: 'rgba(70,50,100,0.45)' },
   sheetClose: { marginTop: 16, padding: 12, alignItems: 'center' },
-  sheetCloseText: { fontSize: 16, color: 'rgba(150,175,220,0.5)' },
+  sheetCloseText: { fontSize: 16, color: 'rgba(50,35,80,0.60)' },
 
   viewerBackdrop: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   viewerImage: { width: '100%', height: '85%' },

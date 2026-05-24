@@ -190,7 +190,7 @@ export default function ChatPanel() {
         >
           <Animated.View style={[styles.handle, { top: handleTop }]}>
             <Pressable style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} onPress={openChat}>
-              <Ionicons name="chatbubbles" size={20} color="rgba(200,220,255,0.9)" />
+              <Ionicons name="chatbubbles" size={20} color="rgba(255,255,255,0.90)" />
               {unread > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text>
@@ -226,12 +226,12 @@ export default function ChatPanel() {
             <View style={styles.drawerHeader}>
               <Text style={styles.drawerTitle}>Discussion</Text>
               <Pressable onPress={closeChat} hitSlop={12}>
-                <Ionicons name="close" size={22} color="rgba(150,175,220,0.6)" />
+                <Ionicons name="close" size={22} color="rgba(50,35,80,0.70)" />
               </Pressable>
             </View>
 
             {loading ? (
-              <ActivityIndicator style={{ flex: 1 }} color="rgba(150,175,220,0.6)" />
+              <ActivityIndicator style={{ flex: 1 }} color="rgba(50,35,80,0.70)" />
             ) : (
               <FlatList
                 style={{ flex: 1 }}
@@ -255,7 +255,7 @@ export default function ChatPanel() {
               <TextInput
                 style={styles.chatInput}
                 placeholder="Envoyer un message..."
-                placeholderTextColor="rgba(150,175,220,0.35)"
+                placeholderTextColor="rgba(70,50,100,0.45)"
                 value={input}
                 onChangeText={setInput}
                 returnKeyType="send"
@@ -269,8 +269,8 @@ export default function ChatPanel() {
                 disabled={!input.trim() || sending}
               >
                 {sending
-                  ? <ActivityIndicator size="small" color="rgba(200,220,255,0.9)" />
-                  : <Ionicons name="arrow-up" size={18} color="rgba(200,220,255,0.9)" />
+                  ? <ActivityIndicator size="small" color="rgba(255,255,255,0.90)" />
+                  : <Ionicons name="arrow-up" size={18} color="rgba(255,255,255,0.90)" />
                 }
               </Pressable>
             </View>
@@ -289,12 +289,12 @@ const styles = StyleSheet.create({
     right: 0,
     width: 46,
     height: 64,
-    backgroundColor: 'rgba(25,55,140,0.8)',
+    backgroundColor: 'rgba(110,55,180,0.85)',
     borderTopLeftRadius: 16,
     borderBottomLeftRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     borderRightWidth: 0,
-    borderColor: 'rgba(120,160,255,0.4)',
+    borderColor: 'rgba(255,255,255,0.55)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 200,
@@ -321,12 +321,12 @@ const styles = StyleSheet.create({
   drawer: {
     position: 'absolute',
     top: 0, right: 0, bottom: 0,
-    backgroundColor: '#0a1030',
+    backgroundColor: '#1a0e30',
     borderTopLeftRadius: 14,
     borderBottomLeftRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
     borderRightWidth: 0,
-    borderColor: 'rgba(140,170,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.40)',
     shadowColor: '#000',
     shadowOffset: { width: -8, height: 0 },
     shadowOpacity: 0.4,
@@ -344,9 +344,9 @@ const styles = StyleSheet.create({
     paddingTop: 56,
     paddingBottom: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(140,170,255,0.15)',
+    borderBottomColor: 'rgba(255,255,255,0.30)',
   },
-  drawerTitle: { fontSize: 17, fontWeight: '700', color: '#dce8ff' },
+  drawerTitle: { fontSize: 17, fontWeight: '700', color: '#1e1a36' },
 
   messageList: { paddingHorizontal: 12, paddingVertical: 12, gap: 12 },
 
@@ -354,32 +354,32 @@ const styles = StyleSheet.create({
   rowOther: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
 
   bubbleOwn: {
-    backgroundColor: 'rgba(25,55,140,0.8)',
+    backgroundColor: 'rgba(110,55,180,0.85)',
     borderRadius: 18,
     borderBottomRightRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 10,
     maxWidth: '80%',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(120,160,255,0.3)',
+    borderColor: 'rgba(255,255,255,0.50)',
   },
   bubbleOther: {
-    backgroundColor: 'rgba(15,28,80,0.8)',
+    backgroundColor: 'rgba(255,255,255,0.75)',
     borderRadius: 18,
     borderBottomLeftRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 10,
     maxWidth: '80%',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(140,170,255,0.18)',
+    borderColor: 'rgba(255,255,255,0.45)',
   },
-  bubbleTextOwn: { fontSize: 15, color: 'rgba(200,220,255,0.95)', lineHeight: 21 },
-  bubbleTextOther: { fontSize: 15, color: '#dce8ff', lineHeight: 21 },
-  senderName: { fontSize: 11, color: 'rgba(150,175,220,0.5)', fontWeight: '600', marginBottom: 3, marginLeft: 2 },
-  time: { fontSize: 10, color: 'rgba(150,175,220,0.3)', marginTop: 2 },
+  bubbleTextOwn: { fontSize: 15, color: 'rgba(255,255,255,0.95)', lineHeight: 21 },
+  bubbleTextOther: { fontSize: 15, color: '#1e1a36', lineHeight: 21 },
+  senderName: { fontSize: 11, color: 'rgba(50,35,80,0.60)', fontWeight: '600', marginBottom: 3, marginLeft: 2 },
+  time: { fontSize: 10, color: 'rgba(70,50,100,0.40)', marginTop: 2 },
 
   emptyChat: { flex: 1, alignItems: 'center', paddingTop: 60 },
-  emptyChatText: { fontSize: 14, color: 'rgba(150,175,220,0.35)' },
+  emptyChatText: { fontSize: 14, color: 'rgba(70,50,100,0.45)' },
 
   inputBar: {
     flexDirection: 'row',
@@ -389,33 +389,33 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(140,170,255,0.15)',
-    backgroundColor: '#0a1030',
+    borderTopColor: 'rgba(255,255,255,0.30)',
+    backgroundColor: '#1a0e30',
   },
   chatInput: {
     flex: 1,
     minHeight: 40,
     maxHeight: 100,
-    backgroundColor: 'rgba(15,28,80,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.60)',
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
-    color: '#e8f0ff',
+    color: '#1e1a36',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(140,170,255,0.2)',
+    borderColor: 'rgba(255,255,255,0.40)',
   },
   sendBtn: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(25,55,140,0.8)',
+    backgroundColor: 'rgba(110,55,180,0.85)',
     justifyContent: 'center', alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(120,160,255,0.4)',
+    borderColor: 'rgba(255,255,255,0.55)',
   },
   sendBtnDisabled: { opacity: 0.35 },
 
   navBarFill: {
     height: 44,
-    backgroundColor: '#0a1030',
+    backgroundColor: '#1a0e30',
   },
 })

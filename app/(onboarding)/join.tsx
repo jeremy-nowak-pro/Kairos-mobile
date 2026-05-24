@@ -39,11 +39,11 @@ export default function JoinSpaceScreen() {
         <Text style={styles.title}>Rejoindre un espace</Text>
         <Text style={styles.subtitle}>Entre le code partagé par ton partenaire.</Text>
 
-        <BlurView intensity={22} tint="dark" style={styles.card}>
+        <BlurView intensity={50} tint="light" style={styles.card}>
           <TextInput
             style={styles.input}
             placeholder="Code à 8 caractères"
-            placeholderTextColor="rgba(160,185,230,0.55)"
+            placeholderTextColor="rgba(100,75,130,0.55)"
             value={code}
             onChangeText={(t) => setCode(t.toUpperCase())}
             autoCapitalize="characters"
@@ -66,7 +66,7 @@ export default function JoinSpaceScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#070818' },
+  root: { flex: 1, backgroundColor: '#1a0e30' },
   content: {
     flex: 1,
     justifyContent: 'center',
@@ -77,13 +77,13 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     marginBottom: 10,
     textAlign: 'center',
-    color: '#dce8ff',
+    color: '#1e1a36',
     letterSpacing: 1,
   },
   subtitle: {
     fontSize: 14,
     textAlign: 'center',
-    color: 'rgba(150,175,220,0.55)',
+    color: 'rgba(50,35,80,0.55)',
     lineHeight: 22,
     marginBottom: 40,
   },
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(140,170,255,0.35)',
+    borderColor: 'rgba(255,255,255,0.60)',
     marginBottom: 14,
   },
   input: {
@@ -100,19 +100,19 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     textAlign: 'center',
     letterSpacing: 8,
-    color: '#e8f0ff',
-    backgroundColor: 'rgba(15,28,80,0.6)',
+    color: '#1e1a36',
+    backgroundColor: 'rgba(255,255,255,0.60)',
   },
   button: {
-    backgroundColor: 'rgba(25,55,140,0.5)',
+    backgroundColor: 'rgba(110,55,180,0.70)',
     borderRadius: 10,
     padding: 16,
     alignItems: 'center',
     marginTop: 4,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(120,160,255,0.3)',
+    borderColor: 'rgba(255,255,255,0.50)',
   },
-  buttonText: { color: 'rgba(200,220,255,0.95)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
+  buttonText: { color: 'rgba(255,255,255,0.95)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
   error: { color: '#e05555', marginBottom: 10, fontSize: 13, textAlign: 'center' },
-  link: { marginTop: 22, textAlign: 'center', color: 'rgba(150,175,220,0.4)', fontSize: 13 },
+  link: { marginTop: 22, textAlign: 'center', color: 'rgba(70,50,100,0.50)', fontSize: 13 },
 })

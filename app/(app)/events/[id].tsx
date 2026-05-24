@@ -35,7 +35,7 @@ function InfoRow({ icon, children, last }: {
     <>
       <View style={styles.infoRow}>
         <View style={styles.infoIcon}>
-          <Ionicons name={icon as any} size={17} color="rgba(150,175,220,0.6)" />
+          <Ionicons name={icon as any} size={17} color="rgba(50,35,80,0.70)" />
         </View>
         <View style={{ flex: 1 }}>{children}</View>
       </View>
@@ -140,7 +140,7 @@ export default function EventDetailScreen() {
   }
 
   if (loading) {
-    return <View style={styles.centered}><ActivityIndicator color="rgba(150,175,220,0.6)" /></View>
+    return <View style={styles.centered}><ActivityIndicator color="rgba(50,35,80,0.70)" /></View>
   }
 
   if (!event) {
@@ -169,7 +169,7 @@ export default function EventDetailScreen() {
 
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
-            <Ionicons name="chevron-back" size={24} color="rgba(180,210,255,0.8)" />
+            <Ionicons name="chevron-back" size={24} color="rgba(110,55,180,0.85)" />
           </Pressable>
           <View style={{ flex: 1 }} />
           <Pressable onPress={() => router.push(`/(app)/events/edit/${event.id}`)} hitSlop={8}>
@@ -273,7 +273,7 @@ export default function EventDetailScreen() {
                       <View style={styles.docIcon}>
                         <Ionicons
                           name={att.mime_type === 'application/pdf' ? 'document-text-outline' : 'document-outline'}
-                          size={18} color="rgba(150,175,220,0.6)"
+                          size={18} color="rgba(50,35,80,0.70)"
                         />
                       </View>
                       <Text style={styles.docName} numberOfLines={1}>{att.filename}</Text>
@@ -327,18 +327,18 @@ const styles = StyleSheet.create({
   },
   container: { flex: 1, backgroundColor: 'transparent', borderTopLeftRadius: 14, overflow: 'hidden' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'transparent' },
-  notFound: { fontSize: 16, color: 'rgba(150,175,220,0.45)', marginBottom: 12 },
-  backLink: { fontSize: 15, color: 'rgba(180,210,255,0.7)' },
+  notFound: { fontSize: 16, color: 'rgba(50,35,80,0.65)', marginBottom: 12 },
+  backLink: { fontSize: 15, color: 'rgba(110,55,180,0.75)' },
 
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingTop: 56, paddingBottom: 10,
   },
   backBtn: { padding: 4 },
-  editLink: { fontSize: 16, color: 'rgba(180,210,255,0.8)' },
+  editLink: { fontSize: 16, color: 'rgba(110,55,180,0.85)' },
 
   titleCard: {
-    backgroundColor: 'rgba(12,20,60,0.85)',
+    backgroundColor: 'rgba(255,255,255,0.82)',
     borderRadius: 12,
     marginHorizontal: 16,
     marginBottom: 20,
@@ -346,19 +346,19 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     borderLeftWidth: 5,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(140,170,255,0.18)',
+    borderColor: 'rgba(255,255,255,0.45)',
   },
-  title: { fontSize: 24, fontWeight: '700', color: '#dce8ff', lineHeight: 30 },
+  title: { fontSize: 24, fontWeight: '700', color: '#1e1a36', lineHeight: 30 },
 
   content: { paddingHorizontal: 16, paddingTop: 4 },
 
   sectionCard: {
-    backgroundColor: 'rgba(12,20,60,0.85)',
+    backgroundColor: 'rgba(255,255,255,0.82)',
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(140,170,255,0.18)',
+    borderColor: 'rgba(255,255,255,0.45)',
   },
   infoRow: {
     flexDirection: 'row', alignItems: 'center',
@@ -366,18 +366,18 @@ const styles = StyleSheet.create({
   },
   infoIcon: {
     width: 30, height: 30, borderRadius: 7,
-    backgroundColor: 'rgba(15,28,80,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.60)',
     justifyContent: 'center', alignItems: 'center',
   },
-  infoText: { fontSize: 15, color: '#dce8ff' },
+  infoText: { fontSize: 15, color: '#1e1a36' },
   rowDivider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(140,170,255,0.12)',
+    backgroundColor: 'rgba(0,0,0,0.08)',
     marginLeft: 58,
   },
 
   groupLabel: {
-    fontSize: 11, fontWeight: '600', color: 'rgba(150,175,220,0.45)',
+    fontSize: 11, fontWeight: '600', color: 'rgba(50,35,80,0.65)',
     letterSpacing: 0.8, marginBottom: 8, marginLeft: 4,
   },
 
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
   tagText: { fontSize: 13, fontWeight: '500' },
 
   descRow: { paddingHorizontal: 16, paddingVertical: 14 },
-  descText: { fontSize: 15, color: 'rgba(180,210,255,0.8)', lineHeight: 22 },
+  descText: { fontSize: 15, color: 'rgba(110,55,180,0.85)', lineHeight: 22 },
 
   docRow: {
     flexDirection: 'row', alignItems: 'center',
@@ -400,15 +400,15 @@ const styles = StyleSheet.create({
   },
   docIcon: {
     width: 34, height: 34, borderRadius: 7,
-    backgroundColor: 'rgba(15,28,80,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.60)',
     justifyContent: 'center', alignItems: 'center',
   },
-  docName: { flex: 1, fontSize: 14, color: '#dce8ff' },
+  docName: { flex: 1, fontSize: 14, color: '#1e1a36' },
 
   deleteSection: {
     marginTop: 48,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(140,170,255,0.12)',
+    borderTopColor: 'rgba(0,0,0,0.08)',
   },
   deleteBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',

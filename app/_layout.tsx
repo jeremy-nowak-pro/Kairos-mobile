@@ -6,13 +6,13 @@ import { SpaceProvider } from '@/context/space'
 import MeshBackground from '@/components/MeshBackground'
 
 const AppTheme = {
-  dark: true,
+  dark: false,
   colors: {
-    primary: 'rgb(10, 132, 255)',
+    primary: '#7040a8',
     background: 'transparent',
-    card: 'rgba(7,8,24,0.95)',
-    text: '#dce8ff',
-    border: 'rgba(140,170,255,0.18)',
+    card: 'rgba(255,255,255,0.82)',
+    text: '#1e1a36',
+    border: 'rgba(255,255,255,0.45)',
     notification: '#e05555',
   },
   fonts: {},
@@ -20,7 +20,7 @@ const AppTheme = {
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#070818' }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#1a0e30' }}>
       <MeshBackground />
       <ThemeProvider value={AppTheme as any}>
         <AuthProvider>
