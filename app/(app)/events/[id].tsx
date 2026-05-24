@@ -11,7 +11,6 @@ import { getEvent, deleteEvent, Event } from '@/lib/events'
 import { getAttachments, Attachment } from '@/lib/attachments'
 import { getImageUrl } from '@/lib/imageCache'
 import { userColor } from '@/lib/userColor'
-import { BlurView } from 'expo-blur'
 import MeshBackground from '@/components/MeshBackground'
 
 function formatDate(dateStr: string): string {
@@ -24,21 +23,15 @@ function formatTime(t: string): string {
   return t.slice(0, 5)
 }
 
-function SectionCard({ children }: { children: React.ReactNode }) {
-  return <BlurView intensity={40} tint="light" style={styles.sectionCard}>{children}</BlurView>
-}
-
-function InfoRow({ icon, children, last }: {
+function GroupRow({ icon, children, last }: {
   icon: string
   children: React.ReactNode
   last?: boolean
 }) {
   return (
     <>
-      <View style={styles.infoRow}>
-        <View style={styles.infoIcon}>
-          <Ionicons name={icon as any} size={17} color="rgba(255,255,255,0.80)" />
-        </View>
+      <View style={styles.row}>
+        <Ionicons name={icon as any} size={16} color="rgba(255,255,255,0.55)" />
         <View style={{ flex: 1 }}>{children}</View>
       </View>
       {!last && <View style={styles.rowDivider} />}
@@ -170,7 +163,8 @@ export default function EventDetailScreen() {
       <MeshBackground />
       <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
 
-        <View style={styles.header}>
+        {/* Nav — immédiat, hors animation */}
+        <View style={styles.nav}>
           <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
             <Ionicons name="chevron-back" size={24} color="rgba(255,255,255,0.92)" />
           </Pressable>
@@ -185,118 +179,121 @@ export default function EventDetailScreen() {
           transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
         }}>
 
-        <BlurView intensity={40} tint="light" style={[styles.titleCard, { borderLeftColor: color.text }]}>
-          <Text style={styles.title}>{event.title}</Text>
-        </BlurView>
-
-        <View style={styles.content}>
-
-          <SectionCard>
-            <InfoRow icon="calendar-outline">
-              <Text style={styles.infoText}>{formatDate(event.date)}</Text>
-            </InfoRow>
-            <InfoRow icon="time-outline" last>
-              <Text style={styles.infoText}>
-                {formatTime(event.start_time)} – {formatTime(event.end_time)}
-              </Text>
-            </InfoRow>
-          </SectionCard>
-
-          {event.location ? (
-            <SectionCard>
-              <InfoRow icon="location-outline" last>
-                <Text style={styles.infoText}>{event.location}</Text>
-              </InfoRow>
-            </SectionCard>
-          ) : null}
-
-          {event.assigned_to ? (
-            <>
-              <Text style={styles.groupLabel}>ASSIGNÉ À</Text>
-              <SectionCard>
-                <InfoRow icon="person-outline" last>
-                  <View style={styles.tagRow}>
-                    {event.assigned_to.split(',').map(n => n.trim()).filter(Boolean).map(name => {
-                      const c = userColor(name)
-                      return (
-                        <View key={name} style={[styles.tag, { backgroundColor: c.bg }]}>
-                          <Text style={[styles.tagText, { color: c.text }]}>{name}</Text>
-                        </View>
-                      )
-                    })}
-                  </View>
-                </InfoRow>
-              </SectionCard>
-            </>
-          ) : null}
-
-          {event.description ? (
-            <>
-              <Text style={styles.groupLabel}>DESCRIPTION</Text>
-              <SectionCard>
-                <View style={styles.descRow}>
-                  <Text style={styles.descText}>{event.description}</Text>
-                </View>
-              </SectionCard>
-            </>
-          ) : null}
-
-          {imageUrls.length > 0 && (
-            imageUrls.length === 1 ? (
-              <Pressable onPress={() => setViewerUri(imageUrls[0])} style={styles.imageSingleWrap}>
-                <Image source={{ uri: imageUrls[0] }} style={styles.imageSingle} contentFit="cover" />
-              </Pressable>
-            ) : (
-              <FlatList
-                horizontal
-                data={imageUrls.slice(0, 4)}
-                keyExtractor={(_, i) => String(i)}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.imageStripContent}
-                style={styles.imageStrip}
-                renderItem={({ item: uri }) => (
-                  <Pressable onPress={() => setViewerUri(uri)}>
-                    <Image source={{ uri }} style={styles.imageStripThumb} contentFit="cover" />
-                  </Pressable>
-                )}
-              />
-            )
-          )}
-
-          {docs.length > 0 && (
-            <>
-              <Text style={styles.groupLabel}>PIÈCES JOINTES</Text>
-              <SectionCard>
-                {docs.map((att, i) => (
-                  <View key={att.id}>
-                    <Pressable
-                      style={({ pressed }) => [styles.docRow, pressed && { opacity: 0.6 }]}
-                      onPress={() => openDoc(att)}
-                    >
-                      <View style={styles.docIcon}>
-                        <Ionicons
-                          name={att.mime_type === 'application/pdf' ? 'document-text-outline' : 'document-outline'}
-                          size={18} color="rgba(255,255,255,0.80)"
-                        />
-                      </View>
-                      <Text style={styles.docName} numberOfLines={1}>{att.filename}</Text>
-                      <Ionicons name="chevron-forward" size={16} color="rgba(140,170,255,0.3)" />
-                    </Pressable>
-                    {i < docs.length - 1 && <View style={styles.rowDivider} />}
-                  </View>
-                ))}
-              </SectionCard>
-            </>
-          )}
-
-          <View style={styles.deleteSection}>
-            <Pressable onPress={handleDelete} style={styles.deleteBtn}>
-              <Ionicons name="trash-outline" size={16} color="#e05555" />
-              <Text style={styles.deleteBtnText}>Supprimer l'événement</Text>
-            </Pressable>
+          {/* Hero coloré */}
+          <View style={styles.hero}>
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: color.text, opacity: 0.22 }]} />
+            <View style={[styles.heroAccent, { backgroundColor: color.text }]} />
+            <Text style={styles.heroTitle}>{event.title}</Text>
           </View>
 
-        </View>
+          {/* Contenu */}
+          <View style={styles.content}>
+
+            {/* Date + Heure */}
+            <View style={styles.group}>
+              <GroupRow icon="calendar-outline">
+                <Text style={styles.rowText}>{formatDate(event.date)}</Text>
+              </GroupRow>
+              <GroupRow icon="time-outline" last>
+                <Text style={styles.rowText}>
+                  {formatTime(event.start_time)} – {formatTime(event.end_time)}
+                </Text>
+              </GroupRow>
+            </View>
+
+            {event.location ? (
+              <View style={styles.group}>
+                <GroupRow icon="location-outline" last>
+                  <Text style={styles.rowText}>{event.location}</Text>
+                </GroupRow>
+              </View>
+            ) : null}
+
+            {event.assigned_to ? (
+              <>
+                <Text style={styles.groupLabel}>ASSIGNÉ À</Text>
+                <View style={styles.group}>
+                  <GroupRow icon="person-outline" last>
+                    <View style={styles.tagRow}>
+                      {event.assigned_to.split(',').map(n => n.trim()).filter(Boolean).map(name => {
+                        const c = userColor(name)
+                        return (
+                          <View key={name} style={[styles.tag, { backgroundColor: c.bg }]}>
+                            <Text style={[styles.tagText, { color: c.text }]}>{name}</Text>
+                          </View>
+                        )
+                      })}
+                    </View>
+                  </GroupRow>
+                </View>
+              </>
+            ) : null}
+
+            {event.description ? (
+              <>
+                <Text style={styles.groupLabel}>DESCRIPTION</Text>
+                <View style={styles.group}>
+                  <View style={styles.descRow}>
+                    <Text style={styles.descText}>{event.description}</Text>
+                  </View>
+                </View>
+              </>
+            ) : null}
+
+            {imageUrls.length > 0 && (
+              imageUrls.length === 1 ? (
+                <Pressable onPress={() => setViewerUri(imageUrls[0])} style={styles.imageSingleWrap}>
+                  <Image source={{ uri: imageUrls[0] }} style={styles.imageSingle} contentFit="cover" />
+                </Pressable>
+              ) : (
+                <FlatList
+                  horizontal
+                  data={imageUrls.slice(0, 4)}
+                  keyExtractor={(_, i) => String(i)}
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.imageStripContent}
+                  style={styles.imageStrip}
+                  renderItem={({ item: uri }) => (
+                    <Pressable onPress={() => setViewerUri(uri)}>
+                      <Image source={{ uri }} style={styles.imageStripThumb} contentFit="cover" />
+                    </Pressable>
+                  )}
+                />
+              )
+            )}
+
+            {docs.length > 0 && (
+              <>
+                <Text style={styles.groupLabel}>PIÈCES JOINTES</Text>
+                <View style={styles.group}>
+                  {docs.map((att, i) => (
+                    <View key={att.id}>
+                      <Pressable
+                        style={({ pressed }) => [styles.docRow, pressed && { opacity: 0.6 }]}
+                        onPress={() => openDoc(att)}
+                      >
+                        <Ionicons
+                          name={att.mime_type === 'application/pdf' ? 'document-text-outline' : 'document-outline'}
+                          size={18} color="rgba(255,255,255,0.75)"
+                        />
+                        <Text style={styles.docName} numberOfLines={1}>{att.filename}</Text>
+                        <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.28)" />
+                      </Pressable>
+                      {i < docs.length - 1 && <View style={styles.rowDivider} />}
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
+
+            <View style={styles.deleteSection}>
+              <Pressable onPress={handleDelete} style={styles.deleteBtn}>
+                <Ionicons name="trash-outline" size={16} color="#e05555" />
+                <Text style={styles.deleteBtnText}>Supprimer l'événement</Text>
+              </Pressable>
+            </View>
+
+          </View>
         </Animated.View>
       </ScrollView>
 
@@ -333,57 +330,68 @@ const styles = StyleSheet.create({
   notFound: { fontSize: 16, color: 'rgba(255,255,255,0.75)', marginBottom: 12 },
   backLink: { fontSize: 15, color: 'rgba(255,255,255,0.85)' },
 
-  header: {
+  nav: {
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, paddingTop: 56, paddingBottom: 10,
+    paddingHorizontal: 16, paddingTop: 56, paddingBottom: 8,
   },
   backBtn: { padding: 4 },
   editLink: { fontSize: 16, color: 'rgba(255,255,255,0.92)' },
 
-  titleCard: {
-    backgroundColor: 'rgba(255,255,255,0.22)',
+  hero: {
     overflow: 'hidden',
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginBottom: 20,
-    paddingHorizontal: 18,
-    paddingVertical: 18,
-    borderLeftWidth: 5,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.45)',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 28,
+    marginBottom: 16,
   },
-  title: { fontSize: 24, fontWeight: '700', color: '#ffffff', lineHeight: 30 },
+  heroAccent: {
+    position: 'absolute',
+    left: 0, top: 0, bottom: 0,
+    width: 4,
+  },
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#ffffff',
+    lineHeight: 34,
+  },
 
-  content: { paddingHorizontal: 16, paddingTop: 4 },
+  content: { paddingHorizontal: 16 },
 
-  sectionCard: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
+  group: {
+    backgroundColor: 'rgba(255,255,255,0.09)',
     borderRadius: 12,
+    paddingHorizontal: 16,
     marginBottom: 12,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.45)',
+    borderColor: 'rgba(255,255,255,0.14)',
   },
-  infoRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingVertical: 13, paddingHorizontal: 16, gap: 12,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    gap: 12,
   },
-  infoIcon: {
-    width: 30, height: 30, borderRadius: 7,
-    backgroundColor: 'rgba(255,255,255,0.38)',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  infoText: { fontSize: 15, color: '#ffffff' },
+  rowText: { fontSize: 15, color: '#ffffff', flex: 1 },
   rowDivider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    marginLeft: 58,
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
 
   groupLabel: {
-    fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.75)',
-    letterSpacing: 0.8, marginBottom: 8, marginLeft: 4,
+    fontSize: 11, fontWeight: '600',
+    color: 'rgba(255,255,255,0.50)',
+    letterSpacing: 0.8,
+    marginBottom: 8, marginLeft: 4,
   },
+
+  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  tag: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 5 },
+  tagText: { fontSize: 13, fontWeight: '500' },
+
+  descRow: { paddingVertical: 14 },
+  descText: { fontSize: 15, color: 'rgba(255,255,255,0.92)', lineHeight: 22 },
 
   imageSingleWrap: { borderRadius: 12, overflow: 'hidden', marginBottom: 12 },
   imageSingle: { width: '100%', height: 220 },
@@ -391,26 +399,14 @@ const styles = StyleSheet.create({
   imageStripContent: { gap: 8 },
   imageStripThumb: { width: 160, height: 160, borderRadius: 10 },
 
-  tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  tag: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 5 },
-  tagText: { fontSize: 13, fontWeight: '500' },
-
-  descRow: { paddingHorizontal: 16, paddingVertical: 14 },
-  descText: { fontSize: 15, color: 'rgba(255,255,255,0.92)', lineHeight: 22 },
-
   docRow: {
     flexDirection: 'row', alignItems: 'center',
-    paddingVertical: 12, paddingHorizontal: 16, gap: 12,
-  },
-  docIcon: {
-    width: 34, height: 34, borderRadius: 7,
-    backgroundColor: 'rgba(255,255,255,0.38)',
-    justifyContent: 'center', alignItems: 'center',
+    paddingVertical: 12, gap: 12,
   },
   docName: { flex: 1, fontSize: 14, color: '#ffffff' },
 
   deleteSection: {
-    marginTop: 48,
+    marginTop: 40,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(255,255,255,0.10)',
   },
