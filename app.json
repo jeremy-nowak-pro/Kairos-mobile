@@ -13,7 +13,11 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "CADisableMinimumFrameDurationOnPhone": true
+      },
+      "bundleIdentifier": "com.jeremypro.kairosmobile"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +25,10 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.jeremypro.kairosmobile",
-      "softwareKeyboardLayoutMode": "resize"
+      "softwareKeyboardLayoutMode": "resize",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "androidNavigationBar": {
       "barStyle": "dark-content",
