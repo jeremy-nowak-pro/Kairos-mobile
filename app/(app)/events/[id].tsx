@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-  container: { flex: 1, backgroundColor: 'transparent', borderTopLeftRadius: 14, overflow: 'hidden' },
+  container: { flex: 1, backgroundColor: 'rgba(8,10,28,0.82)', borderTopLeftRadius: 14, overflow: 'hidden' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'transparent' },
   notFound: { fontSize: 16, color: 'rgba(255,255,255,0.75)', marginBottom: 12 },
   backLink: { fontSize: 15, color: 'rgba(255,255,255,0.85)' },
