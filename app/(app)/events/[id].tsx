@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   editLink: { fontSize: 16, color: 'rgba(110,55,180,0.85)' },
 
   titleCard: {
-    backgroundColor: 'rgba(255,255,255,0.82)',
+    backgroundColor: 'rgba(255,255,255,0.65)',
     borderRadius: 12,
     marginHorizontal: 16,
     marginBottom: 20,
@@ -346,19 +346,19 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     borderLeftWidth: 5,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.45)',
+    borderColor: 'rgba(255,255,255,0.38)',
   },
   title: { fontSize: 24, fontWeight: '700', color: '#1e1a36', lineHeight: 30 },
 
   content: { paddingHorizontal: 16, paddingTop: 4 },
 
   sectionCard: {
-    backgroundColor: 'rgba(255,255,255,0.82)',
+    backgroundColor: 'rgba(255,255,255,0.65)',
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.45)',
+    borderColor: 'rgba(255,255,255,0.38)',
   },
   infoRow: {
     flexDirection: 'row', alignItems: 'center',
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   },
   infoIcon: {
     width: 30, height: 30, borderRadius: 7,
-    backgroundColor: 'rgba(255,255,255,0.60)',
+    backgroundColor: 'rgba(255,255,255,0.38)',
     justifyContent: 'center', alignItems: 'center',
   },
   infoText: { fontSize: 15, color: '#1e1a36' },
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   },
   docIcon: {
     width: 34, height: 34, borderRadius: 7,
-    backgroundColor: 'rgba(255,255,255,0.60)',
+    backgroundColor: 'rgba(255,255,255,0.38)',
     justifyContent: 'center', alignItems: 'center',
   },
   docName: { flex: 1, fontSize: 14, color: '#1e1a36' },

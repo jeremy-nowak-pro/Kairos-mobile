@@ -249,10 +249,10 @@ const s = StyleSheet.create({
   headerTitle: { fontSize: 28, fontWeight: '700', color: '#1e1a36' },
   editBtn: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.60)',
+    backgroundColor: 'rgba(255,255,255,0.38)',
     justifyContent: 'center', alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.45)',
+    borderColor: 'rgba(255,255,255,0.38)',
   },
 
   hero: {
@@ -266,9 +266,9 @@ const s = StyleSheet.create({
   heroEmail: { fontSize: 14, color: 'rgba(50,35,80,0.65)' },
 
   card: {
-    backgroundColor: 'rgba(255,255,255,0.82)',
+    backgroundColor: 'rgba(255,255,255,0.65)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.45)',
+    borderColor: 'rgba(255,255,255,0.38)',
     borderRadius: 14,
     marginHorizontal: 16,
     marginBottom: 12,
@@ -315,7 +315,7 @@ const s = StyleSheet.create({
   scheduleImage: { width: '100%', height: 180, borderRadius: 8, marginBottom: 8 },
   scheduleDoc: {
     height: 80,
-    backgroundColor: 'rgba(255,255,255,0.60)',
+    backgroundColor: 'rgba(255,255,255,0.38)',
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
@@ -337,9 +337,9 @@ const s = StyleSheet.create({
   notifBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     marginHorizontal: 16, marginBottom: 10,
-    backgroundColor: 'rgba(255,255,255,0.82)',
+    backgroundColor: 'rgba(255,255,255,0.65)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.45)',
+    borderColor: 'rgba(255,255,255,0.38)',
     borderRadius: 14,
     padding: 16,
   },
@@ -359,7 +359,7 @@ const s = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   notifSheet: {
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    backgroundColor: 'rgba(255,255,255,0.85)',
     borderTopLeftRadius: 16, borderTopRightRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.40)',
@@ -369,7 +369,7 @@ const s = StyleSheet.create({
     fontSize: 16, fontWeight: '600', color: '#1e1a36', marginBottom: 14,
   },
   notifInput: {
-    backgroundColor: 'rgba(255,255,255,0.60)',
+    backgroundColor: 'rgba(255,255,255,0.38)',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.50)',
     borderRadius: 10,
@@ -387,7 +387,7 @@ const s = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.50)',
   },
   notifSendBtnDisabled: { opacity: 0.4 },
-  notifSendBtnText: { color: 'rgba(255,255,255,0.95)', fontSize: 15, fontWeight: '500' },
+  notifSendBtnText: { color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: '500' },
 
   viewerBackdrop: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   viewerImage: { width: '100%', height: '85%' },

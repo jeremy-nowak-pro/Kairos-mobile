@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   },
   popupWrapper: { width: '100%', maxWidth: 360 },
   popup: {
-    backgroundColor: 'rgba(255,255,255,0.93)',
+    backgroundColor: 'rgba(255,255,255,0.80)',
     borderRadius: 16, padding: 20, overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.50)',

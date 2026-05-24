@@ -63,11 +63,11 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.60)',
+    borderColor: 'rgba(255,255,255,0.38)',
   },
   row: {
     padding: 18,
-    backgroundColor: 'rgba(255,255,255,0.60)',
+    backgroundColor: 'rgba(255,255,255,0.38)',
     alignItems: 'center',
   },
   divider: {
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   },
   rowText: {
     fontSize: 15,
-    color: 'rgba(255,255,255,0.95)',
+    color: 'rgba(255,255,255,0.85)',
     fontWeight: '400',
     letterSpacing: 0.3,
   },

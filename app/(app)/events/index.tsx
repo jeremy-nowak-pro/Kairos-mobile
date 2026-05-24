@@ -152,7 +152,7 @@ export default function EventsScreen() {
         style={styles.fab}
         onPress={() => router.push('/(app)/events/new')}
       >
-        <Ionicons name="add" size={28} color="rgba(255,255,255,0.95)" />
+        <Ionicons name="add" size={28} color="rgba(255,255,255,0.85)" />
       </Pressable>
     </View>
   )
@@ -177,13 +177,13 @@ const styles = StyleSheet.create({
 
   card: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.82)',
+    backgroundColor: 'rgba(255,255,255,0.65)',
     borderRadius: 12,
     marginHorizontal: 16,
     marginBottom: 8,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.45)',
+    borderColor: 'rgba(255,255,255,0.38)',
   },
   cardPressed: { opacity: 0.7 },
   cardBar: { width: 4 },
