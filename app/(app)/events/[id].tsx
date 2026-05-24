@@ -12,6 +12,7 @@ import { getAttachments, Attachment } from '@/lib/attachments'
 import { getImageUrl } from '@/lib/imageCache'
 import { userColor } from '@/lib/userColor'
 import { BlurView } from 'expo-blur'
+import MeshBackground from '@/components/MeshBackground'
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('fr-FR', {
@@ -24,7 +25,7 @@ function formatTime(t: string): string {
 }
 
 function SectionCard({ children }: { children: React.ReactNode }) {
-  return <BlurView intensity={40} tint="light" style={styles.sectionCard}>{children}</BlurView>
+  return <BlurView intensity={22} tint="light" style={styles.sectionCard}>{children}</BlurView>
 }
 
 function InfoRow({ icon, children, last }: {
@@ -166,6 +167,7 @@ export default function EventDetailScreen() {
     >
     <Animated.View style={[styles.shadow, { transform: [{ translateX }] }]}>
       <View style={styles.container}>
+      <MeshBackground />
       <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
 
         <View style={styles.header}>
@@ -183,7 +185,7 @@ export default function EventDetailScreen() {
           transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
         }}>
 
-        <BlurView intensity={40} tint="light" style={[styles.titleCard, { borderLeftColor: color.text }]}>
+        <BlurView intensity={22} tint="light" style={[styles.titleCard, { borderLeftColor: color.text }]}>
           <Text style={styles.title}>{event.title}</Text>
         </BlurView>
 
@@ -327,7 +329,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   container: { flex: 1, backgroundColor: '#1a0e30', borderTopLeftRadius: 14, overflow: 'hidden' },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1a0e30' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   notFound: { fontSize: 16, color: 'rgba(255,255,255,0.75)', marginBottom: 12 },
   backLink: { fontSize: 15, color: 'rgba(255,255,255,0.85)' },
 
@@ -339,7 +341,7 @@ const styles = StyleSheet.create({
   editLink: { fontSize: 16, color: 'rgba(255,255,255,0.92)' },
 
   titleCard: {
-    backgroundColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
     overflow: 'hidden',
     borderRadius: 12,
     marginHorizontal: 16,
@@ -348,19 +350,19 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     borderLeftWidth: 5,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.45)',
+    borderColor: 'rgba(255,255,255,0.38)',
   },
   title: { fontSize: 24, fontWeight: '700', color: '#ffffff', lineHeight: 30 },
 
   content: { paddingHorizontal: 16, paddingTop: 4 },
 
   sectionCard: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.45)',
+    borderColor: 'rgba(255,255,255,0.38)',
   },
   infoRow: {
     flexDirection: 'row', alignItems: 'center',
