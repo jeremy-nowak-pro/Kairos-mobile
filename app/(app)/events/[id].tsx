@@ -12,7 +12,7 @@ import { getAttachments, Attachment } from '@/lib/attachments'
 import { getImageUrl } from '@/lib/imageCache'
 import { userColor } from '@/lib/userColor'
 import { BlurView } from 'expo-blur'
-import MeshBackground from '@/components/MeshBackground'
+import { LinearGradient } from 'expo-linear-gradient'
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr + 'T00:00:00').toLocaleDateString('fr-FR', {
@@ -167,7 +167,13 @@ export default function EventDetailScreen() {
     >
     <Animated.View style={[styles.shadow, { transform: [{ translateX }] }]}>
       <View style={styles.container}>
-      <MeshBackground />
+      <LinearGradient
+        colors={['#2a1250', '#1a0e30', '#2e1028', '#3a1520']}
+        locations={[0, 0.35, 0.70, 1]}
+        start={{ x: 0.2, y: 0 }}
+        end={{ x: 0.8, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
       <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
 
         <View style={styles.header}>
