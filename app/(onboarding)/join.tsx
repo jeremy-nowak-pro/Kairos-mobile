@@ -43,7 +43,7 @@ export default function JoinSpaceScreen() {
           <TextInput
             style={styles.input}
             placeholder="Code à 8 caractères"
-            placeholderTextColor="rgba(100,75,130,0.55)"
+            placeholderTextColor="rgba(255,255,255,0.45)"
             value={code}
             onChangeText={(t) => setCode(t.toUpperCase())}
             autoCapitalize="characters"
@@ -77,13 +77,13 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     marginBottom: 10,
     textAlign: 'center',
-    color: '#1e1a36',
+    color: '#ffffff',
     letterSpacing: 1,
   },
   subtitle: {
     fontSize: 14,
     textAlign: 'center',
-    color: 'rgba(50,35,80,0.55)',
+    color: 'rgba(255,255,255,0.65)',
     lineHeight: 22,
     marginBottom: 40,
   },
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     textAlign: 'center',
     letterSpacing: 8,
-    color: '#1e1a36',
+    color: '#ffffff',
     backgroundColor: 'rgba(255,255,255,0.38)',
   },
   button: {
@@ -114,5 +114,5 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
   error: { color: '#e05555', marginBottom: 10, fontSize: 13, textAlign: 'center' },
-  link: { marginTop: 22, textAlign: 'center', color: 'rgba(70,50,100,0.50)', fontSize: 13 },
+  link: { marginTop: 22, textAlign: 'center', color: 'rgba(255,255,255,0.55)', fontSize: 13 },
 })

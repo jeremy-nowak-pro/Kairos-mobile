@@ -101,7 +101,7 @@ export default function ProfileScreen() {
       <View style={s.header}>
         <Text style={s.headerTitle}>Profil</Text>
         <Pressable style={s.editBtn} onPress={() => router.push('/(app)/profile/edit')} hitSlop={8}>
-          <Ionicons name="pencil-outline" size={18} color="rgba(50,35,80,0.70)" />
+          <Ionicons name="pencil-outline" size={18} color="rgba(255,255,255,0.80)" />
         </Pressable>
       </View>
 
@@ -119,7 +119,7 @@ export default function ProfileScreen() {
 
         <Text style={s.sectionLabel}>Membres</Text>
         {loadingMembers ? (
-          <ActivityIndicator style={{ marginVertical: 12 }} color="rgba(50,35,80,0.70)" />
+          <ActivityIndicator style={{ marginVertical: 12 }} color="rgba(255,255,255,0.80)" />
         ) : (
           <View style={s.membersList}>
             {members.map(m => (
@@ -140,7 +140,7 @@ export default function ProfileScreen() {
         <Pressable style={s.inviteRow} onPress={handleShareCode}>
           <Text style={s.inviteCode}>{space?.invite_code ?? '—'}</Text>
           <View style={s.inviteShareBtn}>
-            <Ionicons name="share-outline" size={15} color="rgba(110,55,180,0.75)" />
+            <Ionicons name="share-outline" size={15} color="rgba(255,255,255,0.85)" />
             <Text style={s.inviteShareText}>Partager</Text>
           </View>
         </Pressable>
@@ -161,7 +161,7 @@ export default function ProfileScreen() {
               <Image source={{ uri: previewUri }} style={s.scheduleImage} contentFit="cover" />
             ) : (
               <View style={s.scheduleDoc}>
-                <Ionicons name="document-text-outline" size={28} color="rgba(50,35,80,0.60)" />
+                <Ionicons name="document-text-outline" size={28} color="rgba(255,255,255,0.70)" />
                 <Text style={s.scheduleDocName} numberOfLines={1}>{schedule.filename}</Text>
               </View>
             )}
@@ -172,14 +172,14 @@ export default function ProfileScreen() {
           </Pressable>
         ) : (
           <Pressable style={s.scheduleEmpty} onPress={() => router.push('/(app)/profile/edit')}>
-            <Ionicons name="add-circle-outline" size={20} color="rgba(70,50,100,0.50)" />
+            <Ionicons name="add-circle-outline" size={20} color="rgba(255,255,255,0.55)" />
             <Text style={s.scheduleEmptyText}>Ajouter mon emploi du temps</Text>
           </Pressable>
         )}
       </BlurView>
 
       <Pressable style={s.notifBtn} onPress={() => setNotifOpen(true)}>
-        <Ionicons name="notifications-outline" size={17} color="rgba(110,55,180,0.75)" />
+        <Ionicons name="notifications-outline" size={17} color="rgba(255,255,255,0.85)" />
         <Text style={s.notifBtnText}>Envoyer une notification</Text>
       </Pressable>
 
@@ -202,7 +202,7 @@ export default function ProfileScreen() {
                 ref={notifInputRef}
                 style={s.notifInput}
                 placeholder="Message à envoyer..."
-                placeholderTextColor="rgba(100,75,130,0.45)"
+                placeholderTextColor="rgba(255,255,255,0.38)"
                 value={notifMessage}
                 onChangeText={setNotifMessage}
                 multiline
@@ -247,7 +247,7 @@ const s = StyleSheet.create({
     paddingTop: 56,
     paddingBottom: 8,
   },
-  headerTitle: { fontSize: 28, fontWeight: '700', color: '#1e1a36' },
+  headerTitle: { fontSize: 28, fontWeight: '700', color: '#ffffff' },
   editBtn: {
     width: 36, height: 36, borderRadius: 18,
     backgroundColor: 'rgba(255,255,255,0.38)',
@@ -263,8 +263,8 @@ const s = StyleSheet.create({
   },
   avatar: { justifyContent: 'center', alignItems: 'center' },
   avatarText: { fontWeight: '700' },
-  heroName: { fontSize: 22, fontWeight: '700', color: '#1e1a36', marginTop: 4 },
-  heroEmail: { fontSize: 14, color: 'rgba(50,35,80,0.65)' },
+  heroName: { fontSize: 22, fontWeight: '700', color: '#ffffff', marginTop: 4 },
+  heroEmail: { fontSize: 14, color: 'rgba(255,255,255,0.75)' },
 
   card: {
     backgroundColor: 'rgba(255,255,255,0.12)',
@@ -278,11 +278,11 @@ const s = StyleSheet.create({
   },
   cardLabel: {
     fontSize: 11, fontWeight: '600',
-    color: 'rgba(50,35,80,0.65)',
+    color: 'rgba(255,255,255,0.75)',
     letterSpacing: 0.8,
     marginBottom: 10,
   },
-  spaceName: { fontSize: 18, fontWeight: '600', color: '#1e1a36', marginBottom: 4 },
+  spaceName: { fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 4 },
   divider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: 'rgba(0,0,0,0.08)',
@@ -290,13 +290,13 @@ const s = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 13, fontWeight: '600',
-    color: 'rgba(50,35,80,0.55)',
+    color: 'rgba(255,255,255,0.65)',
     marginBottom: 10,
   },
   membersList: { gap: 10 },
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   memberInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  memberName: { fontSize: 15, color: '#1e1a36' },
+  memberName: { fontSize: 15, color: '#ffffff' },
   memberBadge: {
     fontSize: 10, color: 'rgba(180,210,255,0.6)',
     borderWidth: StyleSheet.hairlineWidth,
@@ -309,10 +309,10 @@ const s = StyleSheet.create({
   },
   inviteCode: {
     fontSize: 22, fontWeight: '300', letterSpacing: 4,
-    color: '#1e1a36',
+    color: '#ffffff',
   },
   inviteShareBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  inviteShareText: { fontSize: 14, color: 'rgba(110,55,180,0.75)' },
+  inviteShareText: { fontSize: 14, color: 'rgba(255,255,255,0.85)' },
 
   scheduleImage: { width: '100%', height: 180, borderRadius: 8, marginBottom: 8 },
   scheduleDoc: {
@@ -325,16 +325,16 @@ const s = StyleSheet.create({
     gap: 8,
     marginBottom: 8,
   },
-  scheduleDocName: { fontSize: 14, color: 'rgba(50,35,80,0.70)', maxWidth: '60%' },
+  scheduleDocName: { fontSize: 14, color: 'rgba(255,255,255,0.80)', maxWidth: '60%' },
   scheduleFooter: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
   },
-  scheduleDate: { fontSize: 12, color: 'rgba(70,50,100,0.50)' },
+  scheduleDate: { fontSize: 12, color: 'rgba(255,255,255,0.55)' },
   scheduleEmpty: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingVertical: 12, justifyContent: 'center',
   },
-  scheduleEmptyText: { fontSize: 14, color: 'rgba(70,50,100,0.50)' },
+  scheduleEmptyText: { fontSize: 14, color: 'rgba(255,255,255,0.55)' },
 
   notifBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -345,7 +345,7 @@ const s = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
   },
-  notifBtnText: { fontSize: 15, color: 'rgba(110,55,180,0.75)' },
+  notifBtnText: { fontSize: 15, color: 'rgba(255,255,255,0.85)' },
 
   signOutBtn: {
     marginHorizontal: 16, marginTop: 8,
@@ -368,7 +368,7 @@ const s = StyleSheet.create({
     padding: 20, paddingBottom: 40,
   },
   notifSheetTitle: {
-    fontSize: 16, fontWeight: '600', color: '#1e1a36', marginBottom: 14,
+    fontSize: 16, fontWeight: '600', color: '#ffffff', marginBottom: 14,
   },
   notifInput: {
     backgroundColor: 'rgba(255,255,255,0.38)',
@@ -377,7 +377,7 @@ const s = StyleSheet.create({
     borderRadius: 10,
     padding: 14,
     fontSize: 15,
-    color: '#1e1a36',
+    color: '#ffffff',
     minHeight: 80,
     textAlignVertical: 'top',
     marginBottom: 14,

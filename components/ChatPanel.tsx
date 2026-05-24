@@ -226,12 +226,12 @@ export default function ChatPanel() {
             <View style={styles.drawerHeader}>
               <Text style={styles.drawerTitle}>Discussion</Text>
               <Pressable onPress={closeChat} hitSlop={12}>
-                <Ionicons name="close" size={22} color="rgba(50,35,80,0.70)" />
+                <Ionicons name="close" size={22} color="rgba(255,255,255,0.80)" />
               </Pressable>
             </View>
 
             {loading ? (
-              <ActivityIndicator style={{ flex: 1 }} color="rgba(50,35,80,0.70)" />
+              <ActivityIndicator style={{ flex: 1 }} color="rgba(255,255,255,0.80)" />
             ) : (
               <FlatList
                 style={{ flex: 1 }}
@@ -255,7 +255,7 @@ export default function ChatPanel() {
               <TextInput
                 style={styles.chatInput}
                 placeholder="Envoyer un message..."
-                placeholderTextColor="rgba(70,50,100,0.45)"
+                placeholderTextColor="rgba(255,255,255,0.50)"
                 value={input}
                 onChangeText={setInput}
                 returnKeyType="send"
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     right: 0,
     width: 46,
     height: 64,
-    backgroundColor: 'rgba(110,55,180,0.85)',
+    backgroundColor: 'rgba(255,255,255,0.92)',
     borderTopLeftRadius: 16,
     borderBottomLeftRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(255,255,255,0.30)',
   },
-  drawerTitle: { fontSize: 17, fontWeight: '700', color: '#1e1a36' },
+  drawerTitle: { fontSize: 17, fontWeight: '700', color: '#ffffff' },
 
   messageList: { paddingHorizontal: 12, paddingVertical: 12, gap: 12 },
 
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
   rowOther: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
 
   bubbleOwn: {
-    backgroundColor: 'rgba(110,55,180,0.85)',
+    backgroundColor: 'rgba(255,255,255,0.92)',
     borderRadius: 18,
     borderBottomRightRadius: 4,
     paddingHorizontal: 14,
@@ -374,12 +374,12 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.38)',
   },
   bubbleTextOwn: { fontSize: 15, color: 'rgba(255,255,255,0.85)', lineHeight: 21 },
-  bubbleTextOther: { fontSize: 15, color: '#1e1a36', lineHeight: 21 },
-  senderName: { fontSize: 11, color: 'rgba(50,35,80,0.60)', fontWeight: '600', marginBottom: 3, marginLeft: 2 },
-  time: { fontSize: 10, color: 'rgba(70,50,100,0.40)', marginTop: 2 },
+  bubbleTextOther: { fontSize: 15, color: '#ffffff', lineHeight: 21 },
+  senderName: { fontSize: 11, color: 'rgba(255,255,255,0.70)', fontWeight: '600', marginBottom: 3, marginLeft: 2 },
+  time: { fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 2 },
 
   emptyChat: { flex: 1, alignItems: 'center', paddingTop: 60 },
-  emptyChatText: { fontSize: 14, color: 'rgba(70,50,100,0.45)' },
+  emptyChatText: { fontSize: 14, color: 'rgba(255,255,255,0.50)' },
 
   inputBar: {
     flexDirection: 'row',
@@ -401,13 +401,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
-    color: '#1e1a36',
+    color: '#ffffff',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.40)',
   },
   sendBtn: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(110,55,180,0.85)',
+    backgroundColor: 'rgba(255,255,255,0.92)',
     justifyContent: 'center', alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.55)',

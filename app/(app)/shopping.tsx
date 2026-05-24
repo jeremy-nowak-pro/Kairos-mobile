@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(255,255,255,0.30)',
   },
-  title: { fontSize: 28, fontWeight: '700', color: '#1e1a36' },
+  title: { fontSize: 28, fontWeight: '700', color: '#ffffff' },
 
   tabBarWrapper: {
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -579,7 +579,7 @@ const styles = StyleSheet.create({
   },
   tabFillActive: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(110,55,180,0.85)',
+    backgroundColor: 'rgba(255,255,255,0.92)',
     borderRadius: 20,
   },
   tabFillDelete: {
@@ -632,13 +632,13 @@ const styles = StyleSheet.create({
   },
   circleChecked: { backgroundColor: '#34c759', borderColor: '#34c759' },
   itemThumb: { width: 38, height: 38, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.38)', flexShrink: 0 },
-  itemName: { flex: 1, fontSize: 16, color: '#1e1a36' },
-  itemNameChecked: { textDecorationLine: 'line-through', color: 'rgba(70,50,100,0.40)' },
+  itemName: { flex: 1, fontSize: 16, color: '#ffffff' },
+  itemNameChecked: { textDecorationLine: 'line-through', color: 'rgba(255,255,255,0.45)' },
   deleteBtn: { padding: 6 },
 
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 8 },
-  emptyTitle: { fontSize: 17, fontWeight: '600', color: 'rgba(50,35,80,0.70)' },
-  emptyHint: { fontSize: 14, color: 'rgba(70,50,100,0.50)', textAlign: 'center', paddingHorizontal: 40 },
+  emptyTitle: { fontSize: 17, fontWeight: '600', color: 'rgba(255,255,255,0.80)' },
+  emptyHint: { fontSize: 14, color: 'rgba(255,255,255,0.55)', textAlign: 'center', paddingHorizontal: 40 },
   emptyBtn: {
     marginTop: 8,
     backgroundColor: 'rgba(110,55,180,0.70)',
@@ -650,7 +650,7 @@ const styles = StyleSheet.create({
   },
   emptyBtnText: { color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: '500' },
   emptyList: { paddingTop: 60, alignItems: 'center' },
-  emptyListText: { fontSize: 14, color: 'rgba(70,50,100,0.45)', textAlign: 'center', paddingHorizontal: 40 },
+  emptyListText: { fontSize: 14, color: 'rgba(255,255,255,0.50)', textAlign: 'center', paddingHorizontal: 40 },
 
   addBar: {
     flexDirection: 'row',
@@ -679,7 +679,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     fontSize: 15,
-    color: '#1e1a36',
+    color: '#ffffff',
     backgroundColor: 'rgba(255,255,255,0.38)',
     borderRadius: 22,
     paddingHorizontal: 16,
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.40)',
   },
   addBarBtnPrimary: {
-    backgroundColor: 'rgba(110,55,180,0.85)',
+    backgroundColor: 'rgba(255,255,255,0.92)',
     borderColor: 'rgba(255,255,255,0.55)',
   },
   addBarBtnDisabled: { opacity: 0.4 },
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 16,
   },
-  sheetTitle: { fontSize: 17, fontWeight: '700', color: '#1e1a36', marginBottom: 16 },
+  sheetTitle: { fontSize: 17, fontWeight: '700', color: '#ffffff', marginBottom: 16 },
   inputGroup: {
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.50)',
@@ -730,7 +730,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   inputGroupOpen: { backgroundColor: 'rgba(255,255,255,0.58)' },
-  storeInput: { paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: '#1e1a36' },
+  storeInput: { paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: '#ffffff' },
   suggestionFirst: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(255,255,255,0.30)',
@@ -742,9 +742,9 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     backgroundColor: 'rgba(255,255,255,0.38)',
   },
-  suggestionText: { fontSize: 15, color: '#1e1a36', flex: 1 },
+  suggestionText: { fontSize: 15, color: '#ffffff', flex: 1 },
 
-  dateLabel: { fontSize: 13, color: 'rgba(50,35,80,0.65)', marginBottom: 8 },
+  dateLabel: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginBottom: 8 },
   dateChips: { gap: 8, paddingBottom: 16 },
   dateChip: {
     paddingHorizontal: 14,
@@ -755,10 +755,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.40)',
   },
   dateChipActive: {
-    backgroundColor: 'rgba(110,55,180,0.85)',
+    backgroundColor: 'rgba(255,255,255,0.92)',
     borderColor: 'rgba(255,255,255,0.55)',
   },
-  dateChipText: { fontSize: 13, fontWeight: '500', color: 'rgba(50,35,80,0.55)' },
+  dateChipText: { fontSize: 13, fontWeight: '500', color: 'rgba(255,255,255,0.65)' },
   dateChipTextActive: { color: 'rgba(255,255,255,0.85)' },
 
   createBtn: {
@@ -785,6 +785,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 13,
   },
-  toastText: { color: '#1e1a36', fontSize: 14 },
-  toastUndo: { color: 'rgba(110,55,180,0.85)', fontSize: 14, fontWeight: '600' },
+  toastText: { color: '#ffffff', fontSize: 14 },
+  toastUndo: { color: 'rgba(255,255,255,0.92)', fontSize: 14, fontWeight: '600' },
 })

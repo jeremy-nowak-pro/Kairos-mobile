@@ -49,7 +49,7 @@ export default function RegisterScreen() {
           <TextInput
             style={styles.input}
             placeholder="Pseudo"
-            placeholderTextColor="rgba(100,75,130,0.55)"
+            placeholderTextColor="rgba(255,255,255,0.45)"
             value={displayName}
             onChangeText={setDisplayName}
             autoCapitalize="none"
@@ -58,7 +58,7 @@ export default function RegisterScreen() {
           <TextInput
             style={styles.input}
             placeholder="Email"
-            placeholderTextColor="rgba(100,75,130,0.55)"
+            placeholderTextColor="rgba(255,255,255,0.45)"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -69,7 +69,7 @@ export default function RegisterScreen() {
             <TextInput
               style={styles.passwordInput}
               placeholder="Mot de passe"
-              placeholderTextColor="rgba(100,75,130,0.55)"
+              placeholderTextColor="rgba(255,255,255,0.45)"
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
@@ -108,13 +108,13 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     marginBottom: 6,
     textAlign: 'center',
-    color: '#1e1a36',
+    color: '#ffffff',
     letterSpacing: 7,
   },
   pageSubtitle: {
     fontSize: 12,
     textAlign: 'center',
-    color: 'rgba(50,35,80,0.65)',
+    color: 'rgba(255,255,255,0.75)',
     letterSpacing: 2.5,
     marginBottom: 44,
     textTransform: 'uppercase',
@@ -123,14 +123,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '300',
     textAlign: 'center',
-    color: '#1e1a36',
+    color: '#ffffff',
     marginBottom: 12,
     letterSpacing: 1,
   },
   subtitle: {
     fontSize: 14,
     textAlign: 'center',
-    color: 'rgba(50,35,80,0.70)',
+    color: 'rgba(255,255,255,0.80)',
     lineHeight: 22,
     marginBottom: 32,
   },
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   input: {
     padding: 16,
     fontSize: 15,
-    color: '#1e1a36',
+    color: '#ffffff',
     backgroundColor: 'rgba(255,255,255,0.38)',
   },
   divider: {
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     color: '#ccd8f0',
   },
   eyeButton: { paddingHorizontal: 16 },
-  eyeText: { fontSize: 12, color: 'rgba(50,35,80,0.65)', letterSpacing: 0.5 },
+  eyeText: { fontSize: 12, color: 'rgba(255,255,255,0.75)', letterSpacing: 0.5 },
   button: {
     backgroundColor: 'rgba(110,55,180,0.70)',
     borderRadius: 10,
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   link: {
     marginTop: 22,
     textAlign: 'center',
-    color: 'rgba(70,50,100,0.50)',
+    color: 'rgba(255,255,255,0.55)',
     fontSize: 13,
   },
 })
