@@ -326,8 +326,8 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-  container: { flex: 1, backgroundColor: 'transparent', borderTopLeftRadius: 14, overflow: 'hidden' },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'transparent' },
+  container: { flex: 1, backgroundColor: '#1a0e30', borderTopLeftRadius: 14, overflow: 'hidden' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1a0e30' },
   notFound: { fontSize: 16, color: 'rgba(255,255,255,0.75)', marginBottom: 12 },
   backLink: { fontSize: 15, color: 'rgba(255,255,255,0.85)' },
 
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   infoText: { fontSize: 15, color: '#ffffff' },
   rowDivider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.10)',
     marginLeft: 58,
   },
 
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   deleteSection: {
     marginTop: 48,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(0,0,0,0.08)',
+    borderTopColor: 'rgba(255,255,255,0.10)',
   },
   deleteBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
