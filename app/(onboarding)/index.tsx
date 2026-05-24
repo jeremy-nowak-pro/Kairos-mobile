@@ -15,7 +15,7 @@ export default function OnboardingScreen() {
 
         <Text style={styles.intro}>Créez votre espace ou rejoignez celui de votre partenaire.</Text>
 
-        <BlurView intensity={22} tint="dark" style={styles.card}>
+        <BlurView intensity={50} tint="light" style={styles.card}>
           <Pressable style={styles.row} onPress={() => router.push('/(onboarding)/create')}>
             <Text style={styles.rowText}>Créer notre espace</Text>
           </Pressable>
@@ -30,7 +30,7 @@ export default function OnboardingScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#070818' },
+  root: { flex: 1, backgroundColor: '#1a0e30' },
   content: {
     flex: 1,
     justifyContent: 'center',
@@ -41,13 +41,13 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     marginBottom: 6,
     textAlign: 'center',
-    color: '#dce8ff',
+    color: '#1e1a36',
     letterSpacing: 7,
   },
   subtitle: {
     fontSize: 12,
     textAlign: 'center',
-    color: 'rgba(150,175,220,0.45)',
+    color: 'rgba(50,35,80,0.65)',
     letterSpacing: 2.5,
     textTransform: 'uppercase',
     marginBottom: 44,
@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   intro: {
     fontSize: 14,
     textAlign: 'center',
-    color: 'rgba(150,175,220,0.6)',
+    color: 'rgba(50,35,80,0.70)',
     lineHeight: 22,
     marginBottom: 28,
   },
@@ -63,20 +63,20 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(140,170,255,0.35)',
+    borderColor: 'rgba(255,255,255,0.60)',
   },
   row: {
     padding: 18,
-    backgroundColor: 'rgba(15,28,80,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.60)',
     alignItems: 'center',
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(140,170,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.40)',
   },
   rowText: {
     fontSize: 15,
-    color: 'rgba(200,220,255,0.95)',
+    color: 'rgba(255,255,255,0.95)',
     fontWeight: '400',
     letterSpacing: 0.3,
   },

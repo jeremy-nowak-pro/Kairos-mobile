@@ -45,11 +45,11 @@ export default function RegisterScreen() {
         <Text style={styles.pageTitle}>Kairos</Text>
         <Text style={styles.pageSubtitle}>Créer un compte</Text>
 
-        <BlurView intensity={22} tint="dark" style={styles.card}>
+        <BlurView intensity={50} tint="light" style={styles.card}>
           <TextInput
             style={styles.input}
             placeholder="Pseudo"
-            placeholderTextColor="rgba(160,185,230,0.55)"
+            placeholderTextColor="rgba(100,75,130,0.55)"
             value={displayName}
             onChangeText={setDisplayName}
             autoCapitalize="none"
@@ -58,7 +58,7 @@ export default function RegisterScreen() {
           <TextInput
             style={styles.input}
             placeholder="Email"
-            placeholderTextColor="rgba(160,185,230,0.55)"
+            placeholderTextColor="rgba(100,75,130,0.55)"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -69,7 +69,7 @@ export default function RegisterScreen() {
             <TextInput
               style={styles.passwordInput}
               placeholder="Mot de passe"
-              placeholderTextColor="rgba(160,185,230,0.55)"
+              placeholderTextColor="rgba(100,75,130,0.55)"
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
@@ -97,7 +97,7 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#070818' },
+  root: { flex: 1, backgroundColor: '#1a0e30' },
   content: {
     flex: 1,
     justifyContent: 'center',
@@ -108,13 +108,13 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     marginBottom: 6,
     textAlign: 'center',
-    color: '#dce8ff',
+    color: '#1e1a36',
     letterSpacing: 7,
   },
   pageSubtitle: {
     fontSize: 12,
     textAlign: 'center',
-    color: 'rgba(150,175,220,0.45)',
+    color: 'rgba(50,35,80,0.65)',
     letterSpacing: 2.5,
     marginBottom: 44,
     textTransform: 'uppercase',
@@ -123,14 +123,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '300',
     textAlign: 'center',
-    color: '#dce8ff',
+    color: '#1e1a36',
     marginBottom: 12,
     letterSpacing: 1,
   },
   subtitle: {
     fontSize: 14,
     textAlign: 'center',
-    color: 'rgba(150,175,220,0.6)',
+    color: 'rgba(50,35,80,0.70)',
     lineHeight: 22,
     marginBottom: 32,
   },
@@ -138,23 +138,23 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(140,170,255,0.35)',
+    borderColor: 'rgba(255,255,255,0.60)',
     marginBottom: 14,
   },
   input: {
     padding: 16,
     fontSize: 15,
-    color: '#e8f0ff',
-    backgroundColor: 'rgba(15,28,80,0.6)',
+    color: '#1e1a36',
+    backgroundColor: 'rgba(255,255,255,0.60)',
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(140,170,255,0.2)',
+    backgroundColor: 'rgba(255,255,255,0.40)',
   },
   passwordRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(15,28,80,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.60)',
   },
   passwordInput: {
     flex: 1,
@@ -163,22 +163,22 @@ const styles = StyleSheet.create({
     color: '#ccd8f0',
   },
   eyeButton: { paddingHorizontal: 16 },
-  eyeText: { fontSize: 12, color: 'rgba(150,175,220,0.45)', letterSpacing: 0.5 },
+  eyeText: { fontSize: 12, color: 'rgba(50,35,80,0.65)', letterSpacing: 0.5 },
   button: {
-    backgroundColor: 'rgba(25,55,140,0.5)',
+    backgroundColor: 'rgba(110,55,180,0.70)',
     borderRadius: 10,
     padding: 16,
     alignItems: 'center',
     marginTop: 4,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(120,160,255,0.3)',
+    borderColor: 'rgba(255,255,255,0.50)',
   },
-  buttonText: { color: 'rgba(200,220,255,0.95)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
+  buttonText: { color: 'rgba(255,255,255,0.95)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
   error: { color: '#e05555', marginBottom: 10, fontSize: 13, textAlign: 'center' },
   link: {
     marginTop: 22,
     textAlign: 'center',
-    color: 'rgba(150,175,220,0.4)',
+    color: 'rgba(70,50,100,0.50)',
     fontSize: 13,
   },
 })

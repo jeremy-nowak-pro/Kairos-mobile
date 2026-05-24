@@ -32,12 +32,12 @@ half4 main(float2 fragCoord) {
   float w4 = blob(d, b4, spread);
   float w5 = blob(d, b5, spread);
 
-  float3 c1 = float3(0.133, 0.282, 0.722);
-  float3 c2 = float3(0.212, 0.188, 0.690);
-  float3 c3 = float3(0.290, 0.102, 0.667);
-  float3 c4 = float3(0.102, 0.235, 0.729);
-  float3 c5 = float3(0.369, 0.086, 0.635);
-  float3 bg = float3(0.027, 0.031, 0.094);
+  float3 c1 = float3(0.231, 0.118, 0.471);
+  float3 c2 = float3(0.439, 0.220, 0.659);
+  float3 c3 = float3(0.627, 0.282, 0.471);
+  float3 c4 = float3(0.533, 0.125, 0.565);
+  float3 c5 = float3(0.784, 0.408, 0.345);
+  float3 bg = float3(0.102, 0.055, 0.188);
 
   float wTotal = w1 + w2 + w3 + w4 + w5;
   float3 col = (c1 * w1 + c2 * w2 + c3 * w3 + c4 * w4 + c5 * w5) / (wTotal + 0.0001);
@@ -59,7 +59,7 @@ export default function MeshBackground() {
     iTime: clock.value,
   }))
 
-  if (!effect) return <View style={[StyleSheet.absoluteFill, { backgroundColor: '#070818' }]} />
+  if (!effect) return <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1a0e30' }]} />
 
   return (
     <Canvas style={StyleSheet.absoluteFill}>

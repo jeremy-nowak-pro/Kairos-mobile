@@ -57,14 +57,14 @@ function EventCard({ event, delay, animKey }: { event: Event; delay: number; ani
         <Text style={styles.cardTitle} numberOfLines={1}>{event.title}</Text>
         <Text style={styles.cardDate}>{formatDate(event.date)}</Text>
         <View style={styles.cardMeta}>
-          <Ionicons name="time-outline" size={12} color="rgba(150,175,220,0.5)" />
+          <Ionicons name="time-outline" size={12} color="rgba(50,35,80,0.60)" />
           <Text style={styles.cardTime}>
             {formatTime(event.start_time)} – {formatTime(event.end_time)}
           </Text>
           {event.location ? (
             <>
               <Text style={styles.dot}>·</Text>
-              <Ionicons name="location-outline" size={12} color="rgba(150,175,220,0.5)" />
+              <Ionicons name="location-outline" size={12} color="rgba(50,35,80,0.60)" />
               <Text style={styles.cardLoc} numberOfLines={1}>{event.location}</Text>
             </>
           ) : null}
@@ -128,7 +128,7 @@ export default function EventsScreen() {
       </View>
 
       {loading && events.length === 0 ? (
-        <ActivityIndicator style={{ marginTop: 48 }} color="rgba(150,175,220,0.6)" />
+        <ActivityIndicator style={{ marginTop: 48 }} color="rgba(50,35,80,0.70)" />
       ) : error ? (
         <Text style={styles.error}>{error}</Text>
       ) : events.length === 0 ? (
@@ -152,7 +152,7 @@ export default function EventsScreen() {
         style={styles.fab}
         onPress={() => router.push('/(app)/events/new')}
       >
-        <Ionicons name="add" size={28} color="rgba(200,220,255,0.95)" />
+        <Ionicons name="add" size={28} color="rgba(255,255,255,0.95)" />
       </Pressable>
     </View>
   )
@@ -168,52 +168,52 @@ const styles = StyleSheet.create({
     paddingTop: 56,
     paddingBottom: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(140,170,255,0.15)',
+    borderBottomColor: 'rgba(255,255,255,0.30)',
   },
-  title: { fontSize: 28, fontWeight: '700', color: '#dce8ff' },
-  subtitle: { fontSize: 14, color: 'rgba(150,175,220,0.45)' },
+  title: { fontSize: 28, fontWeight: '700', color: '#1e1a36' },
+  subtitle: { fontSize: 14, color: 'rgba(50,35,80,0.65)' },
 
   list: { paddingTop: 12, paddingBottom: 100 },
 
   card: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(12,20,60,0.85)',
+    backgroundColor: 'rgba(255,255,255,0.82)',
     borderRadius: 12,
     marginHorizontal: 16,
     marginBottom: 8,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(140,170,255,0.18)',
+    borderColor: 'rgba(255,255,255,0.45)',
   },
   cardPressed: { opacity: 0.7 },
   cardBar: { width: 4 },
   cardBody: { flex: 1, paddingHorizontal: 14, paddingVertical: 13 },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: '#dce8ff', marginBottom: 3 },
-  cardDate: { fontSize: 13, color: 'rgba(180,210,255,0.8)', marginBottom: 5 },
+  cardTitle: { fontSize: 16, fontWeight: '600', color: '#1e1a36', marginBottom: 3 },
+  cardDate: { fontSize: 13, color: 'rgba(110,55,180,0.85)', marginBottom: 5 },
   cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
-  cardTime: { fontSize: 13, color: 'rgba(150,175,220,0.55)' },
+  cardTime: { fontSize: 13, color: 'rgba(50,35,80,0.55)' },
   dot: { fontSize: 13, color: 'rgba(140,170,255,0.3)' },
-  cardLoc: { fontSize: 13, color: 'rgba(150,175,220,0.55)', flex: 1 },
+  cardLoc: { fontSize: 13, color: 'rgba(50,35,80,0.55)', flex: 1 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 9 },
   tag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 5 },
   tagText: { fontSize: 12, fontWeight: '500' },
 
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyText: { fontSize: 15, color: 'rgba(150,175,220,0.4)', marginBottom: 8 },
-  emptyAction: { fontSize: 15, color: 'rgba(180,210,255,0.7)', fontWeight: '500' },
+  emptyText: { fontSize: 15, color: 'rgba(70,50,100,0.50)', marginBottom: 8 },
+  emptyAction: { fontSize: 15, color: 'rgba(110,55,180,0.75)', fontWeight: '500' },
   error: { color: '#e05555', padding: 20, textAlign: 'center' },
 
   fab: {
     position: 'absolute',
     right: 20,
     bottom: 28,
-    backgroundColor: 'rgba(25,55,140,0.8)',
+    backgroundColor: 'rgba(110,55,180,0.85)',
     width: 52,
     height: 52,
     borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(120,160,255,0.4)',
+    borderColor: 'rgba(255,255,255,0.55)',
   },
 })

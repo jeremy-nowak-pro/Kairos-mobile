@@ -32,13 +32,13 @@ export default function AppLayout() {
         headerShown: false,
         sceneStyle: { backgroundColor: 'transparent' },
         tabBarStyle: {
-          backgroundColor: 'rgba(7,8,24,0.88)',
-          borderTopColor: 'rgba(140,170,255,0.15)',
+          backgroundColor: 'rgba(255,255,255,0.88)',
+          borderTopColor: 'rgba(0,0,0,0.08)',
           borderTopWidth: StyleSheet.hairlineWidth,
           elevation: 0,
         },
-        tabBarActiveTintColor: '#7BA4FF',
-        tabBarInactiveTintColor: 'rgba(150,175,220,0.4)',
+        tabBarActiveTintColor: '#7040a8',
+        tabBarInactiveTintColor: 'rgba(70,50,100,0.50)',
         tabBarLabelStyle: { fontSize: 12 },
       }}
     >

@@ -49,7 +49,7 @@ export default function CreateSpaceScreen() {
           <Text style={styles.title}>Espace créé !</Text>
           <Text style={styles.subtitle}>Partage ce code à ton partenaire pour qu'il vous rejoigne.</Text>
 
-          <BlurView intensity={22} tint="dark" style={styles.codeCard}>
+          <BlurView intensity={50} tint="light" style={styles.codeCard}>
             <Text style={styles.code}>{inviteCode}</Text>
           </BlurView>
 
@@ -87,7 +87,7 @@ export default function CreateSpaceScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#070818' },
+  root: { flex: 1, backgroundColor: '#1a0e30' },
   content: {
     flex: 1,
     justifyContent: 'center',
@@ -98,13 +98,13 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     marginBottom: 10,
     textAlign: 'center',
-    color: '#dce8ff',
+    color: '#1e1a36',
     letterSpacing: 1,
   },
   subtitle: {
     fontSize: 14,
     textAlign: 'center',
-    color: 'rgba(150,175,220,0.55)',
+    color: 'rgba(50,35,80,0.55)',
     lineHeight: 22,
     marginBottom: 44,
   },
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(140,170,255,0.35)',
+    borderColor: 'rgba(255,255,255,0.60)',
     padding: 32,
     alignItems: 'center',
     marginBottom: 24,
@@ -121,23 +121,23 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: '300',
     letterSpacing: 8,
-    color: '#dce8ff',
+    color: '#1e1a36',
   },
   button: {
-    backgroundColor: 'rgba(25,55,140,0.5)',
+    backgroundColor: 'rgba(110,55,180,0.70)',
     borderRadius: 10,
     padding: 16,
     alignItems: 'center',
     marginBottom: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(120,160,255,0.3)',
+    borderColor: 'rgba(255,255,255,0.50)',
   },
-  buttonText: { color: 'rgba(200,220,255,0.95)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
+  buttonText: { color: 'rgba(255,255,255,0.95)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
   buttonSecondary: {
     backgroundColor: 'transparent',
-    borderColor: 'rgba(140,170,255,0.35)',
+    borderColor: 'rgba(255,255,255,0.60)',
   },
-  buttonSecondaryText: { color: 'rgba(180,210,255,0.7)', fontSize: 15, letterSpacing: 0.5 },
+  buttonSecondaryText: { color: 'rgba(110,55,180,0.75)', fontSize: 15, letterSpacing: 0.5 },
   error: { color: '#e05555', marginBottom: 14, fontSize: 13, textAlign: 'center' },
-  link: { marginTop: 8, textAlign: 'center', color: 'rgba(150,175,220,0.4)', fontSize: 13 },
+  link: { marginTop: 8, textAlign: 'center', color: 'rgba(70,50,100,0.50)', fontSize: 13 },
 })
