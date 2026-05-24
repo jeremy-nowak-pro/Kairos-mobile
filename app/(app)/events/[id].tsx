@@ -286,12 +286,13 @@ export default function EventDetailScreen() {
             </>
           )}
 
-          <View style={styles.deleteSection}>
-            <Pressable onPress={handleDelete} style={styles.deleteBtn}>
-              <Ionicons name="trash-outline" size={16} color="#e05555" />
-              <Text style={styles.deleteBtnText}>Supprimer l'événement</Text>
-            </Pressable>
-          </View>
+          <Pressable
+            onPress={handleDelete}
+            style={({ pressed }) => [styles.deleteBtn, pressed && { opacity: 0.7 }]}
+          >
+            <Ionicons name="trash-outline" size={16} color="#e05555" />
+            <Text style={styles.deleteBtnText}>Supprimer l'événement</Text>
+          </Pressable>
 
         </View>
         </Animated.View>
@@ -406,16 +407,16 @@ const styles = StyleSheet.create({
   },
   docName: { flex: 1, fontSize: 14, color: '#ffffff' },
 
-  deleteSection: {
-    marginTop: 48,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.10)',
-  },
   deleteBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 7, paddingVertical: 18,
+    gap: 8, marginTop: 32, marginBottom: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(224,85,85,0.45)',
+    backgroundColor: 'rgba(224,85,85,0.12)',
   },
-  deleteBtnText: { fontSize: 15, color: '#e05555' },
+  deleteBtnText: { fontSize: 15, fontWeight: '500', color: '#e05555' },
 
   viewerBackdrop: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   viewerImage: { width: '100%', height: '85%' },
