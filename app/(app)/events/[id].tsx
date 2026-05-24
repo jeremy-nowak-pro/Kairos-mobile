@@ -290,7 +290,7 @@ export default function EventDetailScreen() {
             onPress={handleDelete}
             style={({ pressed }) => [styles.deleteBtn, pressed && { opacity: 0.7 }]}
           >
-            <Ionicons name="trash-outline" size={16} color="#e05555" />
+            <Ionicons name="trash-outline" size={16} color="#ffffff" />
             <Text style={styles.deleteBtnText}>Supprimer l'événement</Text>
           </Pressable>
 
