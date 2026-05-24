@@ -35,7 +35,7 @@ function InfoRow({ icon, children, last }: {
     <>
       <View style={styles.infoRow}>
         <View style={styles.infoIcon}>
-          <Ionicons name={icon as any} size={17} color="#555" />
+          <Ionicons name={icon as any} size={17} color="rgba(150,175,220,0.6)" />
         </View>
         <View style={{ flex: 1 }}>{children}</View>
       </View>
@@ -140,7 +140,7 @@ export default function EventDetailScreen() {
   }
 
   if (loading) {
-    return <View style={styles.centered}><ActivityIndicator /></View>
+    return <View style={styles.centered}><ActivityIndicator color="rgba(150,175,220,0.6)" /></View>
   }
 
   if (!event) {
@@ -148,7 +148,7 @@ export default function EventDetailScreen() {
       <View style={styles.centered}>
         <Text style={styles.notFound}>Événement introuvable</Text>
         <Pressable onPress={() => router.back()}>
-          <Text style={styles.back}>Retour</Text>
+          <Text style={styles.backLink}>Retour</Text>
         </Pressable>
       </View>
     )
@@ -169,7 +169,7 @@ export default function EventDetailScreen() {
 
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
-            <Ionicons name="chevron-back" size={24} color={BLUE} />
+            <Ionicons name="chevron-back" size={24} color="rgba(180,210,255,0.8)" />
           </Pressable>
           <View style={{ flex: 1 }} />
           <Pressable onPress={() => router.push(`/(app)/events/edit/${event.id}`)} hitSlop={8}>
@@ -188,7 +188,6 @@ export default function EventDetailScreen() {
 
         <View style={styles.content}>
 
-          {/* Date + heure */}
           <SectionCard>
             <InfoRow icon="calendar-outline">
               <Text style={styles.infoText}>{formatDate(event.date)}</Text>
@@ -200,7 +199,6 @@ export default function EventDetailScreen() {
             </InfoRow>
           </SectionCard>
 
-          {/* Lieu */}
           {event.location ? (
             <SectionCard>
               <InfoRow icon="location-outline" last>
@@ -209,7 +207,6 @@ export default function EventDetailScreen() {
             </SectionCard>
           ) : null}
 
-          {/* Assigné à */}
           {event.assigned_to ? (
             <>
               <Text style={styles.groupLabel}>ASSIGNÉ À</Text>
@@ -230,7 +227,6 @@ export default function EventDetailScreen() {
             </>
           ) : null}
 
-          {/* Description */}
           {event.description ? (
             <>
               <Text style={styles.groupLabel}>DESCRIPTION</Text>
@@ -242,7 +238,6 @@ export default function EventDetailScreen() {
             </>
           ) : null}
 
-          {/* Images */}
           {imageUrls.length > 0 && (
             imageUrls.length === 1 ? (
               <Pressable onPress={() => setViewerUri(imageUrls[0])} style={styles.imageSingleWrap}>
@@ -265,7 +260,6 @@ export default function EventDetailScreen() {
             )
           )}
 
-          {/* Pièces jointes */}
           {docs.length > 0 && (
             <>
               <Text style={styles.groupLabel}>PIÈCES JOINTES</Text>
@@ -279,11 +273,11 @@ export default function EventDetailScreen() {
                       <View style={styles.docIcon}>
                         <Ionicons
                           name={att.mime_type === 'application/pdf' ? 'document-text-outline' : 'document-outline'}
-                          size={18} color="#555"
+                          size={18} color="rgba(150,175,220,0.6)"
                         />
                       </View>
                       <Text style={styles.docName} numberOfLines={1}>{att.filename}</Text>
-                      <Ionicons name="chevron-forward" size={16} color="#c0c0c0" />
+                      <Ionicons name="chevron-forward" size={16} color="rgba(140,170,255,0.3)" />
                     </Pressable>
                     {i < docs.length - 1 && <View style={styles.rowDivider} />}
                   </View>
@@ -292,10 +286,9 @@ export default function EventDetailScreen() {
             </>
           )}
 
-          {/* Supprimer */}
           <View style={styles.deleteSection}>
             <Pressable onPress={handleDelete} style={styles.deleteBtn}>
-              <Ionicons name="trash-outline" size={16} color="#dc2626" />
+              <Ionicons name="trash-outline" size={16} color="#e05555" />
               <Text style={styles.deleteBtnText}>Supprimer l'événement</Text>
             </Pressable>
           </View>
@@ -321,53 +314,51 @@ export default function EventDetailScreen() {
   )
 }
 
-const BLUE = '#2563EB'
-
 const styles = StyleSheet.create({
   shadow: {
     flex: 1,
-    backgroundColor: '#f2f2f7',
+    backgroundColor: '#070818',
     borderTopLeftRadius: 14,
     shadowColor: '#000',
     shadowOffset: { width: -8, height: 0 },
-    shadowOpacity: 0.14,
+    shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 8,
   },
-  container: { flex: 1, backgroundColor: '#f2f2f7', borderTopLeftRadius: 14, overflow: 'hidden' },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  notFound: { fontSize: 16, color: '#999', marginBottom: 12 },
-  back: { fontSize: 15, color: BLUE },
+  container: { flex: 1, backgroundColor: '#070818', borderTopLeftRadius: 14, overflow: 'hidden' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#070818' },
+  notFound: { fontSize: 16, color: 'rgba(150,175,220,0.45)', marginBottom: 12 },
+  backLink: { fontSize: 15, color: 'rgba(180,210,255,0.7)' },
 
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingTop: 56, paddingBottom: 10,
   },
   backBtn: { padding: 4 },
-  editLink: { fontSize: 16, color: BLUE },
+  editLink: { fontSize: 16, color: 'rgba(180,210,255,0.8)' },
+
   titleCard: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(12,20,60,0.85)',
     borderRadius: 12,
     marginHorizontal: 16,
     marginBottom: 20,
     paddingHorizontal: 18,
     paddingVertical: 18,
     borderLeftWidth: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.07,
-    shadowRadius: 3,
-    elevation: 2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.18)',
   },
-  title: { fontSize: 24, fontWeight: '700', color: '#111', lineHeight: 30 },
+  title: { fontSize: 24, fontWeight: '700', color: '#dce8ff', lineHeight: 30 },
 
   content: { paddingHorizontal: 16, paddingTop: 4 },
 
   sectionCard: {
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(12,20,60,0.85)',
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.18)',
   },
   infoRow: {
     flexDirection: 'row', alignItems: 'center',
@@ -375,19 +366,19 @@ const styles = StyleSheet.create({
   },
   infoIcon: {
     width: 30, height: 30, borderRadius: 7,
-    backgroundColor: '#f2f2f7',
+    backgroundColor: 'rgba(15,28,80,0.6)',
     justifyContent: 'center', alignItems: 'center',
   },
-  infoText: { fontSize: 15, color: '#222' },
+  infoText: { fontSize: 15, color: '#dce8ff' },
   rowDivider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: '#e5e5e5',
+    backgroundColor: 'rgba(140,170,255,0.12)',
     marginLeft: 58,
   },
 
   groupLabel: {
-    fontSize: 12, fontWeight: '600', color: '#8e8e93',
-    letterSpacing: 0.4, marginBottom: 8, marginLeft: 4,
+    fontSize: 11, fontWeight: '600', color: 'rgba(150,175,220,0.45)',
+    letterSpacing: 0.8, marginBottom: 8, marginLeft: 4,
   },
 
   imageSingleWrap: { borderRadius: 12, overflow: 'hidden', marginBottom: 12 },
@@ -401,7 +392,7 @@ const styles = StyleSheet.create({
   tagText: { fontSize: 13, fontWeight: '500' },
 
   descRow: { paddingHorizontal: 16, paddingVertical: 14 },
-  descText: { fontSize: 15, color: '#333', lineHeight: 22 },
+  descText: { fontSize: 15, color: 'rgba(180,210,255,0.8)', lineHeight: 22 },
 
   docRow: {
     flexDirection: 'row', alignItems: 'center',
@@ -409,21 +400,21 @@ const styles = StyleSheet.create({
   },
   docIcon: {
     width: 34, height: 34, borderRadius: 7,
-    backgroundColor: '#f2f2f7',
+    backgroundColor: 'rgba(15,28,80,0.6)',
     justifyContent: 'center', alignItems: 'center',
   },
-  docName: { flex: 1, fontSize: 14, color: '#333' },
+  docName: { flex: 1, fontSize: 14, color: '#dce8ff' },
 
   deleteSection: {
     marginTop: 48,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#d1d1d6',
+    borderTopColor: 'rgba(140,170,255,0.12)',
   },
   deleteBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 7, paddingVertical: 18,
   },
-  deleteBtnText: { fontSize: 15, color: '#dc2626' },
+  deleteBtnText: { fontSize: 15, color: '#e05555' },
 
   viewerBackdrop: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   viewerImage: { width: '100%', height: '85%' },

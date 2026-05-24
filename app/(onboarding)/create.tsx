@@ -4,6 +4,8 @@ import { useRouter } from 'expo-router'
 import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
 import { createSpace } from '@/lib/spaces'
+import { BlurView } from 'expo-blur'
+import MeshBackground from '@/components/MeshBackground'
 
 export default function CreateSpaceScreen() {
   const { user } = useAuth()
@@ -41,53 +43,101 @@ export default function CreateSpaceScreen() {
 
   if (inviteCode) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Espace créé !</Text>
-        <Text style={styles.subtitle}>Partage ce code à ton partenaire pour qu'il vous rejoigne.</Text>
+      <View style={styles.root}>
+        <MeshBackground />
+        <View style={styles.content}>
+          <Text style={styles.title}>Espace créé !</Text>
+          <Text style={styles.subtitle}>Partage ce code à ton partenaire pour qu'il vous rejoigne.</Text>
 
-        <View style={styles.codeBox}>
-          <Text style={styles.code}>{inviteCode}</Text>
+          <BlurView intensity={22} tint="dark" style={styles.codeCard}>
+            <Text style={styles.code}>{inviteCode}</Text>
+          </BlurView>
+
+          <Pressable style={[styles.button, styles.buttonSecondary]} onPress={handleShare}>
+            <Text style={styles.buttonSecondaryText}>Partager le code</Text>
+          </Pressable>
+
+          <Pressable style={styles.button} onPress={handleContinue}>
+            <Text style={styles.buttonText}>Continuer seul pour l'instant</Text>
+          </Pressable>
         </View>
-
-        <Pressable style={styles.buttonSecondary} onPress={handleShare}>
-          <Text style={styles.buttonSecondaryText}>Partager le code</Text>
-        </Pressable>
-
-        <Pressable style={styles.buttonPrimary} onPress={handleContinue}>
-          <Text style={styles.buttonPrimaryText}>Continuer seul pour l'instant</Text>
-        </Pressable>
       </View>
     )
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Créer notre espace</Text>
-      <Text style={styles.subtitle}>Un espace sera créé. Vous pourrez ensuite inviter votre partenaire.</Text>
+    <View style={styles.root}>
+      <MeshBackground />
+      <View style={styles.content}>
+        <Text style={styles.title}>Créer notre espace</Text>
+        <Text style={styles.subtitle}>Un espace sera créé. Vous pourrez ensuite inviter votre partenaire.</Text>
 
-      {error && <Text style={styles.error}>{error}</Text>}
+        {error && <Text style={styles.error}>{error}</Text>}
 
-      <Pressable style={styles.buttonPrimary} onPress={handleCreate} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonPrimaryText}>Créer l'espace</Text>}
-      </Pressable>
+        <Pressable style={styles.button} onPress={handleCreate} disabled={loading}>
+          {loading ? <ActivityIndicator color="rgba(180,210,255,0.9)" /> : <Text style={styles.buttonText}>Créer l'espace</Text>}
+        </Pressable>
 
-      <Pressable onPress={() => router.back()}>
-        <Text style={styles.link}>Retour</Text>
-      </Pressable>
+        <Pressable onPress={() => router.back()}>
+          <Text style={styles.link}>Retour</Text>
+        </Pressable>
+      </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 32, backgroundColor: '#fff' },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 8 },
-  subtitle: { fontSize: 15, color: '#666', marginBottom: 48, lineHeight: 22 },
-  codeBox: { backgroundColor: '#f5f5f5', borderRadius: 12, padding: 24, alignItems: 'center', marginBottom: 24 },
-  code: { fontSize: 32, fontWeight: '700', letterSpacing: 6 },
-  buttonPrimary: { backgroundColor: '#111', borderRadius: 10, padding: 16, alignItems: 'center', marginBottom: 12 },
-  buttonPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  buttonSecondary: { borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 10, padding: 16, alignItems: 'center', marginBottom: 12 },
-  buttonSecondaryText: { color: '#111', fontSize: 16 },
-  error: { color: '#dc2626', marginBottom: 12, fontSize: 14 },
-  link: { textAlign: 'center', color: '#666', marginTop: 16 },
+  root: { flex: 1, backgroundColor: '#070818' },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 28,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '300',
+    marginBottom: 10,
+    textAlign: 'center',
+    color: '#dce8ff',
+    letterSpacing: 1,
+  },
+  subtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    color: 'rgba(150,175,220,0.55)',
+    lineHeight: 22,
+    marginBottom: 44,
+  },
+  codeCard: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.35)',
+    padding: 32,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  code: {
+    fontSize: 34,
+    fontWeight: '300',
+    letterSpacing: 8,
+    color: '#dce8ff',
+  },
+  button: {
+    backgroundColor: 'rgba(25,55,140,0.5)',
+    borderRadius: 10,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(120,160,255,0.3)',
+  },
+  buttonText: { color: 'rgba(200,220,255,0.95)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
+  buttonSecondary: {
+    backgroundColor: 'transparent',
+    borderColor: 'rgba(140,170,255,0.35)',
+  },
+  buttonSecondaryText: { color: 'rgba(180,210,255,0.7)', fontSize: 15, letterSpacing: 0.5 },
+  error: { color: '#e05555', marginBottom: 14, fontSize: 13, textAlign: 'center' },
+  link: { marginTop: 8, textAlign: 'center', color: 'rgba(150,175,220,0.4)', fontSize: 13 },
 })

@@ -81,16 +81,13 @@ export default function ChatPanel() {
   const openRef = useRef(false)
   const drawerWidth = width * 0.88
 
-  // Sync ref for use inside subscription callback
   useEffect(() => { openRef.current = open }, [open])
 
-  // Initial unread count
   useEffect(() => {
     if (!space || !user) return
     getUnreadCount(space.id, user.id).then(setUnread).catch(() => {})
   }, [space?.id, user?.id])
 
-  // Realtime subscription
   useEffect(() => {
     if (!space || !user) return
     const channel = subscribeToMessages(space.id, msg => {
@@ -180,13 +177,11 @@ export default function ChatPanel() {
   const baseTranslateX = drawerAnim.interpolate({ inputRange: [0, 1], outputRange: [drawerWidth, 0] })
   const gestureOffset = gestureX.interpolate({ inputRange: [0, drawerWidth], outputRange: [0, drawerWidth], extrapolate: 'clamp' })
   const translateX = Animated.add(baseTranslateX, gestureOffset)
-  // Center handle vertically in content area (above tab bar)
   const contentHeight = height - TAB_BAR_HEIGHT
   const handleTop = contentHeight / 2 - 32
 
   return (
     <>
-      {/* Handle */}
       {!open && (
         <PanGestureHandler
           onHandlerStateChange={onHandleStateChange}
@@ -195,7 +190,7 @@ export default function ChatPanel() {
         >
           <Animated.View style={[styles.handle, { top: handleTop }]}>
             <Pressable style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} onPress={openChat}>
-              <Ionicons name="chatbubbles" size={20} color="#fff" />
+              <Ionicons name="chatbubbles" size={20} color="rgba(200,220,255,0.9)" />
               {unread > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text>
@@ -206,7 +201,6 @@ export default function ChatPanel() {
         </PanGestureHandler>
       )}
 
-      {/* Backdrop */}
       {open && (
         <Animated.View
           style={[styles.backdrop, { opacity: backdropOpacity }]}
@@ -216,7 +210,6 @@ export default function ChatPanel() {
         </Animated.View>
       )}
 
-      {/* Drawer */}
       {open && (
         <PanGestureHandler
           onGestureEvent={onGestureEvent}
@@ -230,17 +223,15 @@ export default function ChatPanel() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             keyboardVerticalOffset={0}
           >
-            {/* Header */}
             <View style={styles.drawerHeader}>
               <Text style={styles.drawerTitle}>Discussion</Text>
               <Pressable onPress={closeChat} hitSlop={12}>
-                <Ionicons name="close" size={22} color="#555" />
+                <Ionicons name="close" size={22} color="rgba(150,175,220,0.6)" />
               </Pressable>
             </View>
 
-            {/* Messages */}
             {loading ? (
-              <ActivityIndicator style={{ flex: 1 }} />
+              <ActivityIndicator style={{ flex: 1 }} color="rgba(150,175,220,0.6)" />
             ) : (
               <FlatList
                 style={{ flex: 1 }}
@@ -260,12 +251,11 @@ export default function ChatPanel() {
               />
             )}
 
-            {/* Input */}
             <View style={styles.inputBar}>
               <TextInput
                 style={styles.chatInput}
                 placeholder="Envoyer un message..."
-                placeholderTextColor="#bbb"
+                placeholderTextColor="rgba(150,175,220,0.35)"
                 value={input}
                 onChangeText={setInput}
                 returnKeyType="send"
@@ -279,8 +269,8 @@ export default function ChatPanel() {
                 disabled={!input.trim() || sending}
               >
                 {sending
-                  ? <ActivityIndicator size="small" color="#fff" />
-                  : <Ionicons name="arrow-up" size={18} color="#fff" />
+                  ? <ActivityIndicator size="small" color="rgba(200,220,255,0.9)" />
+                  : <Ionicons name="arrow-up" size={18} color="rgba(200,220,255,0.9)" />
                 }
               </Pressable>
             </View>
@@ -299,26 +289,22 @@ const styles = StyleSheet.create({
     right: 0,
     width: 46,
     height: 64,
-    backgroundColor: '#2563EB',
+    backgroundColor: 'rgba(25,55,140,0.8)',
     borderTopLeftRadius: 16,
     borderBottomLeftRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRightWidth: 0,
+    borderColor: 'rgba(120,160,255,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: -2, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 8,
     zIndex: 200,
   },
   badge: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    minWidth: 16,
-    height: 16,
+    top: 8, right: 8,
+    minWidth: 16, height: 16,
     borderRadius: 8,
-    backgroundColor: '#ef4444',
+    backgroundColor: '#e05555',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 3,
@@ -328,19 +314,22 @@ const styles = StyleSheet.create({
   backdrop: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     zIndex: 190,
   },
 
   drawer: {
     position: 'absolute',
     top: 0, right: 0, bottom: 0,
-    backgroundColor: '#fff',
+    backgroundColor: '#0a1030',
     borderTopLeftRadius: 14,
     borderBottomLeftRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRightWidth: 0,
+    borderColor: 'rgba(140,170,255,0.2)',
     shadowColor: '#000',
     shadowOffset: { width: -8, height: 0 },
-    shadowOpacity: 0.14,
+    shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 20,
     zIndex: 200,
@@ -355,9 +344,9 @@ const styles = StyleSheet.create({
     paddingTop: 56,
     paddingBottom: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#e5e5ea',
+    borderBottomColor: 'rgba(140,170,255,0.15)',
   },
-  drawerTitle: { fontSize: 17, fontWeight: '700', color: '#111' },
+  drawerTitle: { fontSize: 17, fontWeight: '700', color: '#dce8ff' },
 
   messageList: { paddingHorizontal: 12, paddingVertical: 12, gap: 12 },
 
@@ -365,28 +354,32 @@ const styles = StyleSheet.create({
   rowOther: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
 
   bubbleOwn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: 'rgba(25,55,140,0.8)',
     borderRadius: 18,
     borderBottomRightRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 10,
     maxWidth: '80%',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(120,160,255,0.3)',
   },
   bubbleOther: {
-    backgroundColor: '#f2f2f7',
+    backgroundColor: 'rgba(15,28,80,0.8)',
     borderRadius: 18,
     borderBottomLeftRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 10,
     maxWidth: '80%',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.18)',
   },
-  bubbleTextOwn: { fontSize: 15, color: '#fff', lineHeight: 21 },
-  bubbleTextOther: { fontSize: 15, color: '#111', lineHeight: 21 },
-  senderName: { fontSize: 11, color: '#999', fontWeight: '600', marginBottom: 3, marginLeft: 2 },
-  time: { fontSize: 10, color: '#bbb', marginTop: 2 },
+  bubbleTextOwn: { fontSize: 15, color: 'rgba(200,220,255,0.95)', lineHeight: 21 },
+  bubbleTextOther: { fontSize: 15, color: '#dce8ff', lineHeight: 21 },
+  senderName: { fontSize: 11, color: 'rgba(150,175,220,0.5)', fontWeight: '600', marginBottom: 3, marginLeft: 2 },
+  time: { fontSize: 10, color: 'rgba(150,175,220,0.3)', marginTop: 2 },
 
   emptyChat: { flex: 1, alignItems: 'center', paddingTop: 60 },
-  emptyChatText: { fontSize: 14, color: '#bbb' },
+  emptyChatText: { fontSize: 14, color: 'rgba(150,175,220,0.35)' },
 
   inputBar: {
     flexDirection: 'row',
@@ -396,32 +389,33 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#e5e5ea',
-    backgroundColor: '#fff',
+    borderTopColor: 'rgba(140,170,255,0.15)',
+    backgroundColor: '#0a1030',
   },
   chatInput: {
     flex: 1,
     minHeight: 40,
     maxHeight: 100,
-    backgroundColor: '#f2f2f7',
+    backgroundColor: 'rgba(15,28,80,0.6)',
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
-    color: '#111',
+    color: '#e8f0ff',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.2)',
   },
   sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#2563EB',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(25,55,140,0.8)',
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(120,160,255,0.4)',
   },
   sendBtnDisabled: { opacity: 0.35 },
 
   navBarFill: {
     height: 44,
-    backgroundColor: '#f2f2f7',
+    backgroundColor: '#0a1030',
   },
 })

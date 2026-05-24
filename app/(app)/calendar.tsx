@@ -46,8 +46,6 @@ function buildWeeks(year: number, month: number): (number | null)[][] {
   return weeks
 }
 
-// ── Event detail popup ───────────────────────────────────────────────────────
-
 function EventDetailPopup({ event, onClose }: { event: Event; onClose: () => void }) {
   const assignees = event.assigned_to?.split(',').map(s => s.trim()).filter(Boolean) ?? []
   const color = userColor(event.assigned_to)
@@ -73,19 +71,18 @@ function EventDetailPopup({ event, onClose }: { event: Event; onClose: () => voi
       <View style={styles.popupHeader}>
         <Text style={styles.popupTitle}>{event.title}</Text>
         <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={8}>
-          <Ionicons name="close" size={20} color="#666" />
+          <Ionicons name="close" size={20} color="rgba(150,175,220,0.6)" />
         </Pressable>
       </View>
 
-      {/* Date/heure — avec miniature à droite si une seule image */}
       <View style={thumbs.length === 1 ? styles.popupMainRow : undefined}>
         <View style={thumbs.length === 1 ? styles.popupDateTimeCol : undefined}>
           <View style={styles.popupRow}>
-            <Ionicons name="calendar-outline" size={15} color="#888" />
+            <Ionicons name="calendar-outline" size={15} color="rgba(150,175,220,0.5)" />
             <Text style={styles.popupRowText}>{formatFullDate(event.date)}</Text>
           </View>
           <View style={[styles.popupRow, { marginBottom: 0 }]}>
-            <Ionicons name="time-outline" size={15} color="#888" />
+            <Ionicons name="time-outline" size={15} color="rgba(150,175,220,0.5)" />
             <Text style={styles.popupRowText}>
               {formatTime(event.start_time)} – {formatTime(event.end_time)}
             </Text>
@@ -99,7 +96,6 @@ function EventDetailPopup({ event, onClose }: { event: Event; onClose: () => voi
         )}
       </View>
 
-      {/* Plusieurs images : rangée centrée sous la date/heure */}
       {thumbs.length > 1 && (
         <View style={styles.popupThumbRow}>
           {thumbs.slice(0, 4).map((uri, i) => (
@@ -114,17 +110,17 @@ function EventDetailPopup({ event, onClose }: { event: Event; onClose: () => voi
 
       {event.location ? (
         <View style={styles.popupRow}>
-          <Ionicons name="location-outline" size={15} color="#888" />
+          <Ionicons name="location-outline" size={15} color="rgba(150,175,220,0.5)" />
           <Text style={styles.popupRowText}>{event.location}</Text>
         </View>
       ) : null}
       <View style={styles.popupRow}>
-        <Ionicons name="person-outline" size={15} color="#888" />
+        <Ionicons name="person-outline" size={15} color="rgba(150,175,220,0.5)" />
         <Text style={styles.popupRowText}>{event.created_by}</Text>
       </View>
       {assignees.length > 0 && (
         <View style={[styles.popupRow, { marginBottom: 0 }]}>
-          <Ionicons name="checkmark-circle-outline" size={15} color="#888" />
+          <Ionicons name="checkmark-circle-outline" size={15} color="rgba(150,175,220,0.5)" />
           <View style={styles.tagRow}>
             {assignees.map(name => {
               const c = userColor(name)
@@ -155,8 +151,6 @@ function EventDetailPopup({ event, onClose }: { event: Event; onClose: () => voi
   )
 }
 
-// ── Day list popup (multiple events) ────────────────────────────────────────
-
 function DayListPopup({
   dateStr, events, onSelectEvent, onClose,
 }: {
@@ -170,7 +164,7 @@ function DayListPopup({
       <View style={styles.popupHeader}>
         <Text style={styles.popupTitle}>{formatShortDate(dateStr)}</Text>
         <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={8}>
-          <Ionicons name="close" size={20} color="#666" />
+          <Ionicons name="close" size={20} color="rgba(150,175,220,0.6)" />
         </Pressable>
       </View>
       {events.map(e => (
@@ -184,14 +178,12 @@ function DayListPopup({
             <Text style={styles.dayListTitle}>{e.title}</Text>
             <Text style={styles.dayListTime}>{formatTime(e.start_time)} – {formatTime(e.end_time)}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={16} color="#ccc" />
+          <Ionicons name="chevron-forward" size={16} color="rgba(140,170,255,0.3)" />
         </Pressable>
       ))}
     </View>
   )
 }
-
-// ── Overlay modal wrapper ────────────────────────────────────────────────────
 
 function PopupModal({ visible, onClose, children }: {
   visible: boolean
@@ -209,8 +201,6 @@ function PopupModal({ visible, onClose, children }: {
   )
 }
 
-// ── Day cell ─────────────────────────────────────────────────────────────────
-
 function DayCell({
   day, dateStr, isToday, events, onPress,
 }: {
@@ -224,10 +214,7 @@ function DayCell({
 
   return (
     <Pressable
-      style={({ pressed }) => [
-        styles.cell,
-        pressed && styles.cellPressed,
-      ]}
+      style={({ pressed }) => [styles.cell, pressed && styles.cellPressed]}
       onPress={onPress}
     >
       <View style={[styles.dayNumWrap, isToday && styles.dayNumToday]}>
@@ -251,8 +238,6 @@ function DayCell({
   )
 }
 
-// ── Main screen ──────────────────────────────────────────────────────────────
-
 export default function CalendarScreen() {
   const { space } = useSpace()
   const today = new Date()
@@ -260,10 +245,8 @@ export default function CalendarScreen() {
 
   const [viewYear, setViewYear] = useState(today.getFullYear())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
-  // Popup state: either showing a day list or a single event
   const [dayPopup, setDayPopup] = useState<{ dateStr: string; events: Event[] } | null>(null)
   const [eventPopup, setEventPopup] = useState<Event | null>(null)
-
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -338,11 +321,11 @@ export default function CalendarScreen() {
 
       <View style={styles.monthNav}>
         <Pressable onPress={goPrev} style={styles.navBtn}>
-          <Ionicons name="chevron-back" size={22} color="#111" />
+          <Ionicons name="chevron-back" size={22} color="rgba(180,210,255,0.8)" />
         </Pressable>
         <Text style={styles.monthTitle}>{MONTHS_FR[viewMonth]} {viewYear}</Text>
         <Pressable onPress={goNext} style={styles.navBtn}>
-          <Ionicons name="chevron-forward" size={22} color="#111" />
+          <Ionicons name="chevron-forward" size={22} color="rgba(180,210,255,0.8)" />
         </Pressable>
       </View>
 
@@ -355,7 +338,7 @@ export default function CalendarScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 32 }} />
+        <ActivityIndicator style={{ marginTop: 32 }} color="rgba(150,175,220,0.6)" />
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.grid}>
@@ -383,7 +366,6 @@ export default function CalendarScreen() {
       </View>
       </PanGestureHandler>
 
-      {/* Day list popup (2+ events) */}
       <PopupModal visible={!!dayPopup} onClose={() => setDayPopup(null)}>
         {dayPopup && (
           <DayListPopup
@@ -395,7 +377,6 @@ export default function CalendarScreen() {
         )}
       </PopupModal>
 
-      {/* Event detail popup */}
       <PopupModal visible={!!eventPopup} onClose={() => setEventPopup(null)}>
         {eventPopup && (
           <EventDetailPopup event={eventPopup} onClose={() => setEventPopup(null)} />
@@ -405,101 +386,107 @@ export default function CalendarScreen() {
   )
 }
 
-const BLUE = '#2563EB'
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: '#070818' },
   header: {
     paddingHorizontal: 20, paddingTop: 56, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: '#e5e5e5',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(140,170,255,0.15)',
   },
-  title: { fontSize: 26, fontWeight: '700', color: '#111' },
-  eventCount: { fontSize: 13, color: '#999', marginTop: 2 },
+  title: { fontSize: 26, fontWeight: '700', color: '#dce8ff' },
+  eventCount: { fontSize: 13, color: 'rgba(150,175,220,0.45)', marginTop: 2 },
   monthNav: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 8, paddingVertical: 12,
   },
   navBtn: { padding: 8 },
-  monthTitle: { fontSize: 17, fontWeight: '700', color: '#111' },
+  monthTitle: { fontSize: 17, fontWeight: '600', color: '#dce8ff' },
   dayHeaders: {
     flexDirection: 'row',
-    borderBottomWidth: 1, borderBottomColor: '#ebebeb',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(140,170,255,0.1)',
     paddingBottom: 6, paddingHorizontal: 4,
   },
   dayHeaderCell: { flex: 1, alignItems: 'center' },
-  dayHeaderText: { fontSize: 11, color: '#aaa', fontWeight: '600' },
+  dayHeaderText: { fontSize: 11, color: 'rgba(150,175,220,0.4)', fontWeight: '600' },
   grid: { paddingHorizontal: 4 },
-  weekRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#ebebeb' },
+  weekRow: {
+    flexDirection: 'row',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(140,170,255,0.08)',
+  },
   cell: {
     flex: 1, minHeight: 80, paddingVertical: 5, paddingHorizontal: 2,
-    borderRightWidth: 1, borderRightColor: '#ebebeb',
+    borderRightWidth: StyleSheet.hairlineWidth,
+    borderRightColor: 'rgba(140,170,255,0.08)',
   },
-  cellSelected: { backgroundColor: '#F5F8FF' },
-  cellPressed: { backgroundColor: '#EFF6FF' },
+  cellPressed: { backgroundColor: 'rgba(120,160,255,0.06)' },
   dayNumWrap: {
     width: 26, height: 26, borderRadius: 13,
     justifyContent: 'center', alignItems: 'center', marginBottom: 3,
   },
-  dayNumToday: { backgroundColor: BLUE },
-  dayNumSelected: { borderWidth: 1.5, borderColor: BLUE },
-  dayNum: { fontSize: 13, color: '#111' },
-  dayNumHighlight: { color: '#fff', fontWeight: '700' },
+  dayNumToday: { backgroundColor: 'rgba(100,150,255,0.25)' },
+  dayNum: { fontSize: 13, color: 'rgba(180,210,255,0.7)' },
+  dayNumHighlight: { color: '#7BA4FF', fontWeight: '700' },
   chip: {
-    borderRadius: 4, paddingHorizontal: 4, paddingVertical: 2,
-    marginBottom: 2,
+    borderRadius: 4, paddingHorizontal: 4, paddingVertical: 2, marginBottom: 2,
   },
   chipTitle: { fontSize: 10, fontWeight: '600' },
-  moreText: { fontSize: 10, color: '#999', paddingLeft: 4 },
+  moreText: { fontSize: 10, color: 'rgba(150,175,220,0.4)', paddingLeft: 4 },
 
-  // Modal
   backdrop: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center', alignItems: 'center', padding: 24,
   },
   popupWrapper: { width: '100%', maxWidth: 360 },
-  popup: { backgroundColor: '#fff', borderRadius: 16, padding: 20, overflow: 'hidden' },
+  popup: {
+    backgroundColor: 'rgba(12,20,60,0.97)',
+    borderRadius: 16, padding: 20, overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.25)',
+  },
   popupAccent: { height: 4, marginHorizontal: -20, marginTop: -20, marginBottom: 14 },
   popupHeader: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'flex-start', marginBottom: 12,
   },
-  popupTitle: { fontSize: 17, fontWeight: '700', color: '#111', flex: 1, marginRight: 12 },
+  popupTitle: { fontSize: 17, fontWeight: '700', color: '#dce8ff', flex: 1, marginRight: 12 },
   closeBtn: { padding: 2 },
   popupMainRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 10 },
   popupDateTimeCol: { flex: 1 },
-  popupThumbCol: {},
   popupThumbRow: {
     flexDirection: 'row', justifyContent: 'center',
     gap: 8, marginTop: 10,
   },
   popupThumb: { width: 72, height: 72, borderRadius: 8 },
-  popupThumbMore: {
-    backgroundColor: '#f5f5f5',
-    justifyContent: 'center', alignItems: 'center',
+  popupDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(140,170,255,0.12)',
+    marginBottom: 10,
   },
-  popupThumbMoreText: { fontSize: 13, color: '#666', fontWeight: '600' },
-  popupDivider: { height: 1, backgroundColor: '#f0f0f0', marginBottom: 10 },
   popupRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  popupRowText: { fontSize: 13, color: '#444', flex: 1 },
+  popupRowText: { fontSize: 13, color: 'rgba(180,210,255,0.75)', flex: 1 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, flex: 1 },
-  tag: { backgroundColor: '#EFF6FF', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
-  tagText: { fontSize: 12, color: BLUE, fontWeight: '500' },
+  tag: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
+  tagText: { fontSize: 12, fontWeight: '500' },
   popupDescription: {
-    fontSize: 13, color: '#666', lineHeight: 20,
+    fontSize: 13, color: 'rgba(150,175,220,0.6)', lineHeight: 20,
     marginTop: 10, paddingTop: 10,
-    borderTopWidth: 1, borderTopColor: '#f0f0f0',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(140,170,255,0.12)',
   },
   viewerBackdrop: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   viewerImage: { width: '100%', height: '85%' },
   viewerClose: { position: 'absolute', top: 56, right: 20, backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 20 },
 
-  // Day list popup rows
   dayListRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f5f5f5',
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(140,170,255,0.1)',
   },
   eventAccent: { width: 3, height: 36, borderRadius: 2 },
   dayListInfo: { flex: 1 },
-  dayListTitle: { fontSize: 14, fontWeight: '600', color: '#111' },
-  dayListTime: { fontSize: 12, color: '#888', marginTop: 2 },
+  dayListTitle: { fontSize: 14, fontWeight: '600', color: '#dce8ff' },
+  dayListTime: { fontSize: 12, color: 'rgba(150,175,220,0.5)', marginTop: 2 },
 })

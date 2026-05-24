@@ -3,6 +3,8 @@ import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from 
 import { useRouter, useLocalSearchParams } from 'expo-router'
 import { useSpace } from '@/context/space'
 import { joinSpaceByCode } from '@/lib/spaces'
+import { BlurView } from 'expo-blur'
+import MeshBackground from '@/components/MeshBackground'
 
 export default function JoinSpaceScreen() {
   const { code: deepLinkCode } = useLocalSearchParams<{ code?: string }>()
@@ -26,45 +28,91 @@ export default function JoinSpaceScreen() {
     setLoading(false)
   }, [code, refresh, router])
 
-  // Si le deep link contient déjà un code valide, rejoindre automatiquement
   useEffect(() => {
     if (deepLinkCode?.length === 8) handleJoin(deepLinkCode)
   }, [deepLinkCode, handleJoin])
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Rejoindre un espace</Text>
-      <Text style={styles.subtitle}>Entre le code partagé par ton partenaire.</Text>
+    <View style={styles.root}>
+      <MeshBackground />
+      <View style={styles.content}>
+        <Text style={styles.title}>Rejoindre un espace</Text>
+        <Text style={styles.subtitle}>Entre le code partagé par ton partenaire.</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Code à 8 caractères"
-        value={code}
-        onChangeText={(t) => setCode(t.toUpperCase())}
-        autoCapitalize="characters"
-        maxLength={8}
-      />
+        <BlurView intensity={22} tint="dark" style={styles.card}>
+          <TextInput
+            style={styles.input}
+            placeholder="Code à 8 caractères"
+            placeholderTextColor="rgba(160,185,230,0.55)"
+            value={code}
+            onChangeText={(t) => setCode(t.toUpperCase())}
+            autoCapitalize="characters"
+            maxLength={8}
+          />
+        </BlurView>
 
-      {error && <Text style={styles.error}>{error}</Text>}
+        {error && <Text style={styles.error}>{error}</Text>}
 
-      <Pressable style={styles.buttonPrimary} onPress={() => handleJoin()} disabled={loading || code.length < 8}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonPrimaryText}>Rejoindre</Text>}
-      </Pressable>
+        <Pressable style={styles.button} onPress={() => handleJoin()} disabled={loading || code.length < 8}>
+          {loading ? <ActivityIndicator color="rgba(180,210,255,0.9)" /> : <Text style={styles.buttonText}>Rejoindre</Text>}
+        </Pressable>
 
-      <Pressable onPress={() => router.back()}>
-        <Text style={styles.link}>Retour</Text>
-      </Pressable>
+        <Pressable onPress={() => router.back()}>
+          <Text style={styles.link}>Retour</Text>
+        </Pressable>
+      </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 32, backgroundColor: '#fff' },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 8 },
-  subtitle: { fontSize: 15, color: '#666', marginBottom: 48, lineHeight: 22 },
-  input: { borderWidth: 1, borderColor: '#e5e5e5', borderRadius: 8, padding: 14, fontSize: 24, fontWeight: '700', textAlign: 'center', letterSpacing: 6, marginBottom: 12 },
-  buttonPrimary: { backgroundColor: '#111', borderRadius: 10, padding: 16, alignItems: 'center', marginBottom: 12 },
-  buttonPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  error: { color: '#dc2626', marginBottom: 12, fontSize: 14 },
-  link: { textAlign: 'center', color: '#666', marginTop: 16 },
+  root: { flex: 1, backgroundColor: '#070818' },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 28,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '300',
+    marginBottom: 10,
+    textAlign: 'center',
+    color: '#dce8ff',
+    letterSpacing: 1,
+  },
+  subtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    color: 'rgba(150,175,220,0.55)',
+    lineHeight: 22,
+    marginBottom: 40,
+  },
+  card: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.35)',
+    marginBottom: 14,
+  },
+  input: {
+    padding: 18,
+    fontSize: 26,
+    fontWeight: '300',
+    textAlign: 'center',
+    letterSpacing: 8,
+    color: '#e8f0ff',
+    backgroundColor: 'rgba(15,28,80,0.6)',
+  },
+  button: {
+    backgroundColor: 'rgba(25,55,140,0.5)',
+    borderRadius: 10,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(120,160,255,0.3)',
+  },
+  buttonText: { color: 'rgba(200,220,255,0.95)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
+  error: { color: '#e05555', marginBottom: 10, fontSize: 13, textAlign: 'center' },
+  link: { marginTop: 22, textAlign: 'center', color: 'rgba(150,175,220,0.4)', fontSize: 13 },
 })

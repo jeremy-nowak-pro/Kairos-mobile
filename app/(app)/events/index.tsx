@@ -21,7 +21,6 @@ function formatTime(t: string): string {
 function EventCard({ event, delay, animKey }: { event: Event; delay: number; animKey: number }) {
   const color = userColor(event.assigned_to)
   const anim = useRef(new Animated.Value(0)).current
-
   const slideAnim = useRef(new Animated.Value(0)).current
   const translateX = slideAnim.interpolate({ inputRange: [0, 1], outputRange: [260, 0] })
 
@@ -58,14 +57,14 @@ function EventCard({ event, delay, animKey }: { event: Event; delay: number; ani
         <Text style={styles.cardTitle} numberOfLines={1}>{event.title}</Text>
         <Text style={styles.cardDate}>{formatDate(event.date)}</Text>
         <View style={styles.cardMeta}>
-          <Ionicons name="time-outline" size={12} color="#aaa" />
+          <Ionicons name="time-outline" size={12} color="rgba(150,175,220,0.5)" />
           <Text style={styles.cardTime}>
             {formatTime(event.start_time)} – {formatTime(event.end_time)}
           </Text>
           {event.location ? (
             <>
               <Text style={styles.dot}>·</Text>
-              <Ionicons name="location-outline" size={12} color="#aaa" />
+              <Ionicons name="location-outline" size={12} color="rgba(150,175,220,0.5)" />
               <Text style={styles.cardLoc} numberOfLines={1}>{event.location}</Text>
             </>
           ) : null}
@@ -129,7 +128,7 @@ export default function EventsScreen() {
       </View>
 
       {loading && events.length === 0 ? (
-        <ActivityIndicator style={{ marginTop: 48 }} />
+        <ActivityIndicator style={{ marginTop: 48 }} color="rgba(150,175,220,0.6)" />
       ) : error ? (
         <Text style={styles.error}>{error}</Text>
       ) : events.length === 0 ? (
@@ -153,16 +152,14 @@ export default function EventsScreen() {
         style={styles.fab}
         onPress={() => router.push('/(app)/events/new')}
       >
-        <Ionicons name="add" size={28} color="#fff" />
+        <Ionicons name="add" size={28} color="rgba(200,220,255,0.95)" />
       </Pressable>
     </View>
   )
 }
 
-const BLUE = '#2563EB'
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f2f2f7' },
+  container: { flex: 1, backgroundColor: '#070818' },
   header: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -170,57 +167,53 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 56,
     paddingBottom: 16,
-    backgroundColor: '#fff',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#d1d1d6',
+    borderBottomColor: 'rgba(140,170,255,0.15)',
   },
-  title: { fontSize: 28, fontWeight: '700', color: '#111' },
-  subtitle: { fontSize: 14, color: '#999' },
+  title: { fontSize: 28, fontWeight: '700', color: '#dce8ff' },
+  subtitle: { fontSize: 14, color: 'rgba(150,175,220,0.45)' },
 
-  list: { paddingTop: 16, paddingBottom: 100 },
+  list: { paddingTop: 12, paddingBottom: 100 },
 
   card: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(12,20,60,0.85)',
     borderRadius: 12,
     marginHorizontal: 16,
-    marginBottom: 10,
+    marginBottom: 8,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#d1d1d6',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.18)',
   },
-  cardPressed: { opacity: 0.75 },
+  cardPressed: { opacity: 0.7 },
   cardBar: { width: 4 },
   cardBody: { flex: 1, paddingHorizontal: 14, paddingVertical: 13 },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: '#111', marginBottom: 3 },
-  cardDate: { fontSize: 13, color: BLUE, marginBottom: 5 },
+  cardTitle: { fontSize: 16, fontWeight: '600', color: '#dce8ff', marginBottom: 3 },
+  cardDate: { fontSize: 13, color: 'rgba(180,210,255,0.8)', marginBottom: 5 },
   cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
-  cardTime: { fontSize: 13, color: '#666' },
-  dot: { fontSize: 13, color: '#ccc' },
-  cardLoc: { fontSize: 13, color: '#666', flex: 1 },
+  cardTime: { fontSize: 13, color: 'rgba(150,175,220,0.55)' },
+  dot: { fontSize: 13, color: 'rgba(140,170,255,0.3)' },
+  cardLoc: { fontSize: 13, color: 'rgba(150,175,220,0.55)', flex: 1 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 9 },
   tag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 5 },
   tagText: { fontSize: 12, fontWeight: '500' },
 
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyText: { fontSize: 15, color: '#999', marginBottom: 8 },
-  emptyAction: { fontSize: 15, color: BLUE, fontWeight: '500' },
-  error: { color: '#dc2626', padding: 20, textAlign: 'center' },
+  emptyText: { fontSize: 15, color: 'rgba(150,175,220,0.4)', marginBottom: 8 },
+  emptyAction: { fontSize: 15, color: 'rgba(180,210,255,0.7)', fontWeight: '500' },
+  error: { color: '#e05555', padding: 20, textAlign: 'center' },
 
   fab: {
     position: 'absolute',
     right: 20,
     bottom: 28,
-    backgroundColor: BLUE,
+    backgroundColor: 'rgba(25,55,140,0.8)',
     width: 52,
     height: 52,
     borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: BLUE,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(120,160,255,0.4)',
   },
 })

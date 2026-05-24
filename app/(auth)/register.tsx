@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
 import { Link } from 'expo-router'
 import { useAuth } from '@/context/auth'
+import { BlurView } from 'expo-blur'
+import MeshBackground from '@/components/MeshBackground'
 
 export default function RegisterScreen() {
   const { signUp } = useAuth()
@@ -25,89 +27,158 @@ export default function RegisterScreen() {
 
   if (done) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Vérifie tes emails</Text>
-        <Text style={styles.subtitle}>Un lien de confirmation t'a été envoyé à {email}.</Text>
-        <Link href="/(auth)/login" style={styles.link}>Retour à la connexion</Link>
+      <View style={styles.root}>
+        <MeshBackground />
+        <View style={styles.content}>
+          <Text style={styles.title}>Vérifie tes emails</Text>
+          <Text style={styles.subtitle}>Un lien de confirmation t'a été envoyé à {email}.</Text>
+          <Link href="/(auth)/login" style={styles.link}>Retour à la connexion</Link>
+        </View>
       </View>
     )
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Créer un compte</Text>
+    <View style={styles.root}>
+      <MeshBackground />
+      <View style={styles.content}>
+        <Text style={styles.pageTitle}>Kairos</Text>
+        <Text style={styles.pageSubtitle}>Créer un compte</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Pseudo"
-        placeholderTextColor="#999"
-        value={displayName}
-        onChangeText={setDisplayName}
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor="#999"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
+        <BlurView intensity={22} tint="dark" style={styles.card}>
+          <TextInput
+            style={styles.input}
+            placeholder="Pseudo"
+            placeholderTextColor="rgba(160,185,230,0.55)"
+            value={displayName}
+            onChangeText={setDisplayName}
+            autoCapitalize="none"
+          />
+          <View style={styles.divider} />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="rgba(160,185,230,0.55)"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+          <View style={styles.divider} />
+          <View style={styles.passwordRow}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Mot de passe"
+              placeholderTextColor="rgba(160,185,230,0.55)"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+            />
+            <Pressable onPress={() => setShowPassword(v => !v)} style={styles.eyeButton}>
+              <Text style={styles.eyeText}>{showPassword ? 'Cacher' : 'Voir'}</Text>
+            </Pressable>
+          </View>
+        </BlurView>
 
-      <View style={styles.passwordContainer}>
-        <TextInput
-          style={styles.passwordInput}
-          placeholder="Mot de passe"
-          placeholderTextColor="#999"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry={!showPassword}
-        />
-        <Pressable onPress={() => setShowPassword(v => !v)} style={styles.eyeButton}>
-          <Text style={styles.eyeText}>{showPassword ? 'Cacher' : 'Voir'}</Text>
+        {error && <Text style={styles.error}>{error}</Text>}
+
+        <Pressable style={styles.button} onPress={handleRegister} disabled={loading}>
+          {loading
+            ? <ActivityIndicator color="rgba(180,210,255,0.9)" />
+            : <Text style={styles.buttonText}>Créer mon compte</Text>}
         </Pressable>
+
+        <Link href="/(auth)/login" style={styles.link}>
+          Déjà un compte ? Se connecter
+        </Link>
       </View>
-
-      {error && <Text style={styles.error}>{error}</Text>}
-
-      <Pressable style={styles.button} onPress={handleRegister} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Créer mon compte</Text>}
-      </Pressable>
-
-      <Link href="/(auth)/login" style={styles.link}>
-        Déjà un compte ? Se connecter
-      </Link>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 24, textAlign: 'center', color: '#111' },
-  subtitle: { fontSize: 15, color: '#666', textAlign: 'center', marginBottom: 24 },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    fontSize: 16,
-    color: '#111',
+  root: { flex: 1, backgroundColor: '#070818' },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 28,
   },
-  passwordContainer: {
+  pageTitle: {
+    fontSize: 44,
+    fontWeight: '300',
+    marginBottom: 6,
+    textAlign: 'center',
+    color: '#dce8ff',
+    letterSpacing: 7,
+  },
+  pageSubtitle: {
+    fontSize: 12,
+    textAlign: 'center',
+    color: 'rgba(150,175,220,0.45)',
+    letterSpacing: 2.5,
+    marginBottom: 44,
+    textTransform: 'uppercase',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '300',
+    textAlign: 'center',
+    color: '#dce8ff',
+    marginBottom: 12,
+    letterSpacing: 1,
+  },
+  subtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    color: 'rgba(150,175,220,0.6)',
+    lineHeight: 22,
+    marginBottom: 32,
+  },
+  card: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.35)',
+    marginBottom: 14,
+  },
+  input: {
+    padding: 16,
+    fontSize: 15,
+    color: '#e8f0ff',
+    backgroundColor: 'rgba(15,28,80,0.6)',
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(140,170,255,0.2)',
+  },
+  passwordRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    marginBottom: 12,
+    backgroundColor: 'rgba(15,28,80,0.6)',
   },
-  passwordInput: { flex: 1, padding: 12, fontSize: 16, color: '#111' },
-  eyeButton: { paddingHorizontal: 12 },
-  eyeText: { fontSize: 13, color: '#666' },
-  button: { backgroundColor: '#111', borderRadius: 8, padding: 14, alignItems: 'center', marginTop: 8 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  error: { color: '#dc2626', marginBottom: 8, fontSize: 14 },
-  link: { marginTop: 16, textAlign: 'center', color: '#666' },
+  passwordInput: {
+    flex: 1,
+    padding: 16,
+    fontSize: 15,
+    color: '#ccd8f0',
+  },
+  eyeButton: { paddingHorizontal: 16 },
+  eyeText: { fontSize: 12, color: 'rgba(150,175,220,0.45)', letterSpacing: 0.5 },
+  button: {
+    backgroundColor: 'rgba(25,55,140,0.5)',
+    borderRadius: 10,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(120,160,255,0.3)',
+  },
+  buttonText: { color: 'rgba(200,220,255,0.95)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
+  error: { color: '#e05555', marginBottom: 10, fontSize: 13, textAlign: 'center' },
+  link: {
+    marginTop: 22,
+    textAlign: 'center',
+    color: 'rgba(150,175,220,0.4)',
+    fontSize: 13,
+  },
 })
