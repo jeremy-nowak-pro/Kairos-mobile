@@ -8,6 +8,8 @@ import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
 import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect } from 'expo-router'
+import { BlurView } from 'expo-blur'
+import GlassCard from '@/components/GlassCard'
 import { useSpace } from '@/context/space'
 import { useAuth } from '@/context/auth'
 import {
@@ -62,6 +64,7 @@ function AddListModal({
   const [showSuggestions, setShowSuggestions] = useState(false)
   const { space } = useSpace()
   const { user } = useAuth()
+  const inputRef = useRef<TextInput>(null)
 
   useEffect(() => {
     if (visible) {
@@ -98,24 +101,26 @@ function AddListModal({
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} onShow={() => setTimeout(() => inputRef.current?.focus(), 100)}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <Pressable style={styles.backdrop} onPress={onClose}>
           <Pressable style={styles.sheet} onPress={() => {}}>
+            <BlurView intensity={55} tint="dark" style={StyleSheet.absoluteFill} />
+            <View style={[StyleSheet.absoluteFill, styles.sheetOverlay]} />
             <View style={styles.sheetHandle} />
             <Text style={styles.sheetTitle}>Nouveau magasin</Text>
 
             <View style={[styles.inputGroup, filtered.length > 0 && styles.inputGroupOpen]}>
               <TextInput
+                ref={inputRef}
                 style={styles.storeInput}
                 placeholder="Lidl, Carrefour, Marché..."
-                placeholderTextColor="#aaa"
+                placeholderTextColor="rgba(255,255,255,0.35)"
                 value={name}
                 onChangeText={text => { setName(text); setShowSuggestions(true) }}
-                autoFocus
                 returnKeyType="done"
                 onSubmitEditing={handleCreate}
                 onFocus={() => setShowSuggestions(true)}
@@ -207,7 +212,7 @@ function TabItem({
   const holdClamped = holdAnim.interpolate({ inputRange: [0, 0.25], outputRange: [0, 1], extrapolate: 'clamp' })
   const textColor = Animated.add(activeAnim, holdClamped).interpolate({
     inputRange: [0, 0.4, 10],
-    outputRange: ['#555555', '#ffffff', '#ffffff'],
+    outputRange: ['rgba(255,255,255,0.55)', '#ffffff', '#ffffff'],
   })
 
   const handlePressIn = () => {
@@ -288,7 +293,7 @@ function ItemRow({
       </Pressable>
 
       <Pressable onPress={onDelete} hitSlop={12} style={styles.deleteBtn}>
-        <Ionicons name="close-circle" size={20} color="#d1d1d6" />
+        <Ionicons name="close-circle" size={20} color="rgba(255,255,255,0.30)" />
       </Pressable>
     </View>
   )
@@ -424,6 +429,7 @@ export default function ShoppingScreen() {
 
       <View style={styles.header}>
         <Text style={styles.title}>Courses</Text>
+        <Text style={styles.subtitle}>{lists.length} liste{lists.length !== 1 ? 's' : ''}</Text>
       </View>
 
       <View style={styles.tabBarWrapper}>
@@ -442,7 +448,7 @@ export default function ShoppingScreen() {
             />
           ))}
           <Pressable style={styles.tabAdd} onPress={() => setAddListOpen(true)}>
-            <Ionicons name="add" size={20} color="#666" />
+            <Ionicons name="add" size={20} color="rgba(255,255,255,0.55)" />
           </Pressable>
         </ScrollView>
       </View>
@@ -467,6 +473,7 @@ export default function ShoppingScreen() {
             opacity: contentAnim,
             transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
           }}>
+            <GlassCard style={styles.listCard}>
             <FlatList
               style={{ flex: 1 }}
               data={sorted}
@@ -489,11 +496,13 @@ export default function ShoppingScreen() {
               contentContainerStyle={styles.list}
               showsVerticalScrollIndicator={false}
             />
+            </GlassCard>
           </Animated.View>
         )}
 
         {activeList && (
           <View style={styles.addBar}>
+            <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
             {pendingPhoto && (
               <Pressable onPress={() => setPendingPhoto(null)} style={styles.photoPreview}>
                 <Image source={{ uri: pendingPhoto }} style={styles.photoThumb} contentFit="cover" />
@@ -513,7 +522,7 @@ export default function ShoppingScreen() {
               onSubmitEditing={handleAddItem}
             />
             <Pressable onPress={handlePickPhoto} style={styles.addBarBtn} hitSlop={6}>
-              <Ionicons name="camera-outline" size={22} color="#888" />
+              <Ionicons name="camera-outline" size={22} color="rgba(255,255,255,0.60)" />
             </Pressable>
             <Pressable
               onPress={handleAddItem}
@@ -549,17 +558,19 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
 
   header: {
+    flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 56,
-    paddingBottom: 12,
+    paddingBottom: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(255,255,255,0.30)',
   },
   title: { fontSize: 28, fontWeight: '700', color: '#ffffff' },
+  subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.75)' },
 
   tabBarWrapper: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0,0,0,0.08)',
+    borderBottomColor: 'rgba(255,255,255,0.12)',
   },
   tabBar: {
     paddingHorizontal: 12,
@@ -579,7 +590,7 @@ const styles = StyleSheet.create({
   },
   tabFillActive: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    backgroundColor: 'rgba(90,50,200,0.85)',
     borderRadius: 20,
   },
   tabFillDelete: {
@@ -599,7 +610,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  list: { paddingTop: 8, paddingBottom: 100 },
+  listCard: { flex: 1, marginHorizontal: 12, marginTop: 8, marginBottom: 8 },
+  list: { paddingBottom: 100 },
   separator: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: 'rgba(140,170,255,0.1)',
@@ -609,7 +621,7 @@ const styles = StyleSheet.create({
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.52)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     paddingRight: 12,
   },
   itemMain: {
@@ -625,7 +637,7 @@ const styles = StyleSheet.create({
     height: 26,
     borderRadius: 13,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.38)',
+    borderColor: 'rgba(255,255,255,0.45)',
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0,
@@ -655,9 +667,9 @@ const styles = StyleSheet.create({
   addBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.78)',
+    overflow: 'hidden',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.30)',
+    borderTopColor: 'rgba(255,255,255,0.12)',
     paddingHorizontal: 12,
     paddingVertical: 10,
     gap: 8,
@@ -692,30 +704,31 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.38)',
+    backgroundColor: 'rgba(255,255,255,0.10)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.40)',
+    borderColor: 'rgba(255,255,255,0.18)',
   },
   addBarBtnPrimary: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderColor: 'rgba(255,255,255,0.55)',
+    backgroundColor: BLUE,
+    borderColor: 'rgba(120,160,255,0.4)',
   },
   addBarBtnDisabled: { opacity: 0.4 },
 
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  sheetOverlay: { backgroundColor: 'rgba(12,6,28,0.82)' },
   sheet: {
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    overflow: 'hidden',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.40)',
+    borderColor: 'rgba(140,170,255,0.20)',
     padding: 20,
     paddingBottom: 40,
   },
   sheetHandle: {
     width: 36,
     height: 4,
-    backgroundColor: 'rgba(255,255,255,0.50)',
+    backgroundColor: 'rgba(255,255,255,0.20)',
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 16,
@@ -723,26 +736,26 @@ const styles = StyleSheet.create({
   sheetTitle: { fontSize: 17, fontWeight: '700', color: '#ffffff', marginBottom: 16 },
   inputGroup: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.50)',
+    borderColor: 'rgba(140,170,255,0.25)',
     borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.38)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     marginBottom: 16,
     overflow: 'hidden',
   },
-  inputGroupOpen: { backgroundColor: 'rgba(255,255,255,0.58)' },
+  inputGroupOpen: { backgroundColor: 'rgba(255,255,255,0.10)' },
   storeInput: { paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: '#ffffff' },
   suggestionFirst: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.30)',
+    borderTopColor: 'rgba(140,170,255,0.15)',
   },
   suggestionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 11,
-    backgroundColor: 'rgba(255,255,255,0.38)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
-  suggestionText: { fontSize: 15, color: '#ffffff', flex: 1 },
+  suggestionText: { fontSize: 15, color: 'rgba(255,255,255,0.90)', flex: 1 },
 
   dateLabel: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginBottom: 8 },
   dateChips: { gap: 8, paddingBottom: 16 },
@@ -750,16 +763,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 16,
-    backgroundColor: 'rgba(15,28,80,0.5)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.40)',
+    borderColor: 'rgba(140,170,255,0.20)',
   },
   dateChipActive: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderColor: 'rgba(255,255,255,0.55)',
+    backgroundColor: 'rgba(90,50,200,0.85)',
+    borderColor: 'rgba(140,100,255,0.50)',
   },
-  dateChipText: { fontSize: 13, fontWeight: '500', color: 'rgba(255,255,255,0.65)' },
-  dateChipTextActive: { color: 'rgba(255,255,255,0.85)' },
+  dateChipText: { fontSize: 13, fontWeight: '500', color: 'rgba(255,255,255,0.55)' },
+  dateChipTextActive: { color: '#ffffff' },
 
   createBtn: {
     backgroundColor: 'rgba(110,55,180,0.70)',
@@ -775,10 +788,10 @@ const styles = StyleSheet.create({
     bottom: 90,
     left: 16,
     right: 16,
-    backgroundColor: 'rgba(255,255,255,0.82)',
+    backgroundColor: 'rgba(8,16,48,0.92)',
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.40)',
+    borderColor: 'rgba(140,170,255,0.20)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

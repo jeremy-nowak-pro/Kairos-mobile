@@ -76,16 +76,17 @@ export async function updateEvent(id: string, payload: {
 }
 
 export async function deleteEvent(id: string): Promise<void> {
+  // Cleanup storage files before cascade deletes the DB rows
   const { data: attachments } = await supabase
     .from('event_attachments')
     .select('storage_path')
     .eq('event_id', id)
+
   if (attachments?.length) {
-    await supabase.storage
-      .from('event-attachments')
-      .remove(attachments.map((a: { storage_path: string }) => a.storage_path))
-    await supabase.from('event_attachments').delete().eq('event_id', id)
+    const paths = attachments.map((a: { storage_path: string }) => a.storage_path)
+    await supabase.storage.from('event-attachments').remove(paths).catch(() => {})
   }
+
   const { error } = await supabase.from('events').delete().eq('id', id)
   if (error) throw error
 }

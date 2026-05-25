@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import {
   View, Text, Pressable, StyleSheet, ActivityIndicator,
-  ScrollView, Alert, Modal, FlatList, Animated, Dimensions, Easing,
+  ScrollView, Alert, Modal, FlatList, Animated, Dimensions,
 } from 'react-native'
 import { PanGestureHandler, State } from 'react-native-gesture-handler'
 import { Image } from 'expo-image'
-import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
+import { router, useLocalSearchParams, useFocusEffect, Stack, useNavigation } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { getEvent, deleteEvent, Event } from '@/lib/events'
 import { getAttachments, Attachment } from '@/lib/attachments'
@@ -46,6 +46,64 @@ function InfoRow({ icon, children, last }: {
   )
 }
 
+const THUMB_SIZE = 48
+
+function SlideToDelete({ onConfirm, gestureRef }: {
+  onConfirm: () => void
+  gestureRef: React.RefObject<any>
+}) {
+  const [trackWidth, setTrackWidth] = useState(0)
+  const dragX = useRef(new Animated.Value(0)).current
+  const maxX = Math.max(trackWidth - THUMB_SIZE - 8, 1)
+
+  const clampedX = dragX.interpolate({ inputRange: [0, maxX], outputRange: [0, maxX], extrapolate: 'clamp' })
+  const labelOpacity = dragX.interpolate({ inputRange: [0, maxX * 0.4], outputRange: [1, 0], extrapolate: 'clamp' })
+  const fillOpacity = dragX.interpolate({ inputRange: [0, maxX], outputRange: [0, 1], extrapolate: 'clamp' })
+
+  const onGestureEvent = Animated.event([{ nativeEvent: { translationX: dragX } }], { useNativeDriver: true })
+
+  const onHandlerStateChange = ({ nativeEvent }: any) => {
+    if (nativeEvent.oldState === State.ACTIVE) {
+      const x = Math.max(0, nativeEvent.translationX)
+      if (x >= maxX * 0.85) {
+        Animated.spring(dragX, { toValue: maxX, useNativeDriver: true, tension: 100, friction: 12 })
+          .start(() => onConfirm())
+      } else {
+        Animated.spring(dragX, { toValue: 0, useNativeDriver: true, tension: 100, friction: 12 }).start()
+      }
+    }
+  }
+
+  return (
+    <View style={styles.slideZone}>
+      <View
+        style={styles.slideTrack}
+        onLayout={e => setTrackWidth(e.nativeEvent.layout.width)}
+      >
+        <Animated.View style={[StyleSheet.absoluteFill, styles.slideFill, { opacity: fillOpacity }]} />
+        <Animated.Text style={[styles.slideLabel, { opacity: labelOpacity }]}>
+          Glisser pour supprimer
+        </Animated.Text>
+      </View>
+      {trackWidth > 0 && (
+        <PanGestureHandler
+          ref={gestureRef}
+          onGestureEvent={onGestureEvent}
+          onHandlerStateChange={onHandlerStateChange}
+          activeOffsetX={[-9999, 5]}
+          failOffsetY={[-10, 10]}
+        >
+          <Animated.View style={[styles.slideThumbHit, { transform: [{ translateX: clampedX }] }]}>
+            <View style={styles.slideThumb}>
+              <Ionicons name="trash-outline" size={20} color="#ffffff" />
+            </View>
+          </Animated.View>
+        </PanGestureHandler>
+      )}
+    </View>
+  )
+}
+
 export default function EventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const [event, setEvent] = useState<Event | null>(null)
@@ -54,18 +112,57 @@ export default function EventDetailScreen() {
   const [docs, setDocs] = useState<Attachment[]>([])
   const [viewerUri, setViewerUri] = useState<string | null>(null)
 
+  const navigation = useNavigation()
   const screenWidth = Dimensions.get('window').width
-  const translateX = useRef(new Animated.Value(0)).current
+  const translateX = useRef(new Animated.Value(screenWidth)).current
   const contentAnim = useRef(new Animated.Value(0)).current
+  const hasAnimated = useRef(false)
+  const isAnimatingOut = useRef(false)
+
+  const [slideKey, setSlideKey] = useState(0)
+  const [showToast, setShowToast] = useState(false)
+  const [countdown, setCountdown] = useState(3)
+  const toastOpacity = useRef(new Animated.Value(0)).current
+  const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const slideGestureRef = useRef<any>(null)
+
+  useEffect(() => () => {
+    if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current)
+    if (countdownRef.current) clearInterval(countdownRef.current)
+  }, [])
 
   useEffect(() => {
-    if (!event) return
-    contentAnim.setValue(0)
-    Animated.timing(contentAnim, {
-      toValue: 1,
-      duration: 380,
-      easing: Easing.out(Easing.cubic),
+    Animated.spring(translateX, {
+      toValue: 0,
       useNativeDriver: true,
+      tension: 68,
+      friction: 13,
+    }).start()
+  }, [])
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      if (isAnimatingOut.current) return
+      e.preventDefault()
+      isAnimatingOut.current = true
+      Animated.timing(translateX, {
+        toValue: screenWidth,
+        duration: 220,
+        useNativeDriver: true,
+      }).start(() => navigation.dispatch(e.data.action))
+    })
+    return unsubscribe
+  }, [navigation])
+
+  useEffect(() => {
+    if (!event || hasAnimated.current) return
+    hasAnimated.current = true
+    Animated.spring(contentAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 60,
+      friction: 12,
     }).start()
   }, [event?.id])
 
@@ -77,6 +174,7 @@ export default function EventDetailScreen() {
   const onHandlerStateChange = ({ nativeEvent }: any) => {
     if (nativeEvent.state === State.END) {
       if (nativeEvent.translationX > screenWidth * 0.35 || nativeEvent.velocityX > 500) {
+        isAnimatingOut.current = true
         Animated.timing(translateX, {
           toValue: screenWidth,
           duration: 180,
@@ -113,23 +211,35 @@ export default function EventDetailScreen() {
       .catch(() => {})
   }, [id]))
 
-  const handleDelete = () => {
-    if (!event) return
-    Alert.alert('Supprimer', 'Supprimer cet événement ?', [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Supprimer', style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteEvent(event.id)
-            router.back()
-          } catch {
-            Alert.alert('Erreur', 'Impossible de supprimer l\'événement')
-          }
-        },
-      },
-    ])
-  }
+  const handleSlideConfirm = useCallback(() => {
+    setCountdown(3)
+    setShowToast(true)
+    Animated.timing(toastOpacity, { toValue: 1, duration: 200, useNativeDriver: true }).start()
+    countdownRef.current = setInterval(() => {
+      setCountdown(c => c - 1)
+    }, 1000)
+    deleteTimerRef.current = setTimeout(async () => {
+      if (countdownRef.current) clearInterval(countdownRef.current)
+      try {
+        await deleteEvent(event!.id)
+        router.back()
+      } catch {
+        Alert.alert('Erreur', 'Impossible de supprimer l\'événement')
+        toastOpacity.setValue(0)
+        setShowToast(false)
+        setSlideKey(k => k + 1)
+      }
+    }, 3000)
+  }, [event, toastOpacity])
+
+  const handleUndoDelete = useCallback(() => {
+    if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current)
+    if (countdownRef.current) clearInterval(countdownRef.current)
+    Animated.timing(toastOpacity, { toValue: 0, duration: 150, useNativeDriver: true }).start(() => {
+      setShowToast(false)
+      setSlideKey(k => k + 1)
+    })
+  }, [toastOpacity])
 
   const openDoc = async (att: Attachment) => {
     try {
@@ -159,11 +269,14 @@ export default function EventDetailScreen() {
   const color = userColor(event.assigned_to)
 
   return (
+    <>
+    <Stack.Screen options={{ animation: 'none' }} />
     <PanGestureHandler
       onGestureEvent={onGestureEvent}
       onHandlerStateChange={onHandlerStateChange}
       activeOffsetX={[-9999, 10]}
       failOffsetY={[-20, 20]}
+      waitFor={[slideGestureRef]}
     >
     <Animated.View style={[styles.shadow, { transform: [{ translateX }] }]}>
       <View style={styles.container}>
@@ -216,8 +329,8 @@ export default function EventDetailScreen() {
                     {event.assigned_to.split(',').map(n => n.trim()).filter(Boolean).map(name => {
                       const c = userColor(name)
                       return (
-                        <View key={name} style={[styles.tag, { backgroundColor: c.bg }]}>
-                          <Text style={[styles.tagText, { color: c.text }]}>{name}</Text>
+                        <View key={name} style={[styles.tag, { backgroundColor: c.text, borderColor: c.text }]}>
+                          <Text style={styles.tagText}>{name}</Text>
                         </View>
                       )
                     })}
@@ -286,17 +399,24 @@ export default function EventDetailScreen() {
             </>
           )}
 
-          <Pressable
-            onPress={handleDelete}
-            style={({ pressed }) => [styles.deleteBtn, pressed && { opacity: 0.7 }]}
-          >
-            <Ionicons name="trash-outline" size={16} color="#ffffff" />
-            <Text style={styles.deleteBtnText}>Supprimer l'événement</Text>
-          </Pressable>
+          <SlideToDelete
+            key={slideKey}
+            gestureRef={slideGestureRef}
+            onConfirm={handleSlideConfirm}
+          />
 
         </View>
         </Animated.View>
       </ScrollView>
+
+      {showToast && (
+        <Animated.View style={[styles.toast, { opacity: toastOpacity }]} pointerEvents="box-none">
+          <Text style={styles.toastText}>Suppression dans {countdown}s…</Text>
+          <Pressable onPress={handleUndoDelete} hitSlop={8} pointerEvents="auto">
+            <Text style={styles.toastUndo}>Annuler</Text>
+          </Pressable>
+        </Animated.View>
+      )}
 
       {viewerUri && (
         <Modal visible transparent animationType="fade" onRequestClose={() => setViewerUri(null)}>
@@ -312,6 +432,7 @@ export default function EventDetailScreen() {
       </View>
     </Animated.View>
     </PanGestureHandler>
+    </>
   )
 }
 
@@ -390,8 +511,11 @@ const styles = StyleSheet.create({
   imageStripThumb: { width: 160, height: 160, borderRadius: 10 },
 
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  tag: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 5 },
-  tagText: { fontSize: 13, fontWeight: '500' },
+  tag: {
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  tagText: { fontSize: 13, fontWeight: '600', color: '#ffffff' },
 
   descRow: { paddingHorizontal: 16, paddingVertical: 14 },
   descText: { fontSize: 15, color: 'rgba(255,255,255,0.92)', lineHeight: 22 },
@@ -407,14 +531,43 @@ const styles = StyleSheet.create({
   },
   docName: { flex: 1, fontSize: 14, color: '#ffffff' },
 
-  deleteBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, marginTop: 32, marginBottom: 8,
-    paddingVertical: 16,
-    borderRadius: 12,
-    backgroundColor: 'rgba(200,40,40,0.75)',
+  slideZone: {
+    marginTop: 32, marginBottom: 8,
+    height: 90,
+    justifyContent: 'center',
   },
-  deleteBtnText: { fontSize: 15, fontWeight: '600', color: '#ffffff' },
+  slideTrack: {
+    height: 56, borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.12)',
+    overflow: 'hidden',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  slideFill: { backgroundColor: 'rgba(200,40,40,0.85)', borderRadius: 28 },
+  slideLabel: { fontSize: 14, color: 'rgba(255,255,255,0.40)', fontWeight: '500' },
+  slideThumbHit: {
+    position: 'absolute', left: 0, top: 0,
+    width: THUMB_SIZE + 32, height: 90,
+    justifyContent: 'center', alignItems: 'flex-start',
+    paddingLeft: 4,
+  },
+  slideThumb: {
+    width: THUMB_SIZE, height: THUMB_SIZE, borderRadius: THUMB_SIZE / 2,
+    backgroundColor: 'rgba(200,40,40,0.85)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  toast: {
+    position: 'absolute', bottom: 36, left: 20, right: 20,
+    backgroundColor: 'rgba(8,16,48,0.92)',
+    borderRadius: 12,
+    paddingHorizontal: 16, paddingVertical: 14,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.18)',
+  },
+  toastText: { color: 'rgba(220,232,255,0.85)', fontSize: 14 },
+  toastUndo: { color: 'rgba(140,170,255,0.95)', fontSize: 14, fontWeight: '600' },
 
   viewerBackdrop: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   viewerImage: { width: '100%', height: '85%' },

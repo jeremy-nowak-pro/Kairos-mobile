@@ -4,8 +4,8 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useFocusEffect, useNavigation } from 'expo-router'
-import { BlurView } from 'expo-blur'
 import { useSpace } from '@/context/space'
+import GlassCard from '@/components/GlassCard'
 import { getUpcomingEvents, Event } from '@/lib/events'
 import { userColor } from '@/lib/userColor'
 import { prefetchEventImages } from '@/lib/imageCache'
@@ -50,10 +50,10 @@ function EventCard({ event, delay, animKey }: { event: Event; delay: number; ani
   return (
     <Animated.View style={{ opacity: anim, transform: [{ translateX }] }}>
     <Pressable
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      style={({ pressed }) => [pressed && styles.cardPressed]}
       onPress={() => router.push(`/(app)/events/${event.id}`)}
     >
-      <BlurView intensity={22} tint="light" style={StyleSheet.absoluteFill} />
+      <GlassCard style={styles.card}>
       <View style={[styles.cardBar, { backgroundColor: color.text }]} />
       <View style={styles.cardBody}>
         <Text style={styles.cardTitle} numberOfLines={1}>{event.title}</Text>
@@ -76,14 +76,15 @@ function EventCard({ event, delay, animKey }: { event: Event; delay: number; ani
             {event.assigned_to.split(',').map(n => n.trim()).filter(Boolean).map(name => {
               const c = userColor(name)
               return (
-                <View key={name} style={[styles.tag, { backgroundColor: c.bg }]}>
-                  <Text style={[styles.tagText, { color: c.text }]}>{name}</Text>
+                <View key={name} style={[styles.tag, { backgroundColor: c.text, borderColor: c.text }]}>
+                  <Text style={styles.tagText}>{name}</Text>
                 </View>
               )
             })}
           </View>
         ) : null}
       </View>
+      </GlassCard>
     </Pressable>
     </Animated.View>
   )
@@ -181,13 +182,8 @@ const styles = StyleSheet.create({
 
   card: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 12,
     marginHorizontal: 16,
     marginBottom: 8,
-    overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.38)',
   },
   cardPressed: { opacity: 0.7 },
   cardBar: { width: 4 },
@@ -199,8 +195,11 @@ const styles = StyleSheet.create({
   dot: { fontSize: 13, color: 'rgba(140,170,255,0.3)' },
   cardLoc: { fontSize: 13, color: 'rgba(255,255,255,0.65)', flex: 1 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, marginTop: 9 },
-  tag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 5 },
-  tagText: { fontSize: 12, fontWeight: '500' },
+  tag: {
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  tagText: { fontSize: 12, fontWeight: '600', color: '#ffffff' },
 
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyText: { fontSize: 15, color: 'rgba(255,255,255,0.55)', marginBottom: 8 },
