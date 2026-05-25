@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
+import { useEffect, useState } from 'react'
+import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { Link, router } from 'expo-router'
 import { useAuth } from '@/context/auth'
 import { BlurView } from 'expo-blur'
@@ -12,6 +12,12 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!error) return
+    const t = setTimeout(() => setError(null), 3000)
+    return () => clearTimeout(t)
+  }, [error])
 
   const handleLogin = async () => {
     setError(null)
@@ -26,18 +32,25 @@ export default function LoginScreen() {
   }
 
   return (
-    <View style={styles.root}>
+    <KeyboardAvoidingView
+      style={styles.root}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       <MeshBackground />
-
-      <View style={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.title}>Kairos</Text>
         <Text style={styles.subtitle}>Votre espace partagé</Text>
 
-        <BlurView intensity={50} tint="light" style={styles.card}>
+        <BlurView intensity={22} tint="light" style={styles.card}>
           <TextInput
             style={styles.input}
             placeholder="Email"
-            placeholderTextColor="rgba(255,255,255,0.45)"
+            placeholderTextColor="rgba(160,180,220,0.35)"
+            selectionColor="rgba(120,160,255,0.6)"
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -48,7 +61,8 @@ export default function LoginScreen() {
             <TextInput
               style={styles.passwordInput}
               placeholder="Mot de passe"
-              placeholderTextColor="rgba(255,255,255,0.45)"
+              placeholderTextColor="rgba(160,180,220,0.35)"
+              selectionColor="rgba(120,160,255,0.6)"
               value={password}
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
@@ -59,7 +73,9 @@ export default function LoginScreen() {
           </View>
         </BlurView>
 
-        {error && <Text style={styles.error}>{error}</Text>}
+        <View style={styles.errorContainer}>
+          {error && <Text style={styles.error}>{error}</Text>}
+        </View>
 
         <Pressable style={styles.button} onPress={handleLogin} disabled={loading}>
           {loading
@@ -70,15 +86,15 @@ export default function LoginScreen() {
         <Link href="/(auth)/register" style={styles.link}>
           Pas encore de compte ? S'inscrire
         </Link>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   )
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#1a0e30' },
   content: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 28,
   },
@@ -108,37 +124,53 @@ const styles = StyleSheet.create({
   input: {
     padding: 16,
     fontSize: 15,
-    color: '#ffffff',
-    backgroundColor: 'rgba(255,255,255,0.38)',
+    color: '#dce8ff',
+    backgroundColor: 'rgba(8,16,48,0.35)',
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.40)',
+    backgroundColor: 'rgba(140,170,255,0.18)',
   },
   passwordRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.38)',
+    backgroundColor: 'rgba(8,16,48,0.35)',
   },
   passwordInput: {
     flex: 1,
     padding: 16,
     fontSize: 15,
-    color: '#ccd8f0',
+    color: '#dce8ff',
   },
   eyeButton: { paddingHorizontal: 16 },
-  eyeText: { fontSize: 12, color: 'rgba(255,255,255,0.75)', letterSpacing: 0.5 },
+  eyeText: { fontSize: 12, color: 'rgba(150,175,220,0.45)', letterSpacing: 0.5 },
   button: {
-    backgroundColor: 'rgba(110,55,180,0.70)',
+    backgroundColor: 'rgba(25,55,140,0.5)',
     borderRadius: 10,
     padding: 16,
     alignItems: 'center',
     marginTop: 4,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.50)',
+    borderColor: 'rgba(120,160,255,0.3)',
   },
-  buttonText: { color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
-  error: { color: '#e05555', marginBottom: 10, fontSize: 13, textAlign: 'center' },
+  buttonText: { color: 'rgba(200,220,255,0.95)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
+  errorContainer: {
+    height: 44,
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  error: {
+    backgroundColor: 'rgba(224,85,85,0.12)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(224,85,85,0.45)',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    color: '#f08080',
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
   link: {
     marginTop: 22,
     textAlign: 'center',

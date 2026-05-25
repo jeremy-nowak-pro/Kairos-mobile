@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  View, Text, Pressable, StyleSheet, ActivityIndicator,
-  ScrollView, Modal,
+  View, Text, Pressable, StyleSheet,
+  ScrollView, Modal, BackHandler,
 } from 'react-native'
 import { PanGestureHandler, State } from 'react-native-gesture-handler'
 import { Image } from 'expo-image'
@@ -9,6 +9,7 @@ import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSpace } from '@/context/space'
 import { BlurView } from 'expo-blur'
+import { LinearGradient } from 'expo-linear-gradient'
 import { getEventsForMonth, Event } from '@/lib/events'
 import { getAttachments, getSignedUrl } from '@/lib/attachments'
 import { userColor } from '@/lib/userColor'
@@ -126,8 +127,8 @@ function EventDetailPopup({ event, onClose }: { event: Event; onClose: () => voi
             {assignees.map(name => {
               const c = userColor(name)
               return (
-                <View key={name} style={[styles.tag, { backgroundColor: c.bg }]}>
-                  <Text style={[styles.tagText, { color: c.text }]}>{name}</Text>
+                <View key={name} style={[styles.tag, { backgroundColor: c.text }]}>
+                  <Text style={styles.tagText}>{name}</Text>
                 </View>
               )
             })}
@@ -225,10 +226,10 @@ function DayCell({
       </View>
 
       {events.slice(0, 2).map(e => {
-        const { bg, text } = userColor(e.assigned_to)
+        const { text } = userColor(e.assigned_to)
         return (
-          <View key={e.id} style={[styles.chip, { backgroundColor: bg }]}>
-            <Text style={[styles.chipTitle, { color: text }]} numberOfLines={1}>{e.title}</Text>
+          <View key={e.id} style={[styles.chip, { backgroundColor: text }]}>
+            <Text style={styles.chipTitle} numberOfLines={1}>{e.title}</Text>
           </View>
         )
       })}
@@ -251,6 +252,20 @@ export default function CalendarScreen() {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
 
+  const dayPopupRef = useRef<{ dateStr: string; events: Event[] } | null>(null)
+  const eventPopupRef = useRef<Event | null>(null)
+  useEffect(() => { dayPopupRef.current = dayPopup }, [dayPopup])
+  useEffect(() => { eventPopupRef.current = eventPopup }, [eventPopup])
+
+  useFocusEffect(useCallback(() => {
+    const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (eventPopupRef.current) { setEventPopup(null); return true }
+      if (dayPopupRef.current) { setDayPopup(null); return true }
+      return false
+    })
+    return () => handler.remove()
+  }, []))
+
   const loadEvents = useCallback(() => {
     if (!space) return
     setLoading(true)
@@ -261,6 +276,12 @@ export default function CalendarScreen() {
   }, [space, viewYear, viewMonth])
 
   useFocusEffect(loadEvents)
+
+  useFocusEffect(useCallback(() => {
+    const t = new Date()
+    setViewYear(t.getFullYear())
+    setViewMonth(t.getMonth())
+  }, []))
 
   const goPrev = () => {
     if (viewMonth === 0) { setViewMonth(11); setViewYear(y => y - 1) }
@@ -313,34 +334,62 @@ export default function CalendarScreen() {
       <View style={{ flex: 1 }}>
       <View style={styles.header}>
         <Text style={styles.title}>Calendrier</Text>
-        {!loading && (
-          <Text style={styles.eventCount}>
-            {events.length} événement{events.length !== 1 ? 's' : ''}
-          </Text>
-        )}
+        <Text style={styles.eventCount}>
+          {!loading ? `${events.length} événement${events.length !== 1 ? 's' : ''}` : ' '}
+        </Text>
       </View>
 
-      <View style={styles.monthNav}>
-        <Pressable onPress={goPrev} style={styles.navBtn}>
-          <Ionicons name="chevron-back" size={22} color="rgba(255,255,255,0.92)" />
-        </Pressable>
-        <Text style={styles.monthTitle}>{MONTHS_FR[viewMonth]} {viewYear}</Text>
-        <Pressable onPress={goNext} style={styles.navBtn}>
-          <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.92)" />
-        </Pressable>
-      </View>
+      <View style={styles.calCard}>
+        {/* Tinte très légère — quasi transparent */}
+        <View style={[StyleSheet.absoluteFill, styles.glassTint]} />
 
-      <View style={styles.dayHeaders}>
-        {DAYS_FR.map(d => (
-          <View key={d} style={styles.dayHeaderCell}>
-            <Text style={styles.dayHeaderText}>{d}</Text>
-          </View>
-        ))}
-      </View>
+        {/* Reflet spéculaire haut — lumière vive sur la tranche */}
+        <LinearGradient
+          colors={['rgba(255,255,255,0.75)', 'rgba(255,255,255,0)']}
+          style={styles.glassSpecular}
+          pointerEvents="none"
+        />
 
-      {loading ? (
-        <ActivityIndicator style={{ marginTop: 32 }} color="rgba(255,255,255,0.80)" />
-      ) : (
+        {/* Reflet bas — rebond de lumière */}
+        <LinearGradient
+          colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.18)']}
+          style={styles.glassDepth}
+          pointerEvents="none"
+        />
+
+        {/* Bord iridescent gauche — violet */}
+        <LinearGradient
+          colors={['rgba(180,130,255,0.40)', 'rgba(180,130,255,0)']}
+          start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
+          style={styles.glassIriLeft}
+          pointerEvents="none"
+        />
+
+        {/* Bord iridescent droit — cyan */}
+        <LinearGradient
+          colors={['rgba(80,210,255,0.35)', 'rgba(80,210,255,0)']}
+          start={{ x: 1, y: 0.5 }} end={{ x: 0, y: 0.5 }}
+          style={styles.glassIriRight}
+          pointerEvents="none"
+        />
+        <View style={styles.monthNav}>
+          <Pressable onPress={goPrev} style={styles.navBtn}>
+            <Ionicons name="chevron-back" size={22} color="rgba(255,255,255,0.92)" />
+          </Pressable>
+          <Text style={styles.monthTitle}>{MONTHS_FR[viewMonth]} {viewYear}</Text>
+          <Pressable onPress={goNext} style={styles.navBtn}>
+            <Ionicons name="chevron-forward" size={22} color="rgba(255,255,255,0.92)" />
+          </Pressable>
+        </View>
+
+        <View style={styles.dayHeaders}>
+          {DAYS_FR.map(d => (
+            <View key={d} style={styles.dayHeaderCell}>
+              <Text style={styles.dayHeaderText}>{d}</Text>
+            </View>
+          ))}
+        </View>
+
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.grid}>
             {weeks.map((week, wi) => (
@@ -362,7 +411,7 @@ export default function CalendarScreen() {
             ))}
           </View>
         </ScrollView>
-      )}
+      </View>
 
       </View>
       </PanGestureHandler>
@@ -390,12 +439,52 @@ export default function CalendarScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
   header: {
-    paddingHorizontal: 20, paddingTop: 56, paddingBottom: 12,
+    flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingTop: 56, paddingBottom: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(255,255,255,0.30)',
   },
-  title: { fontSize: 26, fontWeight: '700', color: '#ffffff' },
-  eventCount: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
+  title: { fontSize: 28, fontWeight: '700', color: '#ffffff' },
+  eventCount: { fontSize: 14, color: 'rgba(255,255,255,0.75)' },
+  calCard: {
+    flex: 1,
+    marginHorizontal: 12,
+    marginTop: 12,
+    marginBottom: 12,
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.65)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  glassTint: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  glassSpecular: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0,
+    height: 100,
+    zIndex: 10,
+  },
+  glassIriLeft: {
+    position: 'absolute',
+    top: 0, bottom: 0, left: 0,
+    width: 48,
+    zIndex: 10,
+  },
+  glassIriRight: {
+    position: 'absolute',
+    top: 0, bottom: 0, right: 0,
+    width: 48,
+    zIndex: 10,
+  },
+  glassDepth: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    height: 60,
+    zIndex: 10,
+  },
   monthNav: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 8, paddingVertical: 12,
@@ -426,13 +515,14 @@ const styles = StyleSheet.create({
     width: 26, height: 26, borderRadius: 13,
     justifyContent: 'center', alignItems: 'center', marginBottom: 3,
   },
-  dayNumToday: { backgroundColor: 'rgba(120,70,190,0.20)' },
+  dayNumToday: { backgroundColor: 'rgba(90,50,200,0.85)' },
   dayNum: { fontSize: 13, color: 'rgba(255,255,255,0.85)' },
-  dayNumHighlight: { color: '#7040a8', fontWeight: '700' },
+  dayNumHighlight: { color: '#ffffff', fontWeight: '700' },
   chip: {
-    borderRadius: 4, paddingHorizontal: 4, paddingVertical: 2, marginBottom: 2,
+    borderRadius: 3, paddingHorizontal: 4, paddingVertical: 2, marginBottom: 2,
+    width: '100%',
   },
-  chipTitle: { fontSize: 10, fontWeight: '600' },
+  chipTitle: { fontSize: 10, fontWeight: '600', color: '#ffffff' },
   moreText: { fontSize: 10, color: 'rgba(255,255,255,0.55)', paddingLeft: 4 },
 
   backdrop: {
@@ -462,19 +552,19 @@ const styles = StyleSheet.create({
   popupThumb: { width: 72, height: 72, borderRadius: 8 },
   popupDivider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
     marginBottom: 10,
   },
   popupRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   popupRowText: { fontSize: 13, color: 'rgba(255,255,255,0.88)', flex: 1 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, flex: 1 },
-  tag: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
-  tagText: { fontSize: 12, fontWeight: '500' },
+  tag: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20 },
+  tagText: { fontSize: 12, fontWeight: '600', color: '#ffffff' },
   popupDescription: {
     fontSize: 13, color: 'rgba(255,255,255,0.80)', lineHeight: 20,
     marginTop: 10, paddingTop: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(0,0,0,0.08)',
+    borderTopColor: 'rgba(255,255,255,0.12)',
   },
   viewerBackdrop: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   viewerImage: { width: '100%', height: '85%' },

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  View, Text, Pressable, StyleSheet, ScrollView, Modal, Share, ActivityIndicator,
-  TextInput, KeyboardAvoidingView, Platform, Alert,
+  View, Text, Pressable, StyleSheet, ScrollView, Modal, Share, ActivityIndicator, Animated,
 } from 'react-native'
+import { PanGestureHandler, State } from 'react-native-gesture-handler'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -10,9 +10,62 @@ import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
 import { SpaceMember, getSpaceMembers } from '@/lib/spaces'
 import { MemberSchedule, getSpaceSchedules, getScheduleSignedUrl } from '@/lib/schedules'
-import { BlurView } from 'expo-blur'
+import GlassCard from '@/components/GlassCard'
 import { userColor } from '@/lib/userColor'
-import { sendSpaceNotification } from '@/lib/notifications'
+
+const THUMB_SIZE = 48
+
+function SlideToSignOut({ onConfirm }: { onConfirm: () => void }) {
+  const [trackWidth, setTrackWidth] = useState(0)
+  const dragX = useRef(new Animated.Value(0)).current
+  const maxX = Math.max(trackWidth - THUMB_SIZE - 8, 1)
+
+  const clampedX = dragX.interpolate({ inputRange: [0, maxX], outputRange: [0, maxX], extrapolate: 'clamp' })
+  const labelOpacity = dragX.interpolate({ inputRange: [0, maxX * 0.4], outputRange: [1, 0], extrapolate: 'clamp' })
+  const fillOpacity = dragX.interpolate({ inputRange: [0, maxX], outputRange: [0, 1], extrapolate: 'clamp' })
+
+  const onGestureEvent = Animated.event([{ nativeEvent: { translationX: dragX } }], { useNativeDriver: true })
+
+  const onHandlerStateChange = ({ nativeEvent }: any) => {
+    if (nativeEvent.oldState === State.ACTIVE) {
+      const x = Math.max(0, nativeEvent.translationX)
+      if (x >= maxX * 0.85) {
+        Animated.spring(dragX, { toValue: maxX, useNativeDriver: true, tension: 100, friction: 12 })
+          .start(() => onConfirm())
+      } else {
+        Animated.spring(dragX, { toValue: 0, useNativeDriver: true, tension: 100, friction: 12 }).start()
+      }
+    }
+  }
+
+  return (
+    <View style={s.slideZone}>
+      <View
+        style={s.slideTrack}
+        onLayout={e => setTrackWidth(e.nativeEvent.layout.width)}
+      >
+        <Animated.View style={[StyleSheet.absoluteFill, s.slideFill, { opacity: fillOpacity }]} />
+        <Animated.Text style={[s.slideLabel, { opacity: labelOpacity }]}>
+          Glisser pour se déconnecter
+        </Animated.Text>
+      </View>
+      {trackWidth > 0 && (
+        <PanGestureHandler
+          onGestureEvent={onGestureEvent}
+          onHandlerStateChange={onHandlerStateChange}
+          activeOffsetX={[-9999, 5]}
+          failOffsetY={[-10, 10]}
+        >
+          <Animated.View style={[s.slideThumbHit, { transform: [{ translateX: clampedX }] }]}>
+            <View style={s.slideThumb}>
+              <Ionicons name="log-out-outline" size={20} color="#ffffff" />
+            </View>
+          </Animated.View>
+        </PanGestureHandler>
+      )}
+    </View>
+  )
+}
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/)
@@ -40,10 +93,6 @@ export default function ProfileScreen() {
   const [previewUri, setPreviewUri] = useState<string | null>(null)
   const [viewerUri, setViewerUri] = useState<string | null>(null)
   const [loadingMembers, setLoadingMembers] = useState(true)
-  const [notifOpen, setNotifOpen] = useState(false)
-  const [notifMessage, setNotifMessage] = useState('')
-  const [notifSending, setNotifSending] = useState(false)
-  const notifInputRef = useRef<TextInput>(null)
 
   useEffect(() => {
     if (!space || !user) return
@@ -64,21 +113,6 @@ export default function ProfileScreen() {
       })
       .catch(() => {})
   }, [space?.id, user?.id])
-
-  const handleSendNotification = async () => {
-    const msg = notifMessage.trim()
-    if (!msg || !space || !user) return
-    setNotifSending(true)
-    try {
-      await sendSpaceNotification(space.id, user.id, name, msg)
-      setNotifMessage('')
-      setNotifOpen(false)
-    } catch {
-      Alert.alert('Erreur', "L'envoi a échoué.")
-    } finally {
-      setNotifSending(false)
-    }
-  }
 
   const handleShareCode = () => {
     if (!space) return
@@ -111,7 +145,7 @@ export default function ProfileScreen() {
         <Text style={s.heroEmail}>{user?.email}</Text>
       </View>
 
-      <BlurView intensity={22} tint="light" style={s.card}>
+      <GlassCard style={s.card}>
         <Text style={s.cardLabel}>MON ESPACE</Text>
         <Text style={s.spaceName}>{space?.name ?? '—'}</Text>
 
@@ -144,9 +178,9 @@ export default function ProfileScreen() {
             <Text style={s.inviteShareText}>Partager</Text>
           </View>
         </Pressable>
-      </BlurView>
+      </GlassCard>
 
-      <BlurView intensity={22} tint="light" style={s.card}>
+      <GlassCard style={s.card}>
         <Text style={s.cardLabel}>MON EMPLOI DU TEMPS</Text>
         {schedule ? (
           <Pressable
@@ -176,51 +210,11 @@ export default function ProfileScreen() {
             <Text style={s.scheduleEmptyText}>Ajouter mon emploi du temps</Text>
           </Pressable>
         )}
-      </BlurView>
+      </GlassCard>
 
-      <Pressable style={s.notifBtn} onPress={() => setNotifOpen(true)}>
-        <Ionicons name="notifications-outline" size={17} color="rgba(255,255,255,0.85)" />
-        <Text style={s.notifBtnText}>Envoyer une notification</Text>
-      </Pressable>
-
-      <Pressable style={s.signOutBtn} onPress={signOut}>
-        <Text style={s.signOutText}>Se déconnecter</Text>
-      </Pressable>
-
-      <Modal
-        visible={notifOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setNotifOpen(false)}
-        onShow={() => setTimeout(() => notifInputRef.current?.focus(), 100)}
-      >
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <Pressable style={s.notifBackdrop} onPress={() => setNotifOpen(false)}>
-            <Pressable style={s.notifSheet} onPress={() => {}}>
-              <Text style={s.notifSheetTitle}>Notification</Text>
-              <TextInput
-                ref={notifInputRef}
-                style={s.notifInput}
-                placeholder="Message à envoyer..."
-                placeholderTextColor="rgba(255,255,255,0.38)"
-                value={notifMessage}
-                onChangeText={setNotifMessage}
-                multiline
-                returnKeyType="send"
-              />
-              <Pressable
-                style={[s.notifSendBtn, (!notifMessage.trim() || notifSending) && s.notifSendBtnDisabled]}
-                onPress={handleSendNotification}
-                disabled={!notifMessage.trim() || notifSending}
-              >
-                {notifSending
-                  ? <ActivityIndicator color="rgba(180,210,255,0.9)" />
-                  : <Text style={s.notifSendBtnText}>Envoyer</Text>}
-              </Pressable>
-            </Pressable>
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Modal>
+      <View style={s.slideContainer}>
+        <SlideToSignOut onConfirm={signOut} />
+      </View>
 
       {viewerUri && (
         <Modal visible transparent animationType="fade" onRequestClose={() => setViewerUri(null)}>
@@ -245,7 +239,9 @@ const s = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 56,
-    paddingBottom: 8,
+    paddingBottom: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.30)',
   },
   headerTitle: { fontSize: 28, fontWeight: '700', color: '#ffffff' },
   editBtn: {
@@ -267,11 +263,6 @@ const s = StyleSheet.create({
   heroEmail: { fontSize: 14, color: 'rgba(255,255,255,0.75)' },
 
   card: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.38)',
-    borderRadius: 14,
     marginHorizontal: 16,
     marginBottom: 12,
     padding: 16,
@@ -285,7 +276,7 @@ const s = StyleSheet.create({
   spaceName: { fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 4 },
   divider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
     marginVertical: 14,
   },
   sectionLabel: {
@@ -336,61 +327,35 @@ const s = StyleSheet.create({
   },
   scheduleEmptyText: { fontSize: 14, color: 'rgba(255,255,255,0.55)' },
 
-  notifBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    marginHorizontal: 16, marginBottom: 10,
-    backgroundColor: 'rgba(255,255,255,0.65)',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.38)',
-    borderRadius: 14,
-    padding: 16,
-  },
-  notifBtnText: { fontSize: 15, color: 'rgba(255,255,255,0.85)' },
 
-  signOutBtn: {
+  slideContainer: {
     marginHorizontal: 16, marginTop: 8,
-    padding: 16, alignItems: 'center',
+  },
+  slideZone: {
+    height: 90,
+    justifyContent: 'center',
+  },
+  slideTrack: {
+    height: 56, borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(224,85,85,0.3)',
-    borderRadius: 14,
+    borderColor: 'rgba(255,255,255,0.12)',
+    overflow: 'hidden',
+    justifyContent: 'center', alignItems: 'center',
   },
-  signOutText: { fontSize: 15, color: '#e05555' },
-
-  notifBackdrop: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
+  slideFill: { backgroundColor: 'rgba(200,40,40,0.85)', borderRadius: 28 },
+  slideLabel: { fontSize: 14, color: 'rgba(255,255,255,0.40)', fontWeight: '500' },
+  slideThumbHit: {
+    position: 'absolute', left: 0, top: 0,
+    width: THUMB_SIZE + 32, height: 90,
+    justifyContent: 'center', alignItems: 'flex-start',
+    paddingLeft: 4,
   },
-  notifSheet: {
-    backgroundColor: 'rgba(255,255,255,0.85)',
-    borderTopLeftRadius: 16, borderTopRightRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.40)',
-    padding: 20, paddingBottom: 40,
+  slideThumb: {
+    width: THUMB_SIZE, height: THUMB_SIZE, borderRadius: THUMB_SIZE / 2,
+    backgroundColor: 'rgba(200,40,40,0.85)',
+    justifyContent: 'center', alignItems: 'center',
   },
-  notifSheetTitle: {
-    fontSize: 16, fontWeight: '600', color: '#ffffff', marginBottom: 14,
-  },
-  notifInput: {
-    backgroundColor: 'rgba(255,255,255,0.38)',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.50)',
-    borderRadius: 10,
-    padding: 14,
-    fontSize: 15,
-    color: '#ffffff',
-    minHeight: 80,
-    textAlignVertical: 'top',
-    marginBottom: 14,
-  },
-  notifSendBtn: {
-    backgroundColor: 'rgba(110,55,180,0.70)',
-    borderRadius: 10, padding: 14, alignItems: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.50)',
-  },
-  notifSendBtnDisabled: { opacity: 0.4 },
-  notifSendBtnText: { color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: '500' },
-
   viewerBackdrop: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   viewerImage: { width: '100%', height: '85%' },
   viewerClose: { position: 'absolute', top: 56, right: 20, backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 20 },
