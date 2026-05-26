@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
-import { Link, router } from 'expo-router'
+import { Link } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
 import { useAuth } from '@/context/auth'
 import { BlurView } from 'expo-blur'
 import MeshBackground from '@/components/MeshBackground'
@@ -86,7 +87,7 @@ export default function RegisterScreen() {
           En créant un compte, tu acceptes notre{' '}
           <Text
             style={styles.consentLink}
-            onPress={() => router.push('/(app)/privacy')}
+            onPress={() => WebBrowser.openBrowserAsync('https://moncerveau.vercel.app/privacy')}
           >
             politique de confidentialité
           </Text>
