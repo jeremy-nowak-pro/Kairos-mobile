@@ -29,14 +29,19 @@ export async function getAttachments(eventId: string): Promise<Attachment[]> {
   return (data ?? []) as Attachment[]
 }
 
+const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']
+
 export async function uploadAttachment(
   file: LocalFile,
   eventId: string,
   spaceId: string,
   createdBy: string,
 ): Promise<Attachment> {
+  const mime = file.mimeType ?? 'application/octet-stream'
+  if (!ALLOWED_MIME.includes(mime)) throw new Error('Type de fichier non autorisé')
+
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin'
-  const storagePath = `${spaceId}/${eventId}/${Date.now()}.${ext}`
+  const storagePath = `${spaceId}/${eventId}/${crypto.randomUUID()}.${ext}`
 
   const res = await fetch(file.uri)
   const buffer = await res.arrayBuffer()
@@ -44,7 +49,7 @@ export async function uploadAttachment(
   const { error: storageErr } = await supabase.storage
     .from('event-attachments')
     .upload(storagePath, buffer, {
-      contentType: file.mimeType ?? 'application/octet-stream',
+      contentType: mime,
     })
   if (storageErr) throw storageErr
 

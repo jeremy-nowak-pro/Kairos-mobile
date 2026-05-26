@@ -1,31 +1,48 @@
-import { supabase } from './supabase'
+import { File, Paths } from 'expo-file-system'
 
-export async function getLocations(): Promise<string[]> {
-  const { data } = await supabase
-    .from('event_locations')
-    .select('location')
-    .order('used_count', { ascending: false })
-    .limit(20)
-  return (data ?? []).map((r: { location: string }) => r.location)
+interface LocationEntry {
+  location: string
+  used_count: number
 }
 
-export async function upsertLocation(location: string): Promise<void> {
-  if (!location.trim()) return
-  const { data } = await supabase
-    .from('event_locations')
-    .select('id, used_count')
-    .eq('location', location)
-    .maybeSingle()
-  if (data) {
-    await supabase
-      .from('event_locations')
-      .update({ used_count: (data as { used_count: number }).used_count + 1, updated_at: new Date().toISOString() })
-      .eq('id', (data as { id: string }).id)
-  } else {
-    await supabase.from('event_locations').insert({ location })
+const FILE = new File(Paths.document + '/location_history.json')
+
+async function read(): Promise<LocationEntry[]> {
+  try {
+    if (!FILE.exists) return []
+    const text = await FILE.text()
+    return JSON.parse(text) as LocationEntry[]
+  } catch {
+    return []
   }
 }
 
+async function write(entries: LocationEntry[]): Promise<void> {
+  await FILE.write(JSON.stringify(entries))
+}
+
+export async function getLocations(): Promise<string[]> {
+  const entries = await read()
+  return entries
+    .sort((a, b) => b.used_count - a.used_count)
+    .slice(0, 20)
+    .map(e => e.location)
+}
+
+export async function upsertLocation(location: string): Promise<void> {
+  const trimmed = location.trim()
+  if (!trimmed) return
+  const entries = await read()
+  const existing = entries.find(e => e.location === trimmed)
+  if (existing) {
+    existing.used_count += 1
+  } else {
+    entries.push({ location: trimmed, used_count: 1 })
+  }
+  await write(entries)
+}
+
 export async function deleteLocation(location: string): Promise<void> {
-  await supabase.from('event_locations').delete().eq('location', location)
+  const entries = await read()
+  await write(entries.filter(e => e.location !== location))
 }

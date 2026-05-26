@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: error?.message ?? null }
+    return { error: error ? 'Email ou mot de passe incorrect.' : null }
   }
 
   const signUp = async (email: string, password: string, displayName: string) => {
@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
       options: { data: { display_name: displayName } },
     })
-    return { error: error?.message ?? null }
+    return { error: error ? 'Inscription impossible. Vérifiez votre email et votre mot de passe.' : null }
   }
 
   const signOut = async () => {

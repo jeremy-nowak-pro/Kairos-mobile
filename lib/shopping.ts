@@ -41,9 +41,20 @@ export interface ShoppingItem {
   created_at: string
 }
 
-export function getPhotoUrl(imagePath: string): string {
-  const { data } = supabase.storage.from('shopping-photos').getPublicUrl(imagePath)
-  return data.publicUrl
+const photoUrlCache = new Map<string, { url: string; expiresAt: number }>()
+const URL_TTL = 55 * 60 * 1000
+
+export async function getPhotoSignedUrl(imagePath: string): Promise<string> {
+  const cached = photoUrlCache.get(imagePath)
+  if (cached && Date.now() < cached.expiresAt) return cached.url
+
+  const { data, error } = await supabase.storage
+    .from('shopping-photos')
+    .createSignedUrl(imagePath, 3600)
+  if (error) throw error
+
+  photoUrlCache.set(imagePath, { url: data.signedUrl, expiresAt: Date.now() + URL_TTL })
+  return data.signedUrl
 }
 
 // ── Lists ─────────────────────────────────────────────────────────────────────
@@ -131,11 +142,14 @@ export async function addItem(
 
   if (pickerUri) {
     const ext = pickerUri.split('.').pop()?.toLowerCase() ?? 'jpg'
-    const path = `${spaceId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const mime = `image/${ext === 'jpg' ? 'jpeg' : ext}`
+    const allowedMime = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowedMime.includes(mime)) throw new Error('Type de fichier non autorisé')
+    const path = `${spaceId}/${crypto.randomUUID()}.${ext}`
     const buffer = await fetch(pickerUri).then(r => r.arrayBuffer())
     const { error: uploadError } = await supabase.storage
       .from('shopping-photos')
-      .upload(path, buffer, { contentType: `image/${ext}`, upsert: false })
+      .upload(path, buffer, { contentType: mime, upsert: false })
     if (!uploadError) image_path = path
   }
 

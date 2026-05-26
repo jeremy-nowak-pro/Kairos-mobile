@@ -25,10 +25,7 @@
         "backgroundColor": "#1a0e30"
       },
       "package": "com.jeremypro.kairosmobile",
-      "softwareKeyboardLayoutMode": "resize",
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+      "softwareKeyboardLayoutMode": "resize"
     },
     "androidNavigationBar": {
       "barStyle": "dark-content",

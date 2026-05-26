@@ -2,11 +2,14 @@ import { useEffect } from 'react'
 import { Redirect, Tabs } from 'expo-router'
 import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
-import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native'
+import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { BlurView } from 'expo-blur'
+import * as SecureStore from 'expo-secure-store'
 import { registerPushToken } from '@/lib/notifications'
 import ChatPanel from '@/components/ChatPanel'
+
+const PUSH_CONSENT_KEY = 'push_consent_asked'
 
 function TabBarBackground() {
   return (
@@ -26,7 +29,31 @@ export default function AppLayout() {
   const { space } = useSpace()
 
   useEffect(() => {
-    if (user && space) registerPushToken(space.id, user.id).catch(() => {})
+    if (!user || !space) return
+    SecureStore.getItemAsync(PUSH_CONSENT_KEY).then(value => {
+      if (value === 'granted') {
+        registerPushToken(space.id, user.id).catch(() => {})
+      } else if (value === null) {
+        Alert.alert(
+          'Notifications',
+          "Kairos peut t'avertir quand un membre de ton espace envoie un message. Aucun contenu n'est transmis.",
+          [
+            {
+              text: 'Pas maintenant',
+              style: 'cancel',
+              onPress: () => SecureStore.setItemAsync(PUSH_CONSENT_KEY, 'denied'),
+            },
+            {
+              text: 'Activer',
+              onPress: () => {
+                SecureStore.setItemAsync(PUSH_CONSENT_KEY, 'granted')
+                registerPushToken(space.id, user.id).catch(() => {})
+              },
+            },
+          ],
+        )
+      }
+    })
   }, [user?.id, space?.id])
 
   if (loading) {

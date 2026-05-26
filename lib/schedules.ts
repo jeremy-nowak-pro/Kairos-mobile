@@ -20,12 +20,16 @@ export async function getSpaceSchedules(spaceId: string): Promise<MemberSchedule
   return (data ?? []) as MemberSchedule[]
 }
 
+const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']
+
 export async function uploadSchedule(
   spaceId: string,
   userId: string,
   file: LocalFile,
 ): Promise<MemberSchedule> {
-  // Delete existing storage file if any
+  const mime = file.mimeType ?? 'application/octet-stream'
+  if (!ALLOWED_MIME.includes(mime)) throw new Error('Type de fichier non autorisé')
+
   const { data: existing } = await supabase
     .from('member_schedules')
     .select('storage_path')
@@ -38,7 +42,7 @@ export async function uploadSchedule(
   }
 
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin'
-  const storagePath = `${spaceId}/${userId}/${Date.now()}.${ext}`
+  const storagePath = `${spaceId}/${userId}/${crypto.randomUUID()}.${ext}`
 
   const res = await fetch(file.uri)
   const buffer = await res.arrayBuffer()
@@ -46,7 +50,7 @@ export async function uploadSchedule(
   const { error: storageErr } = await supabase.storage
     .from('schedules')
     .upload(storagePath, buffer, {
-      contentType: file.mimeType ?? 'application/octet-stream',
+      contentType: mime,
       upsert: true,
     })
   if (storageErr) throw new Error(storageErr.message ?? JSON.stringify(storageErr))

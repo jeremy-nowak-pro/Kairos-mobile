@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  View, Text, Pressable, StyleSheet, TextInput, FlatList,
+  View, Text, Pressable, StyleSheet, TextInput,
   ScrollView, Modal, Alert, KeyboardAvoidingView, Platform,
   ActivityIndicator, Animated,
 } from 'react-native'
@@ -9,7 +9,6 @@ import * as ImagePicker from 'expo-image-picker'
 import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect } from 'expo-router'
 import { BlurView } from 'expo-blur'
-import GlassCard from '@/components/GlassCard'
 import { useSpace } from '@/context/space'
 import { useAuth } from '@/context/auth'
 import {
@@ -17,7 +16,7 @@ import {
   getLists, createList, deleteList,
   getItems, addItem, toggleItem, deleteItem,
   getStoreHistory, addToStoreHistory, removeFromStoreHistory,
-  getPhotoUrl,
+  getPhotoSignedUrl,
 } from '@/lib/shopping'
 
 const BLUE = '#2563EB'
@@ -260,13 +259,21 @@ function ItemRow({
   item,
   onToggle,
   onDelete,
+  onImagePress,
 }: {
   item: ShoppingItem
   onToggle: () => void
   onDelete: () => void
+  onImagePress?: (uri: string) => void
 }) {
   const scaleAnim = useRef(new Animated.Value(1)).current
   const mounted = useRef(false)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!item.image_path) return
+    getPhotoSignedUrl(item.image_path).then(setPhotoUrl).catch(() => {})
+  }, [item.image_path])
 
   useEffect(() => {
     if (!mounted.current) { mounted.current = true; return }
@@ -283,8 +290,13 @@ function ItemRow({
           {item.checked && <Ionicons name="checkmark" size={13} color="#fff" />}
         </Animated.View>
 
-        {item.image_path && (
-          <Image source={{ uri: getPhotoUrl(item.image_path) }} style={styles.itemThumb} contentFit="cover" />
+        {item.image_path && photoUrl && (
+          <Pressable
+            onPress={e => { e.stopPropagation(); onImagePress?.(photoUrl) }}
+            hitSlop={4}
+          >
+            <Image source={{ uri: photoUrl }} style={styles.itemThumb} contentFit="cover" />
+          </Pressable>
         )}
 
         <Text style={[styles.itemName, item.checked && styles.itemNameChecked]} numberOfLines={2}>
@@ -313,6 +325,7 @@ export default function ShoppingScreen() {
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null)
   const [loadingItems, setLoadingItems] = useState(false)
   const [toastList, setToastList] = useState<ShoppingList | null>(null)
+  const [viewerUri, setViewerUri] = useState<string | null>(null)
   const inputRef = useRef<TextInput>(null)
   const pendingDeleteRef = useRef<ShoppingList | null>(null)
   const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -419,7 +432,8 @@ export default function ShoppingScreen() {
     await deleteItem(item.list_id, item.id)
   }
 
-  const sorted = [...items.filter(i => !i.checked), ...items.filter(i => i.checked)]
+  const unchecked = items.filter(i => !i.checked)
+  const checked = items.filter(i => i.checked)
   const activeList = lists.find(l => l.id === activeId)
 
   if (!space) return <ActivityIndicator style={{ flex: 1 }} />
@@ -473,30 +487,52 @@ export default function ShoppingScreen() {
             opacity: contentAnim,
             transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
           }}>
-            <GlassCard style={styles.listCard}>
-            <FlatList
+            <ScrollView
               style={{ flex: 1 }}
-              data={sorted}
-              keyExtractor={i => i.id}
-              renderItem={({ item }) => (
-                <ItemRow
-                  item={item}
-                  onToggle={() => handleToggle(item)}
-                  onDelete={() => handleDeleteItem(item)}
-                />
-              )}
-              ListEmptyComponent={
+              contentContainerStyle={styles.list}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {unchecked.length === 0 && checked.length === 0 && (
                 <View style={styles.emptyList}>
                   <Text style={styles.emptyListText}>
                     Liste vide — ajoute un premier produit ci-dessous
                   </Text>
                 </View>
-              }
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
-              contentContainerStyle={styles.list}
-              showsVerticalScrollIndicator={false}
-            />
-            </GlassCard>
+              )}
+              {unchecked.map((item, index) => (
+                <View key={item.id}>
+                  <ItemRow
+                    item={item}
+                    onToggle={() => handleToggle(item)}
+                    onDelete={() => handleDeleteItem(item)}
+                    onImagePress={setViewerUri}
+                  />
+                  {index < unchecked.length - 1 && <View style={styles.separator} />}
+                </View>
+              ))}
+              {checked.length > 0 && (
+                <>
+                  <View style={styles.checkedHeader}>
+                    <View style={styles.checkedHeaderLine} />
+                    <Text style={styles.checkedHeaderText}>Dans le panier · {checked.length}</Text>
+                    <View style={styles.checkedHeaderLine} />
+                  </View>
+                  <View style={{ opacity: 0.45 }}>
+                    {checked.map((item, index) => (
+                      <View key={item.id}>
+                        <ItemRow
+                          item={item}
+                          onToggle={() => handleToggle(item)}
+                          onDelete={() => handleDeleteItem(item)}
+                        />
+                        {index < checked.length - 1 && <View style={styles.separator} />}
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
+            </ScrollView>
           </Animated.View>
         )}
 
@@ -543,6 +579,17 @@ export default function ShoppingScreen() {
             <Text style={styles.toastUndo}>Annuler</Text>
           </Pressable>
         </Animated.View>
+      )}
+
+      {viewerUri && (
+        <Modal visible transparent animationType="fade" onRequestClose={() => setViewerUri(null)}>
+          <Pressable style={styles.viewerBackdrop} onPress={() => setViewerUri(null)}>
+            <Image source={{ uri: viewerUri }} style={styles.viewerImage} contentFit="contain" />
+            <Pressable style={styles.viewerClose} onPress={() => setViewerUri(null)} hitSlop={12}>
+              <Ionicons name="close-circle" size={32} color="#fff" />
+            </Pressable>
+          </Pressable>
+        </Modal>
       )}
 
       <AddListModal
@@ -610,25 +657,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  listCard: { flex: 1, marginHorizontal: 12, marginTop: 8, marginBottom: 8 },
-  list: { paddingBottom: 100 },
+  list: { paddingBottom: 120 },
   separator: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(140,170,255,0.1)',
-    marginLeft: 56,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    marginLeft: 58,
+  },
+  checkedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 24,
+    marginBottom: 4,
+    gap: 10,
+  },
+  checkedHeaderLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  checkedHeaderText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.35)',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
   },
 
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
     paddingRight: 12,
   },
   itemMain: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 13,
+    paddingVertical: 14,
     paddingLeft: 16,
     gap: 12,
   },
@@ -800,4 +865,8 @@ const styles = StyleSheet.create({
   },
   toastText: { color: '#ffffff', fontSize: 14 },
   toastUndo: { color: 'rgba(255,255,255,0.92)', fontSize: 14, fontWeight: '600' },
+
+  viewerBackdrop: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
+  viewerImage: { width: '100%', height: '85%' },
+  viewerClose: { position: 'absolute', top: 56, right: 20, backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 20 },
 })
