@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from 'react-native'
-import { Link } from 'expo-router'
+import { Link, router } from 'expo-router'
 import { useAuth } from '@/context/auth'
 import { BlurView } from 'expo-blur'
 import MeshBackground from '@/components/MeshBackground'
@@ -81,6 +81,17 @@ export default function RegisterScreen() {
         </BlurView>
 
         {error && <Text style={styles.error}>{error}</Text>}
+
+        <Text style={styles.consent}>
+          En créant un compte, tu acceptes notre{' '}
+          <Text
+            style={styles.consentLink}
+            onPress={() => router.push('/(app)/privacy')}
+          >
+            politique de confidentialité
+          </Text>
+          .
+        </Text>
 
         <Pressable style={styles.button} onPress={handleRegister} disabled={loading}>
           {loading
@@ -175,6 +186,17 @@ const styles = StyleSheet.create({
   },
   buttonText: { color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
   error: { color: '#e05555', marginBottom: 10, fontSize: 13, textAlign: 'center' },
+  consent: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.45)',
+    textAlign: 'center',
+    marginBottom: 10,
+    lineHeight: 18,
+  },
+  consentLink: {
+    color: 'rgba(180,200,255,0.70)',
+    textDecorationLine: 'underline',
+  },
   link: {
     marginTop: 22,
     textAlign: 'center',

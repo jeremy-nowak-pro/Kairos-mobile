@@ -63,7 +63,7 @@ export async function sendSpaceNotification(
         to: token,
         sound: 'default',
         title: senderName,
-        body: message,
+        body: 'Nouveau message',
         data: { spaceId },
       })),
     ),

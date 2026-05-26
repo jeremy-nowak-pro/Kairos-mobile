@@ -12,6 +12,8 @@ import { SpaceMember, getSpaceMembers } from '@/lib/spaces'
 import { MemberSchedule, getSpaceSchedules, getScheduleSignedUrl } from '@/lib/schedules'
 import GlassCard from '@/components/GlassCard'
 import { userColor } from '@/lib/userColor'
+import { supabase } from '@/lib/supabase'
+import { exportMyData } from '@/lib/export'
 
 const THUMB_SIZE = 48
 
@@ -93,6 +95,8 @@ export default function ProfileScreen() {
   const [previewUri, setPreviewUri] = useState<string | null>(null)
   const [viewerUri, setViewerUri] = useState<string | null>(null)
   const [loadingMembers, setLoadingMembers] = useState(true)
+  const [deletingAccount, setDeletingAccount] = useState(false)
+  const [exporting, setExporting] = useState(false)
 
   useEffect(() => {
     if (!space || !user) return
@@ -113,6 +117,56 @@ export default function ProfileScreen() {
       })
       .catch(() => {})
   }, [space?.id, user?.id])
+
+  const handleExport = async () => {
+    if (!user || !space) return
+    setExporting(true)
+    try {
+      await exportMyData(user.id, space.id)
+    } catch {
+      Alert.alert('Erreur', 'Impossible de générer l\'export.')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Supprimer mon compte',
+      'Toutes tes données seront définitivement effacées : profil, messages, emploi du temps. Cette action est irréversible.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert(
+              'Confirmer la suppression',
+              'Es-tu sûr ? Ton compte sera supprimé immédiatement.',
+              [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                  text: 'Oui, supprimer définitivement',
+                  style: 'destructive',
+                  onPress: async () => {
+                    setDeletingAccount(true)
+                    try {
+                      const { error } = await supabase.functions.invoke('delete-account')
+                      if (error) throw error
+                      await signOut()
+                    } catch {
+                      Alert.alert('Erreur', 'Impossible de supprimer le compte. Réessaie.')
+                    } finally {
+                      setDeletingAccount(false)
+                    }
+                  },
+                },
+              ],
+            ),
+        },
+      ],
+    )
+  }
 
   const handleShareCode = () => {
     if (!space) return
@@ -140,12 +194,11 @@ export default function ProfileScreen() {
       </View>
 
       <View style={s.hero}>
-        <Avatar name={name} size={80} />
         <Text style={s.heroName}>{name}</Text>
         <Text style={s.heroEmail}>{user?.email}</Text>
       </View>
 
-      <GlassCard style={s.card}>
+      <GlassCard style={s.card} contentStyle={s.cardContent}>
         <Text style={s.cardLabel}>MON ESPACE</Text>
         <Text style={s.spaceName}>{space?.name ?? '—'}</Text>
 
@@ -180,7 +233,7 @@ export default function ProfileScreen() {
         </Pressable>
       </GlassCard>
 
-      <GlassCard style={s.card}>
+      <GlassCard style={s.card} contentStyle={s.cardContent}>
         <Text style={s.cardLabel}>MON EMPLOI DU TEMPS</Text>
         {schedule ? (
           <Pressable
@@ -215,6 +268,37 @@ export default function ProfileScreen() {
       <View style={s.slideContainer}>
         <SlideToSignOut onConfirm={signOut} />
       </View>
+
+      <Pressable
+        style={s.exportBtn}
+        onPress={handleExport}
+        disabled={exporting}
+      >
+        {exporting
+          ? <ActivityIndicator size="small" color="rgba(255,255,255,0.55)" />
+          : (
+            <>
+              <Ionicons name="download-outline" size={15} color="rgba(255,255,255,0.55)" />
+              <Text style={s.exportBtnText}>Exporter mes données</Text>
+            </>
+          )
+        }
+      </Pressable>
+
+      <Pressable
+        style={s.deleteAccountBtn}
+        onPress={handleDeleteAccount}
+        disabled={deletingAccount}
+      >
+        {deletingAccount
+          ? <ActivityIndicator size="small" color="rgba(224,85,85,0.7)" />
+          : <Text style={s.deleteAccountText}>Supprimer mon compte</Text>
+        }
+      </Pressable>
+
+      <Pressable style={s.privacyLink} onPress={() => router.push('/(app)/privacy')}>
+        <Text style={s.privacyLinkText}>Politique de confidentialité</Text>
+      </Pressable>
 
       {viewerUri && (
         <Modal visible transparent animationType="fade" onRequestClose={() => setViewerUri(null)}>
@@ -254,19 +338,20 @@ const s = StyleSheet.create({
 
   hero: {
     alignItems: 'center',
-    paddingVertical: 28,
-    gap: 6,
+    paddingTop: 20,
+    paddingBottom: 14,
+    gap: 4,
   },
   avatar: { justifyContent: 'center', alignItems: 'center' },
   avatarText: { fontWeight: '700' },
-  heroName: { fontSize: 22, fontWeight: '700', color: '#ffffff', marginTop: 4 },
+  heroName: { fontSize: 22, fontWeight: '700', color: '#ffffff' },
   heroEmail: { fontSize: 14, color: 'rgba(255,255,255,0.75)' },
 
   card: {
     marginHorizontal: 16,
     marginBottom: 12,
-    padding: 16,
   },
+  cardContent: { padding: 16 },
   cardLabel: {
     fontSize: 11, fontWeight: '600',
     color: 'rgba(255,255,255,0.75)',
@@ -275,8 +360,8 @@ const s = StyleSheet.create({
   },
   spaceName: { fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 4 },
   divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.28)',
     marginVertical: 14,
   },
   sectionLabel: {
@@ -359,4 +444,42 @@ const s = StyleSheet.create({
   viewerBackdrop: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
   viewerImage: { width: '100%', height: '85%' },
   viewerClose: { position: 'absolute', top: 56, right: 20, backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 20 },
+
+  exportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 14,
+    marginHorizontal: 16,
+    marginTop: 8,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  exportBtnText: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.55)',
+  },
+  deleteAccountBtn: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginHorizontal: 16,
+    marginTop: 4,
+  },
+  deleteAccountText: {
+    fontSize: 13,
+    color: 'rgba(224,85,85,0.7)',
+  },
+  privacyLink: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    marginHorizontal: 16,
+  },
+  privacyLinkText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.30)',
+    textDecorationLine: 'underline',
+  },
 })
