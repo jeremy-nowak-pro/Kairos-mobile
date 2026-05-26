@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "kairos-mobile",
+    "name": "Kairos",
     "slug": "kairos-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,6 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
+      "buildNumber": "1",
       "infoPlist": {
         "CADisableMinimumFrameDurationOnPhone": true
       },
@@ -25,6 +26,7 @@
         "backgroundColor": "#1a0e30"
       },
       "package": "com.jeremypro.kairosmobile",
+      "versionCode": 1,
       "softwareKeyboardLayoutMode": "resize"
     },
     "androidNavigationBar": {
@@ -48,7 +50,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Kairos accède à ta galerie pour joindre des photos aux événements."
+          "photosPermission": "Kairos accède à ta galerie pour joindre des photos aux événements et aux listes de courses.",
+          "cameraPermission": "Kairos accède à ton appareil photo pour joindre des photos."
         }
       ]
     ],
@@ -58,6 +61,7 @@
         "projectId": "ad4c8d9b-3498-474a-9173-066087734c73"
       }
     },
+    "privacy": "https://moncerveau.vercel.app/privacy",
     "owner": "jeremy-pro"
   }
 }

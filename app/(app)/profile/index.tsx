@@ -14,6 +14,7 @@ import GlassCard from '@/components/GlassCard'
 import { userColor } from '@/lib/userColor'
 import { supabase } from '@/lib/supabase'
 import { exportMyData } from '@/lib/export'
+import * as WebBrowser from 'expo-web-browser'
 
 const THUMB_SIZE = 48
 
@@ -296,7 +297,7 @@ export default function ProfileScreen() {
         }
       </Pressable>
 
-      <Pressable style={s.privacyLink} onPress={() => router.push('/(app)/privacy')}>
+      <Pressable style={s.privacyLink} onPress={() => WebBrowser.openBrowserAsync('https://moncerveau.vercel.app/privacy')}>
         <Text style={s.privacyLinkText}>Politique de confidentialité</Text>
       </Pressable>
 
