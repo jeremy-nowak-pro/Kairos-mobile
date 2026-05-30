@@ -121,13 +121,13 @@ Toutes les tables sont protégées par Row-Level Security Supabase. Chaque requ�
 
 ## Design system — thème sombre (glassmorphisme)
 
-L'app utilise un thème sombre avec un fond mesh-gradient animé et des surfaces en verre (BlurView).
+L'app utilise un thème sombre avec un fond mesh-gradient animé et des surfaces en verre.
 
 ### Fond
 
 ```
 Bg base          #070818   fond quasi-noir, derrière tout
-Mesh gradient    palette analogue bleu-indigo-violet (5 couches sinusoïdales)
+Mesh gradient    palette analogue bleu-indigo-violet (5 couches sinusoïdales animées)
   — bleu royal   #2248b8
   — bleu-indigo  #3530b0
   — indigo       #4a1aaa
@@ -135,28 +135,72 @@ Mesh gradient    palette analogue bleu-indigo-violet (5 couches sinusoïdales)
   — violet       #5e16a2
 ```
 
-### Surfaces verre (BlurView)
+### GlassCard (composant `components/GlassCard.tsx`)
+
+Technique de bordure dégradée — **ne pas recréer manuellement, utiliser le composant**.
 
 ```
-Card tint        dark, intensity 22
-Card bg          rgba(8, 16, 48, 0.35)
-Card border      rgba(140, 170, 255, 0.18)   hairlineWidth
+Outer wrapper    LinearGradient diagonal  rgba(255,255,255,0.52) → rgba(255,255,255,0.07)
+                 borderRadius: 15, padding: 1   ← c'est la "bordure"
+Inner view       borderRadius: 14, overflow: 'hidden'
+BlurView         intensity: 4, tint: 'light'  (absoluteFill)
+Specular         LinearGradient top  rgba(255,255,255,0.18) → transparent  height 80
+Depth            LinearGradient bottom  transparent → rgba(0,0,20,0.12)   height 50
+```
+
+Props :
+- `style` — styles sur l'outer LinearGradient (margin, flex, sizing)
+- `contentStyle` — styles sur l'inner View (padding, flexDirection)
+
+Ne jamais mettre `padding` sur `style` — ça écraserait le `padding: 1` de la bordure.
+
+### Surfaces modales / drawers
+
+Pour les sheets et drawers (pas les cards) :
+
+```
+Bg               rgba(8, 16, 48, 0.92)
+Overlay optionnel rgba(12, 6, 28, 0.82)  (sur BlurView intensity 55 tint dark)
+Border           rgba(140, 170, 255, 0.20)  hairlineWidth
+```
+
+### Séparateurs
+
+Standard unique dans toute l'app :
+
+```
+height: 1
+backgroundColor: 'rgba(255,255,255,0.28)'
+```
+
+Pour les séparateurs de listes d'items (inset) : ajouter `marginLeft: 56` pour aligner après l'icône/avatar.
+
+### Headers d'écran
+
+```
+paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20
+borderBottomWidth: StyleSheet.hairlineWidth
+borderBottomColor: 'rgba(255,255,255,0.30)'
+Title  fontSize: 28, fontWeight: '700', color: '#ffffff'
 ```
 
 ### Texte
 
 ```
-Text primary     #dce8ff
-Text secondary   rgba(150, 175, 220, 0.45)
-Text placeholder rgba(160, 180, 220, 0.35)
+Primaire         #ffffff
+Secondaire       rgba(255,255,255,0.75)
+Tertiaire        rgba(255,255,255,0.45)
+Labels section   fontSize 11, fontWeight 600, rgba(255,255,255,0.75), letterSpacing 0.8
+Placeholder      rgba(255,255,255,0.35)
 ```
 
 ### Actions
 
 ```
-Button bg        rgba(25, 55, 140, 0.5)
-Button border    rgba(120, 160, 255, 0.3)    hairlineWidth
-Button text      rgba(200, 220, 255, 0.95)
+Bouton principal  bg rgba(37,99,235,0.80)  border rgba(120,160,255,0.35)  hairlineWidth
+Bouton secondaire bg rgba(25,55,140,0.5)   border rgba(120,160,255,0.3)   hairlineWidth
+Texte bouton      rgba(255,255,255,0.95)
+Input bg          rgba(255,255,255,0.08)   border rgba(140,170,255,0.20)  hairlineWidth
 ```
 
 ### États
@@ -164,15 +208,25 @@ Button text      rgba(200, 220, 255, 0.95)
 ```
 Error            #e05555
 Success          #34c759
-Primary action   #2563EB   (hors contexte glassmorphisme, ex: badges)
+Primary          #2563EB  (badges, hors contexte glass)
+```
+
+### Chat — bulles
+
+```
+Bulle propre     bg rgba(37,99,235,0.80)   border rgba(120,160,255,0.35)  texte #ffffff
+Bulle autre      bg rgba(255,255,255,0.10)  border rgba(255,255,255,0.15)  texte rgba(220,232,255,0.95)
+Nom expéditeur   rgba(180,200,255,0.60)  fontSize 11
+Heure            rgba(255,255,255,0.35)   fontSize 10
 ```
 
 ### Règles
 
-- `BlurView` toujours avec `overflow: 'hidden'` sur le conteneur
-- Bordures : `StyleSheet.hairlineWidth` uniquement, jamais de `borderWidth: 1` arbitraire
+- `BlurView` toujours avec `overflow: 'hidden'` sur le conteneur parent
+- Bordures : `StyleSheet.hairlineWidth` uniquement, jamais `borderWidth: 1`
 - Pas de `shadow-*` — le verre se distingue par la bordure et le blur, pas l'ombre
 - Le fond mesh-gradient est le seul endroit avec de la couleur saturée ; le reste de l'UI reste sobre
+- Couleur accentuation unique : bleu `#2563EB` / `rgba(37,99,235,…)`
 
 ---
 
@@ -180,7 +234,8 @@ Primary action   #2563EB   (hors contexte glassmorphisme, ex: badges)
 
 | Composant | Description |
 |---|---|
-| `ChatPanel` | Drawer droit animé, pan gesture, subscription Realtime |
+| `GlassCard` | Carte verre — bordure dégradée (LinearGradient padding:1) + BlurView intensity 4 |
+| `ChatPanel` | Drawer droit animé, pan gesture, subscription Realtime. Fond rgba(8,16,48,0.92) |
 | `TimePicker` | Scroll snap custom (pas de lib) |
 | `CalendarPicker` | Modal date picker custom |
 | `LocationInput` | Autocomplete avec historique local |

@@ -4,6 +4,7 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useFocusEffect, useNavigation } from 'expo-router'
+import { BlurView } from 'expo-blur'
 import { useSpace } from '@/context/space'
 import GlassCard from '@/components/GlassCard'
 import { getUpcomingEvents, Event } from '@/lib/events'
@@ -53,7 +54,7 @@ function EventCard({ event, delay, animKey }: { event: Event; delay: number; ani
       style={({ pressed }) => [pressed && styles.cardPressed]}
       onPress={() => router.push(`/(app)/events/${event.id}`)}
     >
-      <GlassCard style={styles.card}>
+      <GlassCard style={styles.card} contentStyle={styles.cardContent}>
       <View style={[styles.cardBar, { backgroundColor: color.text }]} />
       <View style={styles.cardBody}>
         <Text style={styles.cardTitle} numberOfLines={1}>{event.title}</Text>
@@ -181,10 +182,10 @@ const styles = StyleSheet.create({
   list: { paddingTop: 12, paddingBottom: 100 },
 
   card: {
-    flexDirection: 'row',
     marginHorizontal: 16,
     marginBottom: 8,
   },
+  cardContent: { flexDirection: 'row' },
   cardPressed: { opacity: 0.7 },
   cardBar: { width: 4 },
   cardBody: { flex: 1, paddingHorizontal: 14, paddingVertical: 13 },

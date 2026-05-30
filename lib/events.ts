@@ -91,6 +91,33 @@ export async function deleteEvent(id: string): Promise<void> {
   if (error) throw error
 }
 
+export async function exportEventsToSpace(
+  fromSpaceId: string,
+  toSpaceId: string,
+  userId: string,
+  onlyMine: boolean
+): Promise<number> {
+  const today = new Date().toISOString().split('T')[0]
+
+  let query = supabase
+    .from('events')
+    .select('title, date, start_time, end_time, location, description, assigned_to, created_by')
+    .eq('space_id', fromSpaceId)
+    .gte('date', today)
+
+  if (onlyMine) query = query.eq('created_by', userId)
+
+  const { data, error } = await query
+  if (error) throw error
+  if (!data?.length) return 0
+
+  const events = data.map((e: Omit<Event, 'id' | 'space_id' | 'created_at'>) => ({ ...e, space_id: toSpaceId }))
+  const { error: insertError } = await supabase.from('events').insert(events)
+  if (insertError) throw insertError
+
+  return events.length
+}
+
 export async function createEvent(payload: {
   title: string
   date: string

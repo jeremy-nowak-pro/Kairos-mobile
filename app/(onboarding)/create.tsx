@@ -38,7 +38,7 @@ export default function CreateSpaceScreen() {
 
   const handleContinue = async () => {
     await refresh()
-    router.replace('/(app)/dashboard')
+    router.replace('/(app)/events')
   }
 
   if (inviteCode) {
@@ -49,7 +49,7 @@ export default function CreateSpaceScreen() {
           <Text style={styles.title}>Espace créé !</Text>
           <Text style={styles.subtitle}>Partage ce code à ton partenaire pour qu'il vous rejoigne.</Text>
 
-          <BlurView intensity={50} tint="light" style={styles.codeCard}>
+          <BlurView intensity={22} tint="light" style={styles.codeCard}>
             <Text style={styles.code}>{inviteCode}</Text>
           </BlurView>
 
@@ -138,6 +138,17 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.38)',
   },
   buttonSecondaryText: { color: 'rgba(255,255,255,0.85)', fontSize: 15, letterSpacing: 0.5 },
-  error: { color: '#e05555', marginBottom: 14, fontSize: 13, textAlign: 'center' },
+  error: {
+    backgroundColor: 'rgba(224,85,85,0.12)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(224,85,85,0.45)',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    color: '#f08080',
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 14,
+  },
   link: { marginTop: 8, textAlign: 'center', color: 'rgba(255,255,255,0.55)', fontSize: 13 },
 })

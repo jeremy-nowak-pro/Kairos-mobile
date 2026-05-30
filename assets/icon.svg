@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+
+    <!-- Fond : dégradé radial chaud centré légèrement en haut -->
+    <radialGradient id="bg" cx="50%" cy="44%" r="62%">
+      <stop offset="0%"   stop-color="#2E1060"/>
+      <stop offset="55%"  stop-color="#1a0e30"/>
+      <stop offset="100%" stop-color="#0c0820"/>
+    </radialGradient>
+
+    <!-- Halo ambiant violet au centre -->
+    <radialGradient id="halo" cx="50%" cy="50%" r="48%">
+      <stop offset="0%"   stop-color="#6B30CC" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#6B30CC" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Halo doux sur le cercle interne -->
+    <radialGradient id="innerHalo" cx="50%" cy="50%" r="20%">
+      <stop offset="0%"   stop-color="#BFA0FF" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#BFA0FF" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Glow léger pour les anneaux -->
+    <filter id="glowRing" x="-15%" y="-15%" width="130%" height="130%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Glow plus fort pour l'anneau intérieur et le point central -->
+    <filter id="glowStrong" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="14" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+  </defs>
+
+  <!-- Fond sombre -->
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- Halo ambiant -->
+  <rect width="1024" height="1024" fill="url(#halo)"/>
+
+  <!-- Halo centré doux -->
+  <rect width="1024" height="1024" fill="url(#innerHalo)"/>
+
+  <!-- ── Anneau extérieur — indigo discret ── -->
+  <circle cx="512" cy="512" r="392"
+    fill="none"
+    stroke="#5A2CC0"
+    stroke-width="3"
+    opacity="0.55"
+    filter="url(#glowRing)"/>
+
+  <!-- ── Anneau médian — violet plus vif ── -->
+  <circle cx="512" cy="512" r="278"
+    fill="none"
+    stroke="#8B50F0"
+    stroke-width="4.5"
+    opacity="0.78"
+    filter="url(#glowRing)"/>
+
+  <!-- ── Anneau intérieur — lumineux ── -->
+  <circle cx="512" cy="512" r="158"
+    fill="none"
+    stroke="#C49EFF"
+    stroke-width="5.5"
+    opacity="0.92"
+    filter="url(#glowStrong)"/>
+
+  <!-- ── Point central ── -->
+  <circle cx="512" cy="512" r="30"
+    fill="#DCC8FF"
+    opacity="0.90"
+    filter="url(#glowStrong)"/>
+
+</svg>
