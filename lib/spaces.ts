@@ -46,5 +46,20 @@ export async function getSpaceMembers(): Promise<SpaceMember[]> {
 
 export async function joinSpaceByCode(code: string): Promise<void> {
   const { error } = await supabase.rpc('join_space_by_code', { code: code.toUpperCase() })
-  if (error) throw new Error('Code invalide ou déjà utilisé')
+  if (error) throw new Error('Code d\'invitation invalide')
+}
+
+export async function getAllMySpaces(): Promise<Space[]> {
+  const { data } = await supabase
+    .from('space_members')
+    .select('spaces(*)')
+  return (data?.map((d: { spaces: unknown }) => d.spaces) ?? []) as Space[]
+}
+
+export async function leaveSpace(spaceId: string): Promise<void> {
+  const { error } = await supabase
+    .from('space_members')
+    .delete()
+    .eq('space_id', spaceId)
+  if (error) throw error
 }

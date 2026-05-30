@@ -46,7 +46,7 @@ export default function RegisterScreen() {
         <Text style={styles.pageTitle}>Kairos</Text>
         <Text style={styles.pageSubtitle}>Créer un compte</Text>
 
-        <BlurView intensity={50} tint="light" style={styles.card}>
+        <BlurView intensity={22} tint="light" style={styles.card}>
           <TextInput
             style={styles.input}
             placeholder="Pseudo"
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 15,
     color: '#ffffff',
-    backgroundColor: 'rgba(255,255,255,0.38)',
+    backgroundColor: 'rgba(8,16,48,0.35)',
   },
   divider: {
     height: StyleSheet.hairlineWidth,
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   passwordRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.38)',
+    backgroundColor: 'rgba(8,16,48,0.35)',
   },
   passwordInput: {
     flex: 1,
@@ -186,7 +186,18 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.50)',
   },
   buttonText: { color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: '500', letterSpacing: 0.5 },
-  error: { color: '#e05555', marginBottom: 10, fontSize: 13, textAlign: 'center' },
+  error: {
+    backgroundColor: 'rgba(224,85,85,0.12)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(224,85,85,0.45)',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    color: '#f08080',
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
   consent: {
     fontSize: 12,
     color: 'rgba(255,255,255,0.45)',

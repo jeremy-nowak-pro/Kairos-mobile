@@ -79,6 +79,7 @@ export default function ChatPanel() {
   const drawerAnim = useRef(new Animated.Value(0)).current
   const gestureX = useRef(new Animated.Value(0)).current
   const channelRef = useRef<RealtimeChannel | null>(null)
+  const inputRef = useRef<TextInput>(null)
   const openRef = useRef(false)
   const drawerWidth = width * 0.88
 
@@ -93,7 +94,7 @@ export default function ChatPanel() {
     if (!space || !user) return
     const channel = subscribeToMessages(space.id, msg => {
       if (openRef.current) {
-        setMessages(prev => [msg, ...prev])
+        setMessages(prev => prev.some(m => m.id === msg.id) ? prev : [msg, ...prev])
       } else if (msg.user_id !== user.id) {
         setUnread(n => n + 1)
       }
@@ -114,6 +115,7 @@ export default function ChatPanel() {
       setUnread(0)
     } finally {
       setLoading(false)
+      setTimeout(() => inputRef.current?.focus(), 100)
     }
   }
 
@@ -256,6 +258,7 @@ export default function ChatPanel() {
 
             <View style={styles.inputBar}>
               <TextInput
+                ref={inputRef}
                 style={styles.chatInput}
                 placeholder="Envoyer un message..."
                 placeholderTextColor="rgba(255,255,255,0.50)"
@@ -329,19 +332,15 @@ const styles = StyleSheet.create({
   drawer: {
     position: 'absolute',
     top: 0, right: 0, bottom: 0,
-    backgroundColor: '#1a0e30',
     borderTopLeftRadius: 14,
     borderBottomLeftRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
     borderRightWidth: 0,
-    borderColor: 'rgba(255,255,255,0.40)',
-    shadowColor: '#000',
-    shadowOffset: { width: -8, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
+    borderColor: 'rgba(140,170,255,0.20)',
     elevation: 20,
     zIndex: 200,
     overflow: 'hidden',
+    backgroundColor: 'rgba(8,16,48,0.92)',
   },
 
   drawerHeader: {
@@ -352,7 +351,7 @@ const styles = StyleSheet.create({
     paddingTop: 56,
     paddingBottom: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(255,255,255,0.30)',
+    borderBottomColor: 'rgba(255,255,255,0.28)',
   },
   drawerTitle: { fontSize: 17, fontWeight: '700', color: '#ffffff' },
 
@@ -362,29 +361,29 @@ const styles = StyleSheet.create({
   rowOther: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
 
   bubbleOwn: {
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    backgroundColor: 'rgba(37,99,235,0.80)',
     borderRadius: 18,
     borderBottomRightRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 10,
     maxWidth: '80%',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.50)',
+    borderColor: 'rgba(120,160,255,0.35)',
   },
   bubbleOther: {
-    backgroundColor: 'rgba(255,255,255,0.58)',
+    backgroundColor: 'rgba(255,255,255,0.10)',
     borderRadius: 18,
     borderBottomLeftRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 10,
     maxWidth: '80%',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.38)',
+    borderColor: 'rgba(255,255,255,0.15)',
   },
-  bubbleTextOwn: { fontSize: 15, color: 'rgba(255,255,255,0.85)', lineHeight: 21 },
-  bubbleTextOther: { fontSize: 15, color: '#ffffff', lineHeight: 21 },
-  senderName: { fontSize: 11, color: 'rgba(255,255,255,0.70)', fontWeight: '600', marginBottom: 3, marginLeft: 2 },
-  time: { fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 2 },
+  bubbleTextOwn: { fontSize: 15, color: '#ffffff', lineHeight: 21 },
+  bubbleTextOther: { fontSize: 15, color: 'rgba(220,232,255,0.95)', lineHeight: 21 },
+  senderName: { fontSize: 11, color: 'rgba(180,200,255,0.60)', fontWeight: '600', marginBottom: 3, marginLeft: 2 },
+  time: { fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2 },
 
   emptyChat: { flex: 1, alignItems: 'center', paddingTop: 60 },
   emptyChatText: { fontSize: 14, color: 'rgba(255,255,255,0.50)' },
@@ -397,28 +396,28 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.30)',
-    backgroundColor: '#1a0e30',
+    borderTopColor: 'rgba(255,255,255,0.28)',
+    backgroundColor: 'rgba(8,16,48,0.60)',
   },
   chatInput: {
     flex: 1,
     minHeight: 40,
     maxHeight: 100,
-    backgroundColor: 'rgba(255,255,255,0.38)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
     color: '#ffffff',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.40)',
+    borderColor: 'rgba(140,170,255,0.20)',
   },
   sendBtn: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    backgroundColor: 'rgba(37,99,235,0.80)',
     justifyContent: 'center', alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.55)',
+    borderColor: 'rgba(120,160,255,0.35)',
   },
   sendBtnDisabled: { opacity: 0.35 },
 

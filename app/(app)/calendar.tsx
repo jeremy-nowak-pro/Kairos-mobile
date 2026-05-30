@@ -339,37 +339,22 @@ export default function CalendarScreen() {
         </Text>
       </View>
 
+      <LinearGradient
+        colors={['rgba(255,255,255,0.52)', 'rgba(255,255,255,0.07)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.calBorder}
+      >
       <View style={styles.calCard}>
-        {/* Tinte très légère — quasi transparent */}
-        <View style={[StyleSheet.absoluteFill, styles.glassTint]} />
-
-        {/* Reflet spéculaire haut — lumière vive sur la tranche */}
+        <BlurView intensity={10} tint="light" style={StyleSheet.absoluteFill} />
         <LinearGradient
-          colors={['rgba(255,255,255,0.75)', 'rgba(255,255,255,0)']}
+          colors={['rgba(255,255,255,0.18)', 'rgba(255,255,255,0)']}
           style={styles.glassSpecular}
           pointerEvents="none"
         />
-
-        {/* Reflet bas — rebond de lumière */}
         <LinearGradient
-          colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.18)']}
+          colors={['rgba(0,0,30,0)', 'rgba(0,0,20,0.12)']}
           style={styles.glassDepth}
-          pointerEvents="none"
-        />
-
-        {/* Bord iridescent gauche — violet */}
-        <LinearGradient
-          colors={['rgba(180,130,255,0.40)', 'rgba(180,130,255,0)']}
-          start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }}
-          style={styles.glassIriLeft}
-          pointerEvents="none"
-        />
-
-        {/* Bord iridescent droit — cyan */}
-        <LinearGradient
-          colors={['rgba(80,210,255,0.35)', 'rgba(80,210,255,0)']}
-          start={{ x: 1, y: 0.5 }} end={{ x: 0, y: 0.5 }}
-          style={styles.glassIriRight}
           pointerEvents="none"
         />
         <View style={styles.monthNav}>
@@ -412,6 +397,7 @@ export default function CalendarScreen() {
           </View>
         </ScrollView>
       </View>
+      </LinearGradient>
 
       </View>
       </PanGestureHandler>
@@ -446,45 +432,21 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 28, fontWeight: '700', color: '#ffffff' },
   eventCount: { fontSize: 14, color: 'rgba(255,255,255,0.75)' },
-  calCard: {
+  calBorder: {
     flex: 1,
     marginHorizontal: 12,
     marginTop: 12,
     marginBottom: 12,
+    borderRadius: 21,
+    padding: 1,
+  },
+  calCard: {
+    flex: 1,
     borderRadius: 20,
     overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.65)',
-    backgroundColor: 'rgba(255,255,255,0.06)',
   },
-  glassTint: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-  },
-  glassSpecular: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0,
-    height: 100,
-    zIndex: 10,
-  },
-  glassIriLeft: {
-    position: 'absolute',
-    top: 0, bottom: 0, left: 0,
-    width: 48,
-    zIndex: 10,
-  },
-  glassIriRight: {
-    position: 'absolute',
-    top: 0, bottom: 0, right: 0,
-    width: 48,
-    zIndex: 10,
-  },
-  glassDepth: {
-    position: 'absolute',
-    bottom: 0, left: 0, right: 0,
-    height: 60,
-    zIndex: 10,
-  },
+  glassSpecular: { position: 'absolute', top: 0, left: 0, right: 0, height: 80 },
+  glassDepth:    { position: 'absolute', bottom: 0, left: 0, right: 0, height: 50 },
   monthNav: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 8, paddingVertical: 12,
@@ -551,8 +513,8 @@ const styles = StyleSheet.create({
   },
   popupThumb: { width: 72, height: 72, borderRadius: 8 },
   popupDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.28)',
     marginBottom: 10,
   },
   popupRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },

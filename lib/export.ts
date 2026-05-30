@@ -1,6 +1,9 @@
 import { File, Paths } from 'expo-file-system'
-import * as Sharing from 'expo-sharing'
 import { supabase } from './supabase'
+
+// expo-sharing nécessite un native build — import gardé pour éviter le crash sur Expo Go
+let Sharing: typeof import('expo-sharing') | null = null
+try { Sharing = require('expo-sharing') } catch {}
 
 export async function exportMyData(userId: string, spaceId: string): Promise<void> {
   const [profile, events, messages, shoppingItems] = await Promise.all([
@@ -50,6 +53,8 @@ export async function exportMyData(userId: string, spaceId: string): Promise<voi
   const date = new Date().toISOString().split('T')[0]
   const file = new File(Paths.cache, `kairos-export-${date}.json`)
   await file.write(JSON.stringify(payload, null, 2))
+
+  if (!Sharing) throw new Error('Un build natif est requis pour l\'export. Lance un dev build EAS.')
 
   const canShare = await Sharing.isAvailableAsync()
   if (!canShare) throw new Error('Le partage de fichiers n\'est pas disponible sur cet appareil.')

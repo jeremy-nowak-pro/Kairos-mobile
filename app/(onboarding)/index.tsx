@@ -1,10 +1,17 @@
+import { useEffect } from 'react'
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { BlurView } from 'expo-blur'
 import MeshBackground from '@/components/MeshBackground'
+import { useSpace } from '@/context/space'
 
 export default function OnboardingScreen() {
   const router = useRouter()
+  const { space } = useSpace()
+
+  useEffect(() => {
+    if (space) router.replace('/(app)/events')
+  }, [space])
 
   return (
     <View style={styles.root}>
@@ -15,7 +22,7 @@ export default function OnboardingScreen() {
 
         <Text style={styles.intro}>Créez votre espace ou rejoignez celui de votre partenaire.</Text>
 
-        <BlurView intensity={50} tint="light" style={styles.card}>
+        <BlurView intensity={22} tint="light" style={styles.card}>
           <Pressable style={styles.row} onPress={() => router.push('/(onboarding)/create')}>
             <Text style={styles.rowText}>Créer notre espace</Text>
           </Pressable>
@@ -67,7 +74,7 @@ const styles = StyleSheet.create({
   },
   row: {
     padding: 18,
-    backgroundColor: 'rgba(255,255,255,0.38)',
+    backgroundColor: 'rgba(8,16,48,0.35)',
     alignItems: 'center',
   },
   divider: {

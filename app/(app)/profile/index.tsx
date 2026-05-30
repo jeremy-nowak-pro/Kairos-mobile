@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  View, Text, Pressable, StyleSheet, ScrollView, Modal, Share, ActivityIndicator, Animated,
+  View, Text, Pressable, StyleSheet, ScrollView, Modal, Share, ActivityIndicator, Animated, Alert,
 } from 'react-native'
 import { PanGestureHandler, State } from 'react-native-gesture-handler'
 import { Image } from 'expo-image'
@@ -15,6 +15,9 @@ import { userColor } from '@/lib/userColor'
 import { supabase } from '@/lib/supabase'
 import { exportMyData } from '@/lib/export'
 import * as WebBrowser from 'expo-web-browser'
+
+let Clipboard: typeof import('expo-clipboard') | null = null
+try { Clipboard = require('expo-clipboard') } catch {}
 
 const THUMB_SIZE = 48
 
@@ -98,6 +101,9 @@ export default function ProfileScreen() {
   const [loadingMembers, setLoadingMembers] = useState(true)
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [showCopied, setShowCopied] = useState(false)
+  const toastOpacity = useRef(new Animated.Value(0)).current
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!space || !user) return
@@ -169,6 +175,20 @@ export default function ProfileScreen() {
     )
   }
 
+  const handleCopyCode = async () => {
+    if (!space?.invite_code) return
+    if (!Clipboard) return
+    await Clipboard.setStringAsync(space.invite_code)
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    setShowCopied(true)
+    toastOpacity.setValue(0)
+    Animated.sequence([
+      Animated.timing(toastOpacity, { toValue: 1, duration: 180, useNativeDriver: true }),
+      Animated.delay(1400),
+      Animated.timing(toastOpacity, { toValue: 0, duration: 280, useNativeDriver: true }),
+    ]).start(() => setShowCopied(false))
+  }
+
   const handleShareCode = () => {
     if (!space) return
     Share.share({
@@ -185,6 +205,7 @@ export default function ProfileScreen() {
   const name = displayName ?? user?.email ?? '?'
 
   return (
+    <View style={{ flex: 1 }}>
     <ScrollView style={s.container} contentContainerStyle={{ paddingBottom: 48 }}>
 
       <View style={s.header}>
@@ -225,13 +246,16 @@ export default function ProfileScreen() {
         <View style={s.divider} />
 
         <Text style={s.sectionLabel}>Code d'invitation</Text>
-        <Pressable style={s.inviteRow} onPress={handleShareCode}>
-          <Text style={s.inviteCode}>{space?.invite_code ?? '—'}</Text>
-          <View style={s.inviteShareBtn}>
+        <View style={s.inviteRow}>
+          <Pressable style={s.inviteCodeBtn} onPress={handleCopyCode}>
+            <Text style={s.inviteCode}>{space?.invite_code ?? '—'}</Text>
+            <Ionicons name="copy-outline" size={14} color="rgba(255,255,255,0.35)" />
+          </Pressable>
+          <Pressable style={s.inviteShareBtn} onPress={handleShareCode}>
             <Ionicons name="share-outline" size={15} color="rgba(255,255,255,0.85)" />
             <Text style={s.inviteShareText}>Partager</Text>
-          </View>
-        </Pressable>
+          </Pressable>
+        </View>
       </GlassCard>
 
       <GlassCard style={s.card} contentStyle={s.cardContent}>
@@ -266,40 +290,49 @@ export default function ProfileScreen() {
         )}
       </GlassCard>
 
-      <View style={s.slideContainer}>
+      <GlassCard style={[s.card, { marginTop: 8 }]} contentStyle={s.cardContent}>
+        <Text style={s.cardLabel}>COMPTE</Text>
+
         <SlideToSignOut onConfirm={signOut} />
-      </View>
 
-      <Pressable
-        style={s.exportBtn}
-        onPress={handleExport}
-        disabled={exporting}
-      >
-        {exporting
-          ? <ActivityIndicator size="small" color="rgba(255,255,255,0.55)" />
-          : (
-            <>
-              <Ionicons name="download-outline" size={15} color="rgba(255,255,255,0.55)" />
-              <Text style={s.exportBtnText}>Exporter mes données</Text>
-            </>
-          )
-        }
-      </Pressable>
+        <View style={s.divider} />
 
-      <Pressable
-        style={s.deleteAccountBtn}
-        onPress={handleDeleteAccount}
-        disabled={deletingAccount}
-      >
-        {deletingAccount
-          ? <ActivityIndicator size="small" color="rgba(224,85,85,0.7)" />
-          : <Text style={s.deleteAccountText}>Supprimer mon compte</Text>
-        }
-      </Pressable>
+        <Pressable style={s.actionRow} onPress={handleExport} disabled={exporting}>
+          <Ionicons name="download-outline" size={18} color="rgba(255,255,255,0.70)" />
+          <Text style={s.actionRowText}>Exporter mes données</Text>
+          {exporting
+            ? <ActivityIndicator size="small" color="rgba(255,255,255,0.40)" />
+            : <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.25)" />}
+        </Pressable>
 
-      <Pressable style={s.privacyLink} onPress={() => WebBrowser.openBrowserAsync('https://moncerveau.vercel.app/privacy')}>
-        <Text style={s.privacyLinkText}>Politique de confidentialité</Text>
-      </Pressable>
+        <View style={s.divider} />
+
+        <Pressable
+          style={s.actionRow}
+          onPress={() => WebBrowser.openBrowserAsync('https://moncerveau.vercel.app/privacy')}
+        >
+          <Ionicons name="shield-checkmark-outline" size={18} color="rgba(255,255,255,0.70)" />
+          <Text style={s.actionRowText}>Politique de confidentialité</Text>
+          <Ionicons name="open-outline" size={14} color="rgba(255,255,255,0.25)" />
+        </Pressable>
+
+        <View style={s.divider} />
+
+        <Pressable
+          style={[s.actionRow, deletingAccount && { opacity: 0.5 }]}
+          onPress={handleDeleteAccount}
+          disabled={deletingAccount}
+        >
+          {deletingAccount
+            ? <ActivityIndicator size="small" color="#f08080" />
+            : (
+              <>
+                <Ionicons name="trash-outline" size={17} color="#f08080" />
+                <Text style={s.deleteRowText}>Supprimer mon compte</Text>
+              </>
+            )}
+        </Pressable>
+      </GlassCard>
 
       {viewerUri && (
         <Modal visible transparent animationType="fade" onRequestClose={() => setViewerUri(null)}>
@@ -312,6 +345,13 @@ export default function ProfileScreen() {
         </Modal>
       )}
     </ScrollView>
+
+    {showCopied && (
+      <Animated.View style={[s.toast, { opacity: toastOpacity }]}>
+        <Text style={s.toastText}>Code copié</Text>
+      </Animated.View>
+    )}
+    </View>
   )
 }
 
@@ -384,17 +424,36 @@ const s = StyleSheet.create({
   inviteRow: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
+  inviteCodeBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+  },
   inviteCode: {
-    fontSize: 22, fontWeight: '300', letterSpacing: 4,
-    color: '#ffffff',
+    fontSize: 22, fontWeight: '300', letterSpacing: 4, color: '#ffffff',
   },
   inviteShareBtn: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   inviteShareText: { fontSize: 14, color: 'rgba(255,255,255,0.85)' },
+  toast: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(8,16,48,0.92)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(140,170,255,0.30)',
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+  },
+  toastText: {
+    color: 'rgba(255,255,255,0.90)',
+    fontSize: 13,
+    fontWeight: '500',
+    letterSpacing: 0.3,
+  },
 
   scheduleImage: { width: '100%', height: 180, borderRadius: 8, marginBottom: 8 },
   scheduleDoc: {
     height: 80,
-    backgroundColor: 'rgba(255,255,255,0.38)',
+    backgroundColor: 'rgba(8,16,48,0.35)',
     borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
@@ -414,9 +473,6 @@ const s = StyleSheet.create({
   scheduleEmptyText: { fontSize: 14, color: 'rgba(255,255,255,0.55)' },
 
 
-  slideContainer: {
-    marginHorizontal: 16, marginTop: 8,
-  },
   slideZone: {
     height: 90,
     justifyContent: 'center',
@@ -446,41 +502,21 @@ const s = StyleSheet.create({
   viewerImage: { width: '100%', height: '85%' },
   viewerClose: { position: 'absolute', top: 56, right: 20, backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 20 },
 
-  exportBtn: {
+  actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 14,
-    marginHorizontal: 16,
-    marginTop: 8,
-    borderRadius: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.12)',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    gap: 12,
+    paddingVertical: 4,
   },
-  exportBtnText: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.55)',
+  actionRowText: {
+    flex: 1,
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.85)',
   },
-  deleteAccountBtn: {
-    alignItems: 'center',
-    paddingVertical: 16,
-    marginHorizontal: 16,
-    marginTop: 4,
-  },
-  deleteAccountText: {
-    fontSize: 13,
-    color: 'rgba(224,85,85,0.7)',
-  },
-  privacyLink: {
-    alignItems: 'center',
-    paddingVertical: 12,
-    marginHorizontal: 16,
-  },
-  privacyLinkText: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.30)',
-    textDecorationLine: 'underline',
+  deleteRowText: {
+    flex: 1,
+    fontSize: 15,
+    color: '#f08080',
+    fontWeight: '500',
   },
 })
