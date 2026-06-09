@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import {
   View, Text, Pressable, StyleSheet, ScrollView, Modal, Share, ActivityIndicator, Animated, Alert,
 } from 'react-native'
 import { PanGestureHandler, State } from 'react-native-gesture-handler'
 import { Image } from 'expo-image'
-import { router } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
-import { SpaceMember, getSpaceMembers } from '@/lib/spaces'
+import { SpaceMember, getSpaceMembers, leaveSpace } from '@/lib/spaces'
+import { sendTestNotification } from '@/lib/notifications'
 import { MemberSchedule, getSpaceSchedules, getScheduleSignedUrl } from '@/lib/schedules'
 import GlassCard from '@/components/GlassCard'
 import { userColor } from '@/lib/userColor'
@@ -74,9 +75,10 @@ function SlideToSignOut({ onConfirm }: { onConfirm: () => void }) {
 }
 
 function initials(name: string): string {
-  const parts = name.trim().split(/\s+/)
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
-  return name.slice(0, 2).toUpperCase()
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  return parts.length >= 2
+    ? (parts[0][0] + parts[1][0]).toUpperCase()
+    : parts[0][0].toUpperCase()
 }
 
 function Avatar({ name, size = 48 }: { name: string; size?: number }) {
@@ -92,7 +94,7 @@ function Avatar({ name, size = 48 }: { name: string; size?: number }) {
 
 export default function ProfileScreen() {
   const { user, displayName, signOut } = useAuth()
-  const { space } = useSpace()
+  const { space, refresh } = useSpace()
 
   const [members, setMembers] = useState<SpaceMember[]>([])
   const [schedule, setSchedule] = useState<MemberSchedule | null>(null)
@@ -101,11 +103,12 @@ export default function ProfileScreen() {
   const [loadingMembers, setLoadingMembers] = useState(true)
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [testingNotif, setTestingNotif] = useState(false)
   const [showCopied, setShowCopied] = useState(false)
   const toastOpacity = useRef(new Animated.Value(0)).current
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     if (!space || !user) return
 
     getSpaceMembers()
@@ -120,10 +123,24 @@ export default function ProfileScreen() {
         if (mine?.mime_type?.startsWith('image/')) {
           const url = await getScheduleSignedUrl(mine.storage_path).catch(() => null)
           setPreviewUri(url)
+        } else {
+          setPreviewUri(null)
         }
       })
       .catch(() => {})
-  }, [space?.id, user?.id])
+  }, [space?.id, user?.id]))
+
+  const handleTestNotif = async () => {
+    if (!user || !space) return
+    setTestingNotif(true)
+    try {
+      await sendTestNotification(space.id, user.id, name)
+    } catch (e: unknown) {
+      Alert.alert('Erreur', e instanceof Error ? e.message : 'Impossible d\'envoyer la notification.')
+    } finally {
+      setTestingNotif(false)
+    }
+  }
 
   const handleExport = async () => {
     if (!user || !space) return
@@ -172,6 +189,30 @@ export default function ProfileScreen() {
             ),
         },
       ],
+    )
+  }
+
+  const handleLeaveSpace = () => {
+    if (!space) return
+    Alert.alert(
+      'Quitter l\'espace',
+      `Tu vas quitter "${space.name}". Tu pourras rejoindre un autre espace avec un code d'invitation.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Quitter',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await leaveSpace(space.id)
+              await refresh()
+              router.replace('/(onboarding)')
+            } catch {
+              Alert.alert('Erreur', 'Impossible de quitter l\'espace.')
+            }
+          },
+        },
+      ]
     )
   }
 
@@ -248,7 +289,7 @@ export default function ProfileScreen() {
         <Text style={s.sectionLabel}>Code d'invitation</Text>
         <View style={s.inviteRow}>
           <Pressable style={s.inviteCodeBtn} onPress={handleCopyCode}>
-            <Text style={s.inviteCode}>{space?.invite_code ?? '—'}</Text>
+            <Text style={s.inviteCode}>{space?.invite_code?.toUpperCase() ?? '—'}</Text>
             <Ionicons name="copy-outline" size={14} color="rgba(255,255,255,0.35)" />
           </Pressable>
           <Pressable style={s.inviteShareBtn} onPress={handleShareCode}>
@@ -256,18 +297,39 @@ export default function ProfileScreen() {
             <Text style={s.inviteShareText}>Partager</Text>
           </Pressable>
         </View>
+
+        <View style={s.divider} />
+
+        <Pressable style={s.actionRow} onPress={() => router.push('/(onboarding)/join')}>
+          <Ionicons name="enter-outline" size={18} color="rgba(255,255,255,0.70)" />
+          <Text style={s.actionRowText}>Rejoindre un autre espace</Text>
+          <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.25)" />
+        </Pressable>
+
+        <View style={s.divider} />
+
+        <Pressable style={s.actionRow} onPress={handleLeaveSpace}>
+          <Ionicons name="exit-outline" size={18} color="#ff5555" />
+          <Text style={[s.actionRowText, { color: '#ff5555' }]}>Quitter l'espace</Text>
+        </Pressable>
       </GlassCard>
 
       <GlassCard style={s.card} contentStyle={s.cardContent}>
         <Text style={s.cardLabel}>MON EMPLOI DU TEMPS</Text>
         {schedule ? (
           <Pressable
-            onPress={() => previewUri
-              ? setViewerUri(previewUri)
-              : getScheduleSignedUrl(schedule.storage_path)
-                  .then(url => require('expo-web-browser').openBrowserAsync(url))
-                  .catch(() => {})
-            }
+            onPress={async () => {
+              if (previewUri) {
+                setViewerUri(previewUri)
+              } else {
+                try {
+                  const url = await getScheduleSignedUrl(schedule.storage_path)
+                  await WebBrowser.openBrowserAsync(url)
+                } catch {
+                  Alert.alert('Erreur', "Impossible d'ouvrir le fichier")
+                }
+              }
+            }}
           >
             {previewUri ? (
               <Image source={{ uri: previewUri }} style={s.scheduleImage} contentFit="cover" />
@@ -294,6 +356,16 @@ export default function ProfileScreen() {
         <Text style={s.cardLabel}>COMPTE</Text>
 
         <SlideToSignOut onConfirm={signOut} />
+
+        <View style={s.divider} />
+
+        <Pressable style={s.actionRow} onPress={handleTestNotif} disabled={testingNotif}>
+          <Ionicons name="notifications-outline" size={18} color="rgba(255,255,255,0.70)" />
+          <Text style={s.actionRowText}>Tester les notifications</Text>
+          {testingNotif
+            ? <ActivityIndicator size="small" color="rgba(255,255,255,0.40)" />
+            : <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.25)" />}
+        </Pressable>
 
         <View style={s.divider} />
 
@@ -324,10 +396,10 @@ export default function ProfileScreen() {
           disabled={deletingAccount}
         >
           {deletingAccount
-            ? <ActivityIndicator size="small" color="#f08080" />
+            ? <ActivityIndicator size="small" color="#ff5555" />
             : (
               <>
-                <Ionicons name="trash-outline" size={17} color="#f08080" />
+                <Ionicons name="trash-outline" size={17} color="#ff5555" />
                 <Text style={s.deleteRowText}>Supprimer mon compte</Text>
               </>
             )}
@@ -516,7 +588,7 @@ const s = StyleSheet.create({
   deleteRowText: {
     flex: 1,
     fontSize: 15,
-    color: '#f08080',
+    color: '#ff5555',
     fontWeight: '500',
   },
 })

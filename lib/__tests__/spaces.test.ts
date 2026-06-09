@@ -71,17 +71,17 @@ describe('createSpace', () => {
 // ─── joinSpaceByCode ─────────────────────────────────────────────────────────
 
 describe('joinSpaceByCode', () => {
-  it('rejoint un space avec le code en majuscules', async () => {
+  it('rejoint un space avec le code en minuscules', async () => {
     mockRpc.mockResolvedValueOnce({ error: null })
 
-    await joinSpaceByCode('abcd1234')
+    await joinSpaceByCode('ABCD1234')
 
-    expect(mockRpc).toHaveBeenCalledWith('join_space_by_code', { code: 'ABCD1234' })
+    expect(mockRpc).toHaveBeenCalledWith('join_space_by_code', { code: 'abcd1234' })
   })
 
   it('lève une erreur si le code est invalide', async () => {
-    mockRpc.mockResolvedValueOnce({ error: new Error('not found') })
+    mockRpc.mockResolvedValueOnce({ error: { message: "Code d'invitation invalide" } })
 
-    await expect(joinSpaceByCode('INVALID1')).rejects.toThrow('Code invalide ou déjà utilisé')
+    await expect(joinSpaceByCode('INVALID1')).rejects.toThrow("Code d'invitation invalide")
   })
 })

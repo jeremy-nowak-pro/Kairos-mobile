@@ -4,10 +4,12 @@ import { useRouter } from 'expo-router'
 import { BlurView } from 'expo-blur'
 import MeshBackground from '@/components/MeshBackground'
 import { useSpace } from '@/context/space'
+import { useAuth } from '@/context/auth'
 
 export default function OnboardingScreen() {
   const router = useRouter()
   const { space } = useSpace()
+  const { signOut } = useAuth()
 
   useEffect(() => {
     if (space) router.replace('/(app)/events')
@@ -31,6 +33,10 @@ export default function OnboardingScreen() {
             <Text style={styles.rowText}>Rejoindre avec un code</Text>
           </Pressable>
         </BlurView>
+
+        <Pressable onPress={signOut} style={styles.signOutBtn}>
+          <Text style={styles.signOutText}>Se déconnecter</Text>
+        </Pressable>
       </View>
     </View>
   )
@@ -87,4 +93,6 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     letterSpacing: 0.3,
   },
+  signOutBtn: { marginTop: 28, alignItems: 'center' },
+  signOutText: { fontSize: 13, color: 'rgba(255,255,255,0.40)' },
 })

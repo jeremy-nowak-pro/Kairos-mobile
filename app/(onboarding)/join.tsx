@@ -5,6 +5,7 @@ import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
 import { joinSpaceByCode, leaveSpace, getAllMySpaces, getMySpace } from '@/lib/spaces'
 import { exportEventsToSpace } from '@/lib/events'
+import { exportListsToSpace } from '@/lib/shopping'
 import { BlurView } from 'expo-blur'
 import MeshBackground from '@/components/MeshBackground'
 
@@ -24,6 +25,7 @@ export default function JoinSpaceScreen() {
   const [currentSpace, setCurrentSpace] = useState<{ id: string; name: string } | null>(null)
   const [exportEnabled, setExportEnabled] = useState(true)
   const [exportScope, setExportScope] = useState<ExportScope>('all')
+  const [exportLists, setExportLists] = useState(true)
   const [confirming, setConfirming] = useState(false)
   const [modalError, setModalError] = useState<string | null>(null)
 
@@ -74,7 +76,12 @@ export default function JoinSpaceScreen() {
         )
       }
 
-      // 4. Quitter l'ancien espace
+      // 4. Exporter les listes de courses si demandé
+      if (exportLists && newSpace) {
+        await exportListsToSpace(currentSpace.id, newSpace.id, user.id)
+      }
+
+      // 5. Quitter l'ancien espace
       await leaveSpace(currentSpace.id)
 
       await refresh()
@@ -129,7 +136,8 @@ export default function JoinSpaceScreen() {
 
       <Modal visible={showModal} transparent animationType="fade">
         <View style={s.overlay}>
-          <BlurView intensity={22} tint="dark" style={s.modal}>
+          <BlurView intensity={55} tint="dark" style={s.overlayBlur} />
+          <View style={s.modal}>
 
             <Text style={s.modalTitle}>Tu es déjà dans un espace</Text>
             <Text style={s.modalSubtitle}>
@@ -139,7 +147,6 @@ export default function JoinSpaceScreen() {
 
             <View style={s.sep} />
 
-            {/* Toggle export */}
             <Pressable style={s.toggleRow} onPress={() => setExportEnabled(v => !v)}>
               <View style={s.toggleInfo}>
                 <Text style={s.toggleLabel}>Importer les événements à venir</Text>
@@ -150,7 +157,6 @@ export default function JoinSpaceScreen() {
               </View>
             </Pressable>
 
-            {/* Choix du périmètre */}
             {exportEnabled && (
               <View style={s.scopeBox}>
                 <Pressable
@@ -173,6 +179,18 @@ export default function JoinSpaceScreen() {
                 </Pressable>
               </View>
             )}
+
+            <View style={s.innerSep} />
+
+            <Pressable style={s.toggleRow} onPress={() => setExportLists(v => !v)}>
+              <View style={s.toggleInfo}>
+                <Text style={s.toggleLabel}>Importer les listes de courses</Text>
+                <Text style={s.toggleHint}>Les photos des articles ne seront pas transférées</Text>
+              </View>
+              <View style={[s.toggle, exportLists && s.toggleOn]}>
+                <View style={[s.toggleKnob, exportLists && s.toggleKnobOn]} />
+              </View>
+            </Pressable>
 
             <View style={s.sep} />
 
@@ -197,7 +215,7 @@ export default function JoinSpaceScreen() {
               </Pressable>
             </View>
 
-          </BlurView>
+          </View>
         </View>
       </Modal>
     </View>
@@ -252,12 +270,16 @@ const s = StyleSheet.create({
 
   // Modal
   overlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.65)',
+    flex: 1, backgroundColor: 'rgba(12,6,28,0.82)',
     justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20,
   },
+  overlayBlur: {
+    ...StyleSheet.absoluteFillObject,
+  },
   modal: {
-    width: '100%', borderRadius: 18, overflow: 'hidden',
+    width: '100%', borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(140,170,255,0.20)',
+    backgroundColor: 'rgba(8,16,48,0.92)',
     padding: 24,
   },
   modalTitle: {
@@ -270,6 +292,11 @@ const s = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     backgroundColor: 'rgba(255,255,255,0.28)',
     marginVertical: 20,
+  },
+  innerSep: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    marginVertical: 16,
   },
 
   // Toggle

@@ -11,10 +11,12 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
 import { createEvent } from '@/lib/events'
+import { sendEventNotification } from '@/lib/notifications'
 import { getSpaceMembers, SpaceMember } from '@/lib/spaces'
 import { uploadAttachment, LocalFile } from '@/lib/attachments'
 import { MemberSchedule, getSpaceSchedules, getScheduleSignedUrl } from '@/lib/schedules'
 import { upsertLocation } from '@/lib/locations'
+import { userColor } from '@/lib/userColor'
 import CalendarPicker from '@/components/CalendarPicker'
 import TimePicker from '@/components/TimePicker'
 import AttachmentSection from '@/components/AttachmentSection'
@@ -35,7 +37,7 @@ function formatDisplayDate(isoDate: string): string {
 }
 
 export default function NewEventScreen() {
-  const { displayName } = useAuth()
+  const { user, displayName } = useAuth()
   const { space } = useSpace()
   const { date: dateParam } = useLocalSearchParams<{ date?: string }>()
   const [title, setTitle] = useState('')
@@ -116,6 +118,7 @@ export default function NewEventScreen() {
       await Promise.all([
         ...pendingFiles.map(f => uploadAttachment(f, event.id, space.id, createdBy)),
         trimmedLocation ? upsertLocation(trimmedLocation) : Promise.resolve(),
+        sendEventNotification(space.id, user!.id, createdBy, title.trim(), 'created').catch(() => {}),
       ])
       router.back()
     } catch {
@@ -184,13 +187,14 @@ export default function NewEventScreen() {
             ) : (
               members.map(m => {
                 const active = selectedMembers.includes(m.display_name)
+                const c = userColor(m.display_name)
                 return (
                   <Pressable
                     key={m.user_id}
-                    style={[styles.memberBtn, active && styles.memberBtnActive]}
+                    style={[styles.memberBtn, active && { backgroundColor: c.bg, borderColor: c.text }]}
                     onPress={() => toggleMember(m.display_name)}
                   >
-                    <Text style={[styles.memberBtnText, active && styles.memberBtnTextActive]}>
+                    <Text style={[styles.memberBtnText, active && { color: c.text, fontWeight: '600' }]}>
                       {m.display_name}
                     </Text>
                   </Pressable>
