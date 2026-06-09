@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "317605260936",
+    "project_id": "kairos-e9288",
+    "storage_bucket": "kairos-e9288.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:317605260936:android:cce82934a3216a6b15793d",
+        "android_client_info": {
+          "package_name": "com.jeremypro.kairosmobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFz5f-wp78gw_Q-zV9SPXSmF5HsHVRG7c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
