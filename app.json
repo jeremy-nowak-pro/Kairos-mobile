@@ -27,7 +27,8 @@
       },
       "package": "com.jeremypro.kairosmobile",
       "versionCode": 1,
-      "softwareKeyboardLayoutMode": "resize"
+      "softwareKeyboardLayoutMode": "resize",
+      "googleServicesFile": "./google-services.json"
     },
     "androidNavigationBar": {
       "barStyle": "dark-content",
