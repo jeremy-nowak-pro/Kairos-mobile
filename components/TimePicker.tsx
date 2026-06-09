@@ -28,7 +28,7 @@ function Column({
   // Vrai pendant tout le geste + momentum — empêche l'effet de re-scroller
   const isScrollingRef = useRef(false)
   const hasMomentumRef = useRef(false)
-  const dragTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const dragTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   // S'exécute quand visible devient true (ouverture) ET quand selected change
   // (le parent met à jour ses valeurs via son propre useEffect, qui tourne après).
