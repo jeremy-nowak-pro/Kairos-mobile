@@ -11,9 +11,11 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
 import { getEvent, updateEvent } from '@/lib/events'
+import { sendEventNotification } from '@/lib/notifications'
 import { getSpaceMembers, SpaceMember } from '@/lib/spaces'
 import { upsertLocation } from '@/lib/locations'
 import { MemberSchedule, getSpaceSchedules, getScheduleSignedUrl } from '@/lib/schedules'
+import { userColor } from '@/lib/userColor'
 import CalendarPicker from '@/components/CalendarPicker'
 import TimePicker from '@/components/TimePicker'
 import AttachmentSection from '@/components/AttachmentSection'
@@ -35,7 +37,7 @@ function formatDisplayDate(isoDate: string): string {
 
 export default function EditEventScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
-  const { displayName } = useAuth()
+  const { user, displayName } = useAuth()
   const { space } = useSpace()
 
   const [loaded, setLoaded] = useState(false)
@@ -119,6 +121,7 @@ export default function EditEventScreen() {
         assigned_to: selectedMembers.join(','),
       })
       if (trimmedLocation) upsertLocation(trimmedLocation).catch(() => {})
+      sendEventNotification(space.id, user!.id, displayName ?? '', title.trim(), 'updated').catch(() => {})
       router.back()
     } catch {
       setError('Une erreur est survenue')
@@ -191,13 +194,14 @@ export default function EditEventScreen() {
             ) : (
               members.map(m => {
                 const active = selectedMembers.includes(m.display_name)
+                const c = userColor(m.display_name)
                 return (
                   <Pressable
                     key={m.user_id}
-                    style={[styles.memberBtn, active && styles.memberBtnActive]}
+                    style={[styles.memberBtn, active && { backgroundColor: c.bg, borderColor: c.text }]}
                     onPress={() => toggleMember(m.display_name)}
                   >
-                    <Text style={[styles.memberBtnText, active && styles.memberBtnTextActive]}>
+                    <Text style={[styles.memberBtnText, active && { color: c.text, fontWeight: '600' }]}>
                       {m.display_name}
                     </Text>
                   </Pressable>

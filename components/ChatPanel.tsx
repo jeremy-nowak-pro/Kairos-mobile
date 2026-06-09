@@ -9,7 +9,6 @@ import { Ionicons } from '@expo/vector-icons'
 import { BlurView } from 'expo-blur'
 import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
-import { userColor } from '@/lib/userColor'
 import {
   Message, getMessages, sendMessage, subscribeToMessages, markRead, getUnreadCount,
 } from '@/lib/chat'
@@ -17,23 +16,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 
 const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 83 : 56
 
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/)
-  return parts.length >= 2
-    ? (parts[0][0] + parts[1][0]).toUpperCase()
-    : name.slice(0, 2).toUpperCase()
-}
 
-function Avatar({ name, size = 32 }: { name: string; size?: number }) {
-  const color = userColor(name)
-  return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color.bg, justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ fontSize: size * 0.36, fontWeight: '700', color: color.text }}>
-        {initials(name)}
-      </Text>
-    </View>
-  )
-}
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
@@ -45,20 +28,19 @@ function MessageBubble({ message, isOwn }: { message: Message; isOwn: boolean })
       <View style={styles.rowOwn}>
         <View style={styles.bubbleOwn}>
           <Text style={styles.bubbleTextOwn}>{message.content}</Text>
+          <Text style={styles.timeOwn}>{formatTime(message.created_at)}</Text>
         </View>
-        <Text style={styles.time}>{formatTime(message.created_at)}</Text>
       </View>
     )
   }
   return (
     <View style={styles.rowOther}>
-      <Avatar name={message.sender_name} size={28} />
-      <View style={{ flex: 1 }}>
+      <View>
         <Text style={styles.senderName}>{message.sender_name}</Text>
         <View style={styles.bubbleOther}>
           <Text style={styles.bubbleTextOther}>{message.content}</Text>
+          <Text style={styles.timeOther}>{formatTime(message.created_at)}</Text>
         </View>
-        <Text style={styles.time}>{formatTime(message.created_at)}</Text>
       </View>
     </View>
   )
@@ -159,8 +141,7 @@ export default function ChatPanel() {
     setInput('')
     setSending(true)
     try {
-      const msg = await sendMessage(space.id, user.id, displayName, content)
-      setMessages(prev => [msg, ...prev])
+      await sendMessage(space.id, user.id, displayName, content)
     } catch {
       setInput(content)
     } finally {
@@ -357,15 +338,16 @@ const styles = StyleSheet.create({
 
   messageList: { paddingHorizontal: 12, paddingVertical: 12, gap: 12 },
 
-  rowOwn: { alignItems: 'flex-end', gap: 3 },
-  rowOther: { flexDirection: 'row', gap: 8, alignItems: 'flex-end' },
+  rowOwn: { alignItems: 'flex-end' },
+  rowOther: { alignItems: 'flex-start' },
 
   bubbleOwn: {
     backgroundColor: 'rgba(37,99,235,0.80)',
     borderRadius: 18,
     borderBottomRightRadius: 4,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingTop: 10,
+    paddingBottom: 7,
     maxWidth: '80%',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(120,160,255,0.35)',
@@ -375,15 +357,17 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderBottomLeftRadius: 4,
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    maxWidth: '80%',
+    paddingTop: 10,
+    paddingBottom: 7,
+    maxWidth: '75%',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.15)',
   },
   bubbleTextOwn: { fontSize: 15, color: '#ffffff', lineHeight: 21 },
   bubbleTextOther: { fontSize: 15, color: 'rgba(220,232,255,0.95)', lineHeight: 21 },
-  senderName: { fontSize: 11, color: 'rgba(180,200,255,0.60)', fontWeight: '600', marginBottom: 3, marginLeft: 2 },
-  time: { fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 2 },
+  senderName: { fontSize: 11, fontWeight: '600', color: 'rgba(180,200,255,0.60)', marginBottom: 3, marginLeft: 2 },
+  timeOwn: { fontSize: 10, color: 'rgba(255,255,255,0.40)', marginTop: 4, textAlign: 'right' },
+  timeOther: { fontSize: 10, color: 'rgba(255,255,255,0.30)', marginTop: 4, textAlign: 'right' },
 
   emptyChat: { flex: 1, alignItems: 'center', paddingTop: 60 },
   emptyChatText: { fontSize: 14, color: 'rgba(255,255,255,0.50)' },

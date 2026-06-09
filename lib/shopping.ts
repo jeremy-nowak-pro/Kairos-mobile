@@ -141,6 +141,14 @@ export async function addItem(
   let image_path: string | null = null
 
   if (pickerUri) {
+    const { data: existingPhotos, error: countError } = await supabase
+      .from('shopping_items')
+      .select('id')
+      .eq('list_id', listId)
+      .not('image_path', 'is', null)
+    if (countError) throw countError
+    if ((existingPhotos?.length ?? 0) >= 5) throw new Error('Limite de 5 photos par liste atteinte')
+
     const ext = pickerUri.split('.').pop()?.toLowerCase() ?? 'jpg'
     const mime = `image/${ext === 'jpg' ? 'jpeg' : ext}`
     const allowedMime = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -182,6 +190,49 @@ export async function deleteItem(listId: string, itemId: string): Promise<void> 
 
   await supabase.from('shopping_items').delete().eq('id', itemId)
   writeCache(itemsCache(listId), cached.filter(i => i.id !== itemId))
+}
+
+// ── Migration inter-espaces ───────────────────────────────────────────────────
+
+export async function exportListsToSpace(
+  fromSpaceId: string,
+  toSpaceId: string,
+  createdBy: string,
+): Promise<number> {
+  const { data: lists, error } = await supabase
+    .from('shopping_lists')
+    .select('id, name, date')
+    .eq('space_id', fromSpaceId)
+  if (error) throw error
+  if (!lists?.length) return 0
+
+  let count = 0
+  for (const list of lists as { id: string; name: string; date: string | null }[]) {
+    const { data: newList, error: listErr } = await supabase
+      .from('shopping_lists')
+      .insert({ space_id: toSpaceId, name: list.name, date: list.date, created_by: createdBy })
+      .select('id')
+      .single()
+    if (listErr || !newList) continue
+
+    const { data: items } = await supabase
+      .from('shopping_items')
+      .select('name, checked')
+      .eq('list_id', list.id)
+
+    if (items?.length) {
+      await supabase.from('shopping_items').insert(
+        (items as { name: string; checked: boolean }[]).map(item => ({
+          list_id: newList.id,
+          name: item.name,
+          checked: item.checked,
+          image_path: null,
+        }))
+      )
+    }
+    count++
+  }
+  return count
 }
 
 // ── Historique magasins (local uniquement) ────────────────────────────────────

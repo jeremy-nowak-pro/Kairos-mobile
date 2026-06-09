@@ -45,8 +45,8 @@ export async function getSpaceMembers(): Promise<SpaceMember[]> {
 }
 
 export async function joinSpaceByCode(code: string): Promise<void> {
-  const { error } = await supabase.rpc('join_space_by_code', { code: code.toUpperCase() })
-  if (error) throw new Error('Code d\'invitation invalide')
+  const { error } = await supabase.rpc('join_space_by_code', { code: code.toLowerCase() })
+  if (error) throw new Error(error.message)
 }
 
 export async function getAllMySpaces(): Promise<Space[]> {
@@ -57,9 +57,12 @@ export async function getAllMySpaces(): Promise<Space[]> {
 }
 
 export async function leaveSpace(spaceId: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Non authentifié')
   const { error } = await supabase
     .from('space_members')
     .delete()
     .eq('space_id', spaceId)
+    .eq('user_id', user.id)
   if (error) throw error
 }
