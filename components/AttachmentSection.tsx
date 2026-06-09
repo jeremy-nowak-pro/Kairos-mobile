@@ -113,7 +113,7 @@ type ImageItem = {
   key: string
   uri: string
   onPress: () => void
-  onDelete?: () => void
+  onDelete: () => void
 }
 
 function ImageGrid({ items }: { items: ImageItem[] }) {
