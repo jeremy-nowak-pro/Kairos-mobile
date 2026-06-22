@@ -9,9 +9,8 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Firebase credentials (injectés via EAS secrets au moment du build)
+# Firebase credentials iOS (clé privée — ne jamais committer)
 GoogleService-Info.plist
-google-services.json
 
 # Native
 .kotlin/
