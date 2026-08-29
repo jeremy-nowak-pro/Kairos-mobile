@@ -16,7 +16,7 @@ import {
   getLists, createList, deleteList,
   getItems, addItem, toggleItem, deleteItem,
   getStoreHistory, addToStoreHistory, removeFromStoreHistory,
-  getPhotoSignedUrl,
+  getPhotoLocalUri, subscribeToItems, syncPendingToggles,
 } from '@/lib/shopping'
 
 const BLUE = '#2563EB'
@@ -272,7 +272,7 @@ function ItemRow({
 
   useEffect(() => {
     if (!item.image_path) return
-    getPhotoSignedUrl(item.image_path).then(setPhotoUrl).catch(() => {})
+    getPhotoLocalUri(item.image_path).then(setPhotoUrl).catch(err => console.error('getPhotoLocalUri failed:', err))
   }, [item.image_path])
 
   useEffect(() => {
@@ -343,6 +343,13 @@ export default function ShoppingScreen() {
     }, [space]),
   )
 
+  useFocusEffect(
+    useCallback(() => {
+      if (!activeId) return
+      syncPendingToggles(activeId).then(() => getItems(activeId)).then(setItems).catch(() => {})
+    }, [activeId]),
+  )
+
   useEffect(() => {
     if (!activeId) { setItems([]); return }
     contentAnim.setValue(0)
@@ -353,6 +360,20 @@ export default function ShoppingScreen() {
         Animated.spring(contentAnim, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 6 }).start()
       })
       .finally(() => setLoadingItems(false))
+  }, [activeId])
+
+  useEffect(() => {
+    if (!activeId) return
+    const channel = subscribeToItems(activeId, change => {
+      if (change.type === 'insert') {
+        setItems(prev => prev.some(i => i.id === change.item.id) ? prev : [change.item, ...prev])
+      } else if (change.type === 'update') {
+        setItems(prev => prev.map(i => i.id === change.item.id ? change.item : i))
+      } else {
+        setItems(prev => prev.filter(i => i.id !== change.id))
+      }
+    })
+    return () => { channel.unsubscribe() }
   }, [activeId])
 
   const handleListCreated = (list: ShoppingList) => {
