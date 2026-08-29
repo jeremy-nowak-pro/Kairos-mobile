@@ -38,6 +38,10 @@ jest.mock('expo-file-system', () => {
 
 // ── Mock Supabase ─────────────────────────────────────────────────────────────
 
+jest.mock('expo-crypto', () => ({
+  randomUUID: jest.fn(() => 'test-uuid'),
+}))
+
 jest.mock('../supabase', () => ({
   supabase: {
     from: jest.fn(),
@@ -194,7 +198,6 @@ describe('addItem', () => {
       .mockReturnValueOnce(chain({ data: [{ id: '1' }, { id: '2' }, { id: '3' }, { id: '4' }], error: null }))
       .mockReturnValueOnce(chain({ data: itemWithPhoto, error: null }))
     mockStorageFrom.mockReturnValue({ upload: jest.fn().mockResolvedValue({ error: null }) })
-    jest.spyOn(global.crypto, 'randomUUID').mockReturnValue('test-uuid' as ReturnType<typeof crypto.randomUUID>)
     ;(global as any).fetch = jest.fn().mockResolvedValue({ arrayBuffer: () => Promise.resolve(new ArrayBuffer(10)) })
     const result = await addItem('l1', 's1', 'Photo', 'file:///test.jpg')
     expect(result.image_path).toBe('s1/test-uuid.jpg')
@@ -207,7 +210,6 @@ describe('addItem', () => {
       .mockReturnValueOnce(chain({ data: itemWithPhoto, error: null }))
     const mockUpload = jest.fn().mockResolvedValue({ error: null })
     mockStorageFrom.mockReturnValue({ upload: mockUpload })
-    jest.spyOn(global.crypto, 'randomUUID').mockReturnValue('test-uuid' as ReturnType<typeof crypto.randomUUID>)
     ;(global as any).fetch = jest.fn().mockResolvedValue({ arrayBuffer: () => Promise.resolve(new ArrayBuffer(10)) })
     const result = await addItem('l1', 's1', 'Photo', 'file:///test.png')
     expect(mockUpload).toHaveBeenCalledWith(
