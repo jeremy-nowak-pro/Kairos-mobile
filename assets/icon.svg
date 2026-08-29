@@ -1,5 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
+<<<<<<< HEAD
 
     <!-- Fond : dégradé radial chaud centré légèrement en haut -->
     <radialGradient id="bg" cx="50%" cy="44%" r="62%">
@@ -79,4 +80,39 @@
     opacity="0.90"
     filter="url(#glowStrong)"/>
 
+=======
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#1E40AF"/>
+      <stop offset="55%"  stop-color="#4338CA"/>
+      <stop offset="100%" stop-color="#6D28D9"/>
+    </linearGradient>
+    <radialGradient id="glassFill" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="white" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0.04"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Fond dégradé -->
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- Sablier avec courbes bezier et intérieur en verre -->
+  <path
+    fill="url(#glassFill)"
+    stroke="white"
+    stroke-width="50"
+    stroke-linejoin="round"
+    d="
+      M 258,176 L 766,176
+      Q 814,176 814,224
+      C 814,430 572,492 572,512
+      C 572,532 814,594 814,800
+      Q 814,848 766,848
+      L 258,848
+      Q 210,848 210,800
+      C 210,594 452,532 452,512
+      C 452,492 210,430 210,224
+      Q 210,176 258,176 Z
+    "
+  />
+>>>>>>> 041648a47ada3254bf60a3724372ce590242833c
 </svg>

@@ -9,7 +9,7 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Firebase credentials (GoogleService-Info.plist contient des clés privées iOS — ne pas committer)
+# Firebase credentials iOS (clé privée — ne jamais committer)
 GoogleService-Info.plist
 
 # Native

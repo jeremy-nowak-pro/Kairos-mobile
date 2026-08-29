@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "eas-build-pre-install": "if [ -n \"${GOOGLE_SERVICES_JSON:-}\" ]; then cp \"$GOOGLE_SERVICES_JSON\" ./google-services.json; fi"
   },
   "jest": {
     "preset": "jest-expo",

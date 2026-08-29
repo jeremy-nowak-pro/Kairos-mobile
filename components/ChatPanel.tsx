@@ -12,6 +12,10 @@ import { useSpace } from '@/context/space'
 import {
   Message, getMessages, sendMessage, subscribeToMessages, markRead, getUnreadCount,
 } from '@/lib/chat'
+<<<<<<< HEAD
+=======
+import { sendSpaceNotification } from '@/lib/notifications'
+>>>>>>> 041648a47ada3254bf60a3724372ce590242833c
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 83 : 56
@@ -142,6 +146,10 @@ export default function ChatPanel() {
     setSending(true)
     try {
       await sendMessage(space.id, user.id, displayName, content)
+<<<<<<< HEAD
+=======
+      sendSpaceNotification(space.id, user.id, displayName, content).catch(() => {})
+>>>>>>> 041648a47ada3254bf60a3724372ce590242833c
     } catch {
       setInput(content)
     } finally {
