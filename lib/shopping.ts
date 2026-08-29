@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { File, Paths } from 'expo-file-system'
+import * as Crypto from 'expo-crypto'
 
 // ── Cache local (fallback hors ligne) ─────────────────────────────────────────
 
@@ -137,6 +138,7 @@ export async function addItem(
   spaceId: string,
   name: string,
   pickerUri: string | null,
+  pickerMime?: string | null,
 ): Promise<ShoppingItem> {
   let image_path: string | null = null
 
@@ -149,16 +151,19 @@ export async function addItem(
     if (countError) throw countError
     if ((existingPhotos?.length ?? 0) >= 5) throw new Error('Limite de 5 photos par liste atteinte')
 
-    const ext = pickerUri.split('.').pop()?.toLowerCase() ?? 'jpg'
-    const mime = `image/${ext === 'jpg' ? 'jpeg' : ext}`
     const allowedMime = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    const extFromUri = pickerUri.split('.').pop()?.toLowerCase()
+    const mime = pickerMime?.toLowerCase()
+      ?? (extFromUri ? `image/${extFromUri === 'jpg' ? 'jpeg' : extFromUri}` : 'image/jpeg')
     if (!allowedMime.includes(mime)) throw new Error('Type de fichier non autorisé')
-    const path = `${spaceId}/${crypto.randomUUID()}.${ext}`
+    const ext = mime === 'image/jpeg' ? 'jpg' : mime.split('/')[1]
+    const path = `${spaceId}/${Crypto.randomUUID()}.${ext}`
     const buffer = await fetch(pickerUri).then(r => r.arrayBuffer())
     const { error: uploadError } = await supabase.storage
       .from('shopping-photos')
       .upload(path, buffer, { contentType: mime, upsert: false })
-    if (!uploadError) image_path = path
+    if (uploadError) throw uploadError
+    image_path = path
   }
 
   const { data, error } = await supabase

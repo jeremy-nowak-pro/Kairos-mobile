@@ -323,6 +323,7 @@ export default function ShoppingScreen() {
   const [addListOpen, setAddListOpen] = useState(false)
   const [newItemName, setNewItemName] = useState('')
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null)
+  const [pendingPhotoMime, setPendingPhotoMime] = useState<string | null>(null)
   const [loadingItems, setLoadingItems] = useState(false)
   const [toastList, setToastList] = useState<ShoppingList | null>(null)
   const [viewerUri, setViewerUri] = useState<string | null>(null)
@@ -409,16 +410,24 @@ export default function ShoppingScreen() {
       return
     }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 })
-    if (!result.canceled) setPendingPhoto(result.assets[0].uri)
+    if (!result.canceled) {
+      setPendingPhoto(result.assets[0].uri)
+      setPendingPhotoMime(result.assets[0].mimeType ?? null)
+    }
   }
 
   const handleAddItem = async () => {
     const name = newItemName.trim()
     if (!name || !activeId || !space) return
-    const item = await addItem(activeId, space.id, name, pendingPhoto)
-    setItems(prev => [item, ...prev])
-    setNewItemName('')
-    setPendingPhoto(null)
+    try {
+      const item = await addItem(activeId, space.id, name, pendingPhoto, pendingPhotoMime)
+      setItems(prev => [item, ...prev])
+      setNewItemName('')
+      setPendingPhoto(null)
+      setPendingPhotoMime(null)
+    } catch (err) {
+      Alert.alert('Erreur', err instanceof Error ? err.message : "Impossible d'ajouter le produit.")
+    }
   }
 
   const handleToggle = async (item: ShoppingItem) => {
@@ -540,7 +549,7 @@ export default function ShoppingScreen() {
           <View style={styles.addBar}>
             <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
             {pendingPhoto && (
-              <Pressable onPress={() => setPendingPhoto(null)} style={styles.photoPreview}>
+              <Pressable onPress={() => { setPendingPhoto(null); setPendingPhotoMime(null) }} style={styles.photoPreview}>
                 <Image source={{ uri: pendingPhoto }} style={styles.photoThumb} contentFit="cover" />
                 <View style={styles.photoRemove}>
                   <Ionicons name="close" size={10} color="#fff" />
