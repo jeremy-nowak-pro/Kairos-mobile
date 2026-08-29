@@ -1,2 +1,5 @@
 allowBuilds:
   unrs-resolver: true
+
+overrides:
+  react-native-screens: 4.16.0
