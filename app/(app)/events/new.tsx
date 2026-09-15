@@ -5,6 +5,7 @@ import {
   Modal, Alert,
 } from 'react-native'
 import { Image } from 'expo-image'
+import { BlurView } from 'expo-blur'
 import * as WebBrowser from 'expo-web-browser'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
@@ -128,9 +129,9 @@ export default function NewEventScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: '#1a0e30' }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: '#1a0e30' }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <MeshBackground />
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Pressable onPress={() => router.back()}>
             <Text style={styles.cancel}>Annuler</Text>
@@ -227,17 +228,19 @@ export default function NewEventScreen() {
               onRemove={i => setPendingFiles(prev => prev.filter((_, idx) => idx !== i))}
             />
           </View>
-
-          {error && <Text style={styles.error}>{error}</Text>}
-
-          <Pressable style={styles.button} onPress={handleCreate} disabled={loading}>
-            {loading
-              ? <ActivityIndicator color="rgba(180,210,255,0.9)" />
-              : <Text style={styles.buttonText}>+ Créer l'événement</Text>
-            }
-          </Pressable>
         </View>
       </ScrollView>
+
+      <View style={styles.bottomBar}>
+        <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+        {error && <Text style={styles.error}>{error}</Text>}
+        <Pressable style={styles.button} onPress={handleCreate} disabled={loading}>
+          {loading
+            ? <ActivityIndicator color="rgba(180,210,255,0.9)" />
+            : <Text style={styles.buttonText}>+ Créer l'événement</Text>
+          }
+        </Pressable>
+      </View>
 
       <CalendarPicker
         visible={calendarOpen}
@@ -389,10 +392,18 @@ const styles = StyleSheet.create({
   },
   memberBtnText: { fontSize: 14, color: 'rgba(255,255,255,0.65)' },
   memberBtnTextActive: { fontSize: 14, color: 'rgba(255,255,255,0.85)', fontWeight: '600' },
+  bottomBar: {
+    overflow: 'hidden',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.12)',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 12,
+  },
   button: {
     backgroundColor: 'rgba(110,55,180,0.70)',
     borderRadius: 10,
-    padding: 16, alignItems: 'center', marginTop: 24,
+    padding: 16, alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.50)',
   },
@@ -408,7 +419,7 @@ const styles = StyleSheet.create({
     marginTop: 8, marginBottom: 4,
   },
   scheduleBtnText: { fontSize: 13, color: 'rgba(180,210,255,0.6)' },
-  error: { color: '#e05555', fontSize: 14, marginTop: 12 },
+  error: { color: '#e05555', fontSize: 14, marginBottom: 12, textAlign: 'center' },
 
   backdrop: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end',
