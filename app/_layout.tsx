@@ -1,9 +1,14 @@
+import { useEffect } from 'react'
 import { Slot } from 'expo-router'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { ThemeProvider } from '@react-navigation/native'
+import * as SplashScreen from 'expo-splash-screen'
 import { AuthProvider } from '@/context/auth'
 import { SpaceProvider } from '@/context/space'
 import MeshBackground from '@/components/MeshBackground'
+
+SplashScreen.preventAutoHideAsync()
+SplashScreen.setOptions({ duration: 400, fade: true })
 
 const AppTheme = {
   dark: false,
@@ -19,6 +24,10 @@ const AppTheme = {
 }
 
 export default function RootLayout() {
+  useEffect(() => {
+    SplashScreen.hideAsync()
+  }, [])
+
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#1a0e30' }}>
       <MeshBackground />

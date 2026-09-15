@@ -7,11 +7,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#1a0e30"
-    },
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -52,6 +47,14 @@
         {
           "photosPermission": "Kairos accède à ta galerie pour joindre des photos aux événements et aux listes de courses.",
           "cameraPermission": "Kairos accède à ton appareil photo pour joindre des photos."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "cover",
+          "backgroundColor": "#1a0e30"
         }
       ]
     ],
