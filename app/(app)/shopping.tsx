@@ -281,13 +281,13 @@ function ItemRow({
       Animated.timing(scaleAnim, { toValue: 1.28, duration: 80, useNativeDriver: true }),
       Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, bounciness: 16, speed: 18 }),
     ]).start()
-  }, [item.checked])
+  }, [item.done])
 
   return (
     <View style={styles.itemRow}>
       <Pressable style={styles.itemMain} onPress={onToggle}>
-        <Animated.View style={[styles.circle, item.checked && styles.circleChecked, { transform: [{ scale: scaleAnim }] }]}>
-          {item.checked && <Ionicons name="checkmark" size={13} color="#fff" />}
+        <Animated.View style={[styles.circle, item.done && styles.circleChecked, { transform: [{ scale: scaleAnim }] }]}>
+          {item.done && <Ionicons name="checkmark" size={13} color="#fff" />}
         </Animated.View>
 
         {item.image_path && photoUrl && (
@@ -299,7 +299,7 @@ function ItemRow({
           </Pressable>
         )}
 
-        <Text style={[styles.itemName, item.checked && styles.itemNameChecked]} numberOfLines={2}>
+        <Text style={[styles.itemName, item.done && styles.itemNameChecked]} numberOfLines={2}>
           {item.name}
         </Text>
       </Pressable>
@@ -459,9 +459,9 @@ export default function ShoppingScreen() {
   }
 
   const handleToggle = async (item: ShoppingItem) => {
-    const newChecked = !item.checked
-    setItems(prev => prev.map(i => i.id === item.id ? { ...i, checked: newChecked } : i))
-    await toggleItem(item.list_id, item.id, newChecked)
+    const newDone = !item.done
+    setItems(prev => prev.map(i => i.id === item.id ? { ...i, done: newDone } : i))
+    await toggleItem(item.list_id, item.id, newDone)
   }
 
   const handleDeleteItem = async (item: ShoppingItem) => {
@@ -469,8 +469,8 @@ export default function ShoppingScreen() {
     await deleteItem(item.list_id, item.id)
   }
 
-  const unchecked = items.filter(i => !i.checked)
-  const checked = items.filter(i => i.checked)
+  const unchecked = items.filter(i => !i.done)
+  const checked = items.filter(i => i.done)
   const activeList = lists.find(l => l.id === activeId)
 
   if (!space) return <ActivityIndicator style={{ flex: 1 }} />

@@ -64,7 +64,7 @@ function chain(result: unknown) {
 }
 
 const LIST = { id: 'l1', space_id: 's1', name: 'Courses', date: null, created_by: 'u1', created_at: '' }
-const ITEM = { id: 'i1', list_id: 'l1', name: 'Lait', image_path: null, checked: false, created_at: '' }
+const ITEM = { id: 'i1', list_id: 'l1', name: 'Lait', image_path: null, done: false, created_at: '' }
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -230,19 +230,19 @@ describe('addItem', () => {
 // ─── toggleItem ───────────────────────────────────────────────────────────────
 
 describe('toggleItem', () => {
-  it('appelle Supabase update avec checked=true', async () => {
+  it('appelle Supabase update avec done=true', async () => {
     const c = chain({ data: null, error: null })
     mockFrom.mockReturnValue(c)
     await toggleItem('l1', 'i1', true)
-    expect(c.update).toHaveBeenCalledWith({ checked: true })
+    expect(c.update).toHaveBeenCalledWith({ done: true })
     expect(c.eq).toHaveBeenCalledWith('id', 'i1')
   })
 
-  it('appelle Supabase update avec checked=false', async () => {
+  it('appelle Supabase update avec done=false', async () => {
     const c = chain({ data: null, error: null })
     mockFrom.mockReturnValue(c)
     await toggleItem('l1', 'i1', false)
-    expect(c.update).toHaveBeenCalledWith({ checked: false })
+    expect(c.update).toHaveBeenCalledWith({ done: false })
   })
 })
 

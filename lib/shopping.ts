@@ -41,7 +41,7 @@ export interface ShoppingItem {
   list_id: string
   name: string
   image_path: string | null
-  checked: boolean
+  done: boolean
   created_at: string
 }
 
@@ -142,7 +142,7 @@ export async function deleteList(id: string, spaceId: string): Promise<void> {
 
 // ── Items ─────────────────────────────────────────────────────────────────────
 
-interface PendingToggle { itemId: string; checked: boolean }
+interface PendingToggle { itemId: string; done: boolean }
 
 // Pousse les changements d'état faits hors ligne vers Supabase. Best-effort :
 // silencieux si toujours hors ligne, les entrées non synchronisées restent en file.
@@ -152,7 +152,7 @@ export async function syncPendingToggles(listId: string): Promise<void> {
 
   const remaining: PendingToggle[] = []
   for (const p of pending) {
-    const { error } = await supabase.from('shopping_items').update({ checked: p.checked }).eq('id', p.itemId)
+    const { error } = await supabase.from('shopping_items').update({ done: p.done }).eq('id', p.itemId)
     if (error) remaining.push(p)
   }
   writeCache(pendingTogglesCache(listId), remaining)
@@ -244,16 +244,16 @@ export function subscribeToItems(
     .subscribe()
 }
 
-export async function toggleItem(listId: string, itemId: string, checked: boolean): Promise<void> {
+export async function toggleItem(listId: string, itemId: string, done: boolean): Promise<void> {
   const cached = await readCache<ShoppingItem[]>(itemsCache(listId), [])
-  writeCache(itemsCache(listId), cached.map(i => i.id === itemId ? { ...i, checked } : i))
+  writeCache(itemsCache(listId), cached.map(i => i.id === itemId ? { ...i, done } : i))
 
   try {
-    const { error } = await supabase.from('shopping_items').update({ checked }).eq('id', itemId)
+    const { error } = await supabase.from('shopping_items').update({ done }).eq('id', itemId)
     if (error) throw error
   } catch {
     const pending = await readCache<PendingToggle[]>(pendingTogglesCache(listId), [])
-    writeCache(pendingTogglesCache(listId), [...pending.filter(p => p.itemId !== itemId), { itemId, checked }])
+    writeCache(pendingTogglesCache(listId), [...pending.filter(p => p.itemId !== itemId), { itemId, done }])
   }
 }
 
@@ -296,15 +296,15 @@ export async function exportListsToSpace(
 
     const { data: items } = await supabase
       .from('shopping_items')
-      .select('name, checked')
+      .select('name, done')
       .eq('list_id', list.id)
 
     if (items?.length) {
       await supabase.from('shopping_items').insert(
-        (items as { name: string; checked: boolean }[]).map(item => ({
+        (items as { name: string; done: boolean }[]).map(item => ({
           list_id: newList.id,
           name: item.name,
-          checked: item.checked,
+          done: item.done,
           image_path: null,
         }))
       )
