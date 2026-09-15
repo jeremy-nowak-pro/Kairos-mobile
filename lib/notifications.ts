@@ -56,7 +56,13 @@ async function pushToTokens(
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
     body: JSON.stringify(
-      tokens.map(token => ({ to: token, sound: 'default', title, body, data }))
+      // channelId doit être explicite : sans lui, Android 8+ ignore la
+      // notification silencieusement (aucune erreur, aucun log) au lieu de
+      // retomber sur le channel "default" créé via setNotificationChannelAsync.
+      tokens.map(token => ({
+        to: token, sound: 'default', title, body, data,
+        channelId: 'default', priority: 'high',
+      }))
     ),
   })
   // L'API Expo répond 200 même en cas d'échec par token — le vrai statut
