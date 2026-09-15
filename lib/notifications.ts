@@ -52,13 +52,19 @@ async function pushToTokens(
   data: Record<string, unknown>,
 ): Promise<void> {
   if (!tokens.length) return
-  await fetch('https://exp.host/--/api/v2/push/send', {
+  const res = await fetch('https://exp.host/--/api/v2/push/send', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
     body: JSON.stringify(
       tokens.map(token => ({ to: token, sound: 'default', title, body, data }))
     ),
   })
+  // L'API Expo répond 200 même en cas d'échec par token — le vrai statut
+  // est dans le corps JSON (ex: DeviceNotRegistered, InvalidCredentials...).
+  const json = await res.json().catch(() => null)
+  const results = Array.isArray(json?.data) ? json.data : []
+  const errors = results.filter((r: { status?: string }) => r.status === 'error')
+  if (errors.length > 0) console.error('Expo push errors:', JSON.stringify(errors))
 }
 
 async function getOtherTokens(spaceId: string, senderUserId: string): Promise<string[]> {

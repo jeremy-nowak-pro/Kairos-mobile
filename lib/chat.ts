@@ -34,7 +34,8 @@ export async function sendMessage(
     .select()
     .single()
   if (error) throw error
-  sendSpaceNotification(spaceId, userId, senderName, content).catch(() => {})
+  sendSpaceNotification(spaceId, userId, senderName, content)
+    .catch(err => console.error('sendSpaceNotification failed:', err))
   return data as Message
 }
 

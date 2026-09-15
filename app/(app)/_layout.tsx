@@ -32,7 +32,7 @@ export default function AppLayout() {
     if (!user || !space) return
     SecureStore.getItemAsync(PUSH_CONSENT_KEY).then(value => {
       if (value === 'granted') {
-        registerPushToken(space.id, user.id).catch(() => {})
+        registerPushToken(space.id, user.id).catch(err => console.error('registerPushToken failed:', err))
       } else if (value === null) {
         Alert.alert(
           'Notifications',
@@ -47,7 +47,7 @@ export default function AppLayout() {
               text: 'Activer',
               onPress: () => {
                 SecureStore.setItemAsync(PUSH_CONSENT_KEY, 'granted')
-                registerPushToken(space.id, user.id).catch(() => {})
+                registerPushToken(space.id, user.id).catch(err => console.error('registerPushToken failed:', err))
               },
             },
           ],
