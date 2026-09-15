@@ -324,10 +324,12 @@ export default function ShoppingScreen() {
   const [newItemName, setNewItemName] = useState('')
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null)
   const [pendingPhotoMime, setPendingPhotoMime] = useState<string | null>(null)
+  const [addingItem, setAddingItem] = useState(false)
   const [loadingItems, setLoadingItems] = useState(false)
   const [toastList, setToastList] = useState<ShoppingList | null>(null)
   const [viewerUri, setViewerUri] = useState<string | null>(null)
   const inputRef = useRef<TextInput>(null)
+  const addingItemRef = useRef(false)
   const pendingDeleteRef = useRef<ShoppingList | null>(null)
   const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const toastOpacity = useRef(new Animated.Value(0)).current
@@ -439,7 +441,9 @@ export default function ShoppingScreen() {
 
   const handleAddItem = async () => {
     const name = newItemName.trim()
-    if (!name || !activeId || !space) return
+    if (!name || !activeId || !space || addingItemRef.current) return
+    addingItemRef.current = true
+    setAddingItem(true)
     try {
       const item = await addItem(activeId, space.id, name, pendingPhoto, pendingPhotoMime)
       setItems(prev => [item, ...prev])
@@ -448,6 +452,9 @@ export default function ShoppingScreen() {
       setPendingPhotoMime(null)
     } catch (err) {
       Alert.alert('Erreur', err instanceof Error ? err.message : "Impossible d'ajouter le produit.")
+    } finally {
+      addingItemRef.current = false
+      setAddingItem(false)
     }
   }
 
@@ -592,11 +599,14 @@ export default function ShoppingScreen() {
             </Pressable>
             <Pressable
               onPress={handleAddItem}
-              style={[styles.addBarBtn, styles.addBarBtnPrimary, !newItemName.trim() && styles.addBarBtnDisabled]}
-              disabled={!newItemName.trim()}
+              style={[styles.addBarBtn, styles.addBarBtnPrimary, (!newItemName.trim() || addingItem) && styles.addBarBtnDisabled]}
+              disabled={!newItemName.trim() || addingItem}
               hitSlop={6}
             >
-              <Ionicons name="add" size={22} color="#fff" />
+              {addingItem
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Ionicons name="add" size={22} color="#fff" />
+              }
             </Pressable>
           </View>
         )}
