@@ -98,8 +98,10 @@ export default function ProfileScreen() {
 
   const [members, setMembers] = useState<SpaceMember[]>([])
   const [schedule, setSchedule] = useState<MemberSchedule | null>(null)
+  const [schedules, setSchedules] = useState<Record<string, MemberSchedule>>({})
   const [previewUri, setPreviewUri] = useState<string | null>(null)
   const [viewerUri, setViewerUri] = useState<string | null>(null)
+  const [scheduleLoadingId, setScheduleLoadingId] = useState<string | null>(null)
   const [loadingMembers, setLoadingMembers] = useState(true)
   const [deletingAccount, setDeletingAccount] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -118,7 +120,11 @@ export default function ProfileScreen() {
 
     getSpaceSchedules(space.id)
       .then(async all => {
-        const mine = all.find(s => s.user_id === user.id) ?? null
+        const map: Record<string, MemberSchedule> = {}
+        all.forEach(s => { map[s.user_id] = s })
+        setSchedules(map)
+
+        const mine = map[user.id] ?? null
         setSchedule(mine)
         if (mine?.mime_type?.startsWith('image/')) {
           const url = await getScheduleSignedUrl(mine.storage_path).catch(() => null)
@@ -129,6 +135,26 @@ export default function ProfileScreen() {
       })
       .catch(() => {})
   }, [space?.id, user?.id]))
+
+  const handleViewMemberSchedule = async (member: SpaceMember) => {
+    const sc = schedules[member.user_id]
+    if (!sc) {
+      Alert.alert('Emploi du temps', `${member.display_name} n'a pas encore partagé son emploi du temps.`)
+      return
+    }
+    setScheduleLoadingId(member.user_id)
+    try {
+      const url = await getScheduleSignedUrl(sc.storage_path)
+      if (sc.mime_type?.startsWith('image/')) {
+        setViewerUri(url)
+      } else {
+        await WebBrowser.openBrowserAsync(url)
+      }
+    } catch {
+      Alert.alert('Erreur', "Impossible d'ouvrir le fichier")
+    }
+    setScheduleLoadingId(null)
+  }
 
   const handleTestNotif = async () => {
     if (!user || !space) return
@@ -273,13 +299,27 @@ export default function ProfileScreen() {
         ) : (
           <View style={s.membersList}>
             {members.map(m => (
-              <View key={m.user_id} style={s.memberRow}>
+              <Pressable
+                key={m.user_id}
+                style={s.memberRow}
+                onPress={() => handleViewMemberSchedule(m)}
+                disabled={scheduleLoadingId === m.user_id}
+              >
                 <Avatar name={m.display_name} size={36} />
                 <View style={s.memberInfo}>
                   <Text style={s.memberName}>{m.display_name}</Text>
                   {m.is_creator && <Text style={s.memberBadge}>Créateur</Text>}
                 </View>
-              </View>
+                {scheduleLoadingId === m.user_id ? (
+                  <ActivityIndicator size="small" color="rgba(255,255,255,0.55)" />
+                ) : (
+                  <Ionicons
+                    name="calendar-outline"
+                    size={16}
+                    color={schedules[m.user_id] ? 'rgba(180,210,255,0.75)' : 'rgba(255,255,255,0.20)'}
+                  />
+                )}
+              </Pressable>
             ))}
           </View>
         )}
