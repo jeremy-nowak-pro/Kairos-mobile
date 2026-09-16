@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import * as Crypto from 'expo-crypto'
 
 export interface Attachment {
   id: string
@@ -41,7 +42,7 @@ export async function uploadAttachment(
   if (!ALLOWED_MIME.includes(mime)) throw new Error('Type de fichier non autorisé')
 
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin'
-  const storagePath = `${spaceId}/${eventId}/${crypto.randomUUID()}.${ext}`
+  const storagePath = `${spaceId}/${eventId}/${Crypto.randomUUID()}.${ext}`
 
   const res = await fetch(file.uri)
   const buffer = await res.arrayBuffer()

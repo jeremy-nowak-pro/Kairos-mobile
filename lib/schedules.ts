@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { LocalFile } from './attachments'
+import * as Crypto from 'expo-crypto'
 
 export interface MemberSchedule {
   id: string
@@ -42,7 +43,7 @@ export async function uploadSchedule(
   }
 
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin'
-  const storagePath = `${spaceId}/${userId}/${crypto.randomUUID()}.${ext}`
+  const storagePath = `${spaceId}/${userId}/${Crypto.randomUUID()}.${ext}`
 
   const res = await fetch(file.uri)
   const buffer = await res.arrayBuffer()
