@@ -16,7 +16,7 @@ import {
   getLists, createList, deleteList,
   getItems, addItem, toggleItem, deleteItem,
   getStoreHistory, addToStoreHistory, removeFromStoreHistory,
-  getPhotoLocalUri, subscribeToItems, syncPendingToggles,
+  getPhotoLocalUri, subscribeToItems, syncPendingChanges,
 } from '@/lib/shopping'
 
 const BLUE = '#2563EB'
@@ -348,7 +348,7 @@ export default function ShoppingScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!activeId) return
-      syncPendingToggles(activeId).then(() => getItems(activeId)).then(setItems).catch(() => {})
+      syncPendingChanges(activeId).then(() => getItems(activeId)).then(setItems).catch(() => {})
     }, [activeId]),
   )
 

@@ -6,6 +6,7 @@ import {
   addItem,
   toggleItem,
   deleteItem,
+  syncPendingChanges,
   getPhotoSignedUrl,
   getStoreHistory,
   addToStoreHistory,
@@ -225,6 +226,20 @@ describe('addItem', () => {
     await expect(addItem('l1', 's1', 'Item', 'file:///test.jpg'))
       .rejects.toThrow('count error')
   })
+
+  it('crée localement et met en file si hors ligne (sans photo)', async () => {
+    mockFrom.mockReturnValue(chain({ data: null, error: new Error('network') }))
+    const result = await addItem('l1', 's1', 'Lait', null)
+    expect(result.id).toMatch(/^local-/)
+    expect(result.name).toBe('Lait')
+    expect(result.done).toBe(false)
+  })
+
+  it('ne crée jamais localement si une photo est jointe (réseau obligatoire)', async () => {
+    mockFrom.mockReturnValueOnce(chain({ data: null, error: new Error('network') }))
+    await expect(addItem('l1', 's1', 'Photo', 'file:///test.jpg'))
+      .rejects.toThrow('network')
+  })
 })
 
 // ─── toggleItem ───────────────────────────────────────────────────────────────
@@ -243,6 +258,25 @@ describe('toggleItem', () => {
     mockFrom.mockReturnValue(c)
     await toggleItem('l1', 'i1', false)
     expect(c.update).toHaveBeenCalledWith({ done: false })
+  })
+
+  it('met en file si le réseau échoue, sans jamais lever d\'erreur', async () => {
+    mockFrom.mockReturnValue(chain({ data: null, error: new Error('network') }))
+    await expect(toggleItem('l1', 'i1', true)).resolves.toBeUndefined()
+  })
+
+  it('fusionne le toggle dans la création en attente si l\'item est encore local', async () => {
+    mockFrom.mockReturnValue(chain({ data: null, error: new Error('network') }))
+    const created = await addItem('l1', 's1', 'Lait', null)
+    await toggleItem('l1', created.id, true)
+
+    const insertChain = chain({ data: { ...ITEM, id: 'real1', done: true }, error: null })
+    mockFrom.mockReturnValue(insertChain)
+    await syncPendingChanges('l1')
+
+    expect(insertChain.insert).toHaveBeenCalledWith(
+      expect.objectContaining({ list_id: 'l1', name: 'Lait', done: true })
+    )
   })
 })
 
@@ -264,6 +298,52 @@ describe('deleteItem', () => {
     mockFrom.mockReturnValue(chain({ data: null, error: null }))
     await deleteItem('l1', 'i1')
     expect(mockRemove).toHaveBeenCalledWith(['photos/img.jpg'])
+  })
+
+  it('met en file la suppression si le réseau échoue', async () => {
+    ;(FS as any).__set('/doc/sc_items_l1.json', JSON.stringify([ITEM]))
+    mockFrom.mockReturnValue(chain({ data: null, error: new Error('network') }))
+    await expect(deleteItem('l1', 'i1')).resolves.toBeUndefined()
+
+    const deleteChain = chain({ data: null, error: null })
+    mockFrom.mockReturnValue(deleteChain)
+    await syncPendingChanges('l1')
+    expect(deleteChain.delete).toHaveBeenCalled()
+    expect(deleteChain.eq).toHaveBeenCalledWith('id', 'i1')
+  })
+
+  it('annule la création en attente si on supprime un item encore local', async () => {
+    mockFrom.mockReturnValue(chain({ data: null, error: new Error('network') }))
+    const created = await addItem('l1', 's1', 'Lait', null)
+    await deleteItem('l1', created.id)
+
+    const insertChain = chain({ data: null, error: null })
+    mockFrom.mockReturnValue(insertChain)
+    await syncPendingChanges('l1')
+    expect(insertChain.insert).not.toHaveBeenCalled()
+  })
+})
+
+// ─── syncPendingChanges ───────────────────────────────────────────────────────
+
+describe('syncPendingChanges', () => {
+  it('remplace l\'item local par l\'item réel après synchro d\'une création', async () => {
+    mockFrom.mockReturnValue(chain({ data: null, error: new Error('network') }))
+    const created = await addItem('l1', 's1', 'Lait', null)
+
+    const real = { ...ITEM, id: 'real-1', name: 'Lait' }
+    mockFrom.mockReturnValue(chain({ data: real, error: null }))
+    await syncPendingChanges('l1')
+
+    const raw = await new (FS as any).File('/doc', 'sc_items_l1.json').text()
+    const cachedItems = JSON.parse(raw)
+    expect(cachedItems.find((i: any) => i.id === 'real-1')).toBeDefined()
+    expect(cachedItems.find((i: any) => i.id === created.id)).toBeUndefined()
+  })
+
+  it('ne fait rien si la file est vide', async () => {
+    await expect(syncPendingChanges('l1')).resolves.toBeUndefined()
+    expect(mockFrom).not.toHaveBeenCalled()
   })
 })
 

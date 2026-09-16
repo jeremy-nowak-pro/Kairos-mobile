@@ -3,13 +3,14 @@ import { supabase } from './supabase'
 import * as Crypto from 'expo-crypto'
 import { getCompressedLocalUri, deleteLocalMedia } from './mediaCache'
 import { cacheFile, readCache, writeCache } from './localCache'
+import { getOutbox, enqueue, removeFromOutbox, markOutboxFailed, mergeIntoPendingCreate, cancelPendingCreate, clearOutbox } from './outbox'
 
 // ── Cache local (fallback hors ligne) ─────────────────────────────────────────
 
 const listsCache = (spaceId: string) => cacheFile(`sc_lists_${spaceId}.json`)
 const itemsCache = (listId: string) => cacheFile(`sc_items_${listId}.json`)
-const pendingTogglesCache = (listId: string) => cacheFile(`sc_pending_${listId}.json`)
 const storesFile = cacheFile('shopping_stores.json')
+const isLocalId = (id: string) => id.startsWith('local-')
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
 
@@ -109,29 +110,47 @@ export async function deleteList(id: string, spaceId: string): Promise<void> {
 
   const cf = itemsCache(id)
   if (cf.exists) cf.delete()
+  clearOutbox(id)
 }
 
 // ── Items ─────────────────────────────────────────────────────────────────────
 
-interface PendingToggle { itemId: string; done: boolean }
+// Rejoue les mutations créées hors ligne (create/update/delete), dans l'ordre
+// où elles ont été faites. Best-effort : une entrée qui échoue encore reste
+// en file (marquée "failed") plutôt que de bloquer les suivantes.
+export async function syncPendingChanges(listId: string): Promise<void> {
+  const queue = await getOutbox(listId)
+  if (queue.length === 0) return
 
-// Pousse les changements d'état faits hors ligne vers Supabase. Best-effort :
-// silencieux si toujours hors ligne, les entrées non synchronisées restent en file.
-export async function syncPendingToggles(listId: string): Promise<void> {
-  const pending = await readCache<PendingToggle[]>(pendingTogglesCache(listId), [])
-  if (pending.length === 0) return
-
-  const remaining: PendingToggle[] = []
-  for (const p of pending) {
-    const { error } = await supabase.from('shopping_items').update({ done: p.done }).eq('id', p.itemId)
-    if (error) remaining.push(p)
+  for (const entry of queue) {
+    try {
+      if (entry.op === 'create') {
+        const { data, error } = await supabase
+          .from('shopping_items')
+          .insert(entry.payload)
+          .select()
+          .single()
+        if (error) throw error
+        const item = data as ShoppingItem
+        const cached = await readCache<ShoppingItem[]>(itemsCache(listId), [])
+        writeCache(itemsCache(listId), cached.map(i => i.id === entry.localId ? item : i))
+      } else if (entry.op === 'update' && entry.targetId) {
+        const { error } = await supabase.from('shopping_items').update(entry.payload).eq('id', entry.targetId)
+        if (error) throw error
+      } else if (entry.op === 'delete' && entry.targetId) {
+        const { error } = await supabase.from('shopping_items').delete().eq('id', entry.targetId)
+        if (error) throw error
+      }
+      await removeFromOutbox(listId, entry.id)
+    } catch (err) {
+      await markOutboxFailed(listId, entry.id, err)
+    }
   }
-  writeCache(pendingTogglesCache(listId), remaining)
 }
 
 export async function getItems(listId: string): Promise<ShoppingItem[]> {
   try {
-    await syncPendingToggles(listId)
+    await syncPendingChanges(listId)
     const { data, error } = await supabase
       .from('shopping_items')
       .select('*')
@@ -152,43 +171,62 @@ export async function addItem(
   pickerUri: string | null,
   pickerMime?: string | null,
 ): Promise<ShoppingItem> {
-  let image_path: string | null = null
+  try {
+    let image_path: string | null = null
 
-  if (pickerUri) {
-    const { data: existingPhotos, error: countError } = await supabase
+    if (pickerUri) {
+      const { data: existingPhotos, error: countError } = await supabase
+        .from('shopping_items')
+        .select('id')
+        .eq('list_id', listId)
+        .not('image_path', 'is', null)
+      if (countError) throw countError
+      if ((existingPhotos?.length ?? 0) >= 5) throw new Error('Limite de 5 photos par liste atteinte')
+
+      const allowedMime = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+      const extFromUri = pickerUri.split('.').pop()?.toLowerCase()
+      const mime = pickerMime?.toLowerCase()
+        ?? (extFromUri ? `image/${extFromUri === 'jpg' ? 'jpeg' : extFromUri}` : 'image/jpeg')
+      if (!allowedMime.includes(mime)) throw new Error('Type de fichier non autorisé')
+      const ext = mime === 'image/jpeg' ? 'jpg' : mime.split('/')[1]
+      const path = `${spaceId}/${Crypto.randomUUID()}.${ext}`
+      const buffer = await fetch(pickerUri).then(r => r.arrayBuffer())
+      const { error: uploadError } = await supabase.storage
+        .from('shopping-photos')
+        .upload(path, buffer, { contentType: mime, upsert: false })
+      if (uploadError) throw uploadError
+      image_path = path
+    }
+
+    const { data, error } = await supabase
       .from('shopping_items')
-      .select('id')
-      .eq('list_id', listId)
-      .not('image_path', 'is', null)
-    if (countError) throw countError
-    if ((existingPhotos?.length ?? 0) >= 5) throw new Error('Limite de 5 photos par liste atteinte')
+      .insert({ list_id: listId, name, image_path })
+      .select()
+      .single()
+    if (error) throw error
 
-    const allowedMime = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-    const extFromUri = pickerUri.split('.').pop()?.toLowerCase()
-    const mime = pickerMime?.toLowerCase()
-      ?? (extFromUri ? `image/${extFromUri === 'jpg' ? 'jpeg' : extFromUri}` : 'image/jpeg')
-    if (!allowedMime.includes(mime)) throw new Error('Type de fichier non autorisé')
-    const ext = mime === 'image/jpeg' ? 'jpg' : mime.split('/')[1]
-    const path = `${spaceId}/${Crypto.randomUUID()}.${ext}`
-    const buffer = await fetch(pickerUri).then(r => r.arrayBuffer())
-    const { error: uploadError } = await supabase.storage
-      .from('shopping-photos')
-      .upload(path, buffer, { contentType: mime, upsert: false })
-    if (uploadError) throw uploadError
-    image_path = path
+    const item = data as ShoppingItem
+    const cached = await readCache<ShoppingItem[]>(itemsCache(listId), [])
+    writeCache(itemsCache(listId), [item, ...cached])
+    return item
+  } catch (err) {
+    // Une photo exige le réseau de bout en bout (upload Storage) — pas de
+    // mode dégradé possible, on ne masque jamais cette erreur.
+    if (pickerUri) throw err
+
+    const localId = `local-${Crypto.randomUUID()}`
+    const localItem: ShoppingItem = {
+      id: localId, list_id: listId, name, image_path: null, done: false,
+      created_at: new Date().toISOString(),
+    }
+    const cached = await readCache<ShoppingItem[]>(itemsCache(listId), [])
+    writeCache(itemsCache(listId), [localItem, ...cached])
+    await enqueue(listId, {
+      id: Crypto.randomUUID(), op: 'create', localId,
+      payload: { list_id: listId, name, image_path: null },
+    })
+    return localItem
   }
-
-  const { data, error } = await supabase
-    .from('shopping_items')
-    .insert({ list_id: listId, name, image_path })
-    .select()
-    .single()
-  if (error) throw error
-
-  const item = data as ShoppingItem
-  const cached = await readCache<ShoppingItem[]>(itemsCache(listId), [])
-  writeCache(itemsCache(listId), [item, ...cached])
-  return item
 }
 
 export type ShoppingItemChange =
@@ -219,26 +257,39 @@ export async function toggleItem(listId: string, itemId: string, done: boolean):
   const cached = await readCache<ShoppingItem[]>(itemsCache(listId), [])
   writeCache(itemsCache(listId), cached.map(i => i.id === itemId ? { ...i, done } : i))
 
+  if (isLocalId(itemId)) {
+    await mergeIntoPendingCreate(listId, itemId, { done })
+    return
+  }
+
   try {
     const { error } = await supabase.from('shopping_items').update({ done }).eq('id', itemId)
     if (error) throw error
   } catch {
-    const pending = await readCache<PendingToggle[]>(pendingTogglesCache(listId), [])
-    writeCache(pendingTogglesCache(listId), [...pending.filter(p => p.itemId !== itemId), { itemId, done }])
+    await enqueue(listId, { id: Crypto.randomUUID(), op: 'update', targetId: itemId, payload: { done } })
   }
 }
 
 export async function deleteItem(listId: string, itemId: string): Promise<void> {
   const cached = await readCache<ShoppingItem[]>(itemsCache(listId), [])
   const target = cached.find(i => i.id === itemId)
+  writeCache(itemsCache(listId), cached.filter(i => i.id !== itemId))
 
-  if (target?.image_path) {
-    await supabase.storage.from('shopping-photos').remove([target.image_path])
-    deleteLocalMedia('sc_photo', target.image_path)
+  if (isLocalId(itemId)) {
+    await cancelPendingCreate(listId, itemId)
+    return
   }
 
-  await supabase.from('shopping_items').delete().eq('id', itemId)
-  writeCache(itemsCache(listId), cached.filter(i => i.id !== itemId))
+  try {
+    if (target?.image_path) {
+      await supabase.storage.from('shopping-photos').remove([target.image_path])
+      deleteLocalMedia('sc_photo', target.image_path)
+    }
+    const { error } = await supabase.from('shopping_items').delete().eq('id', itemId)
+    if (error) throw error
+  } catch {
+    await enqueue(listId, { id: Crypto.randomUUID(), op: 'delete', targetId: itemId, payload: {} })
+  }
 }
 
 // ── Migration inter-espaces ───────────────────────────────────────────────────
