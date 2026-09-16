@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   View, Text, Pressable, StyleSheet,
-  ScrollView, Modal, BackHandler,
+  ScrollView, Modal, BackHandler, ActivityIndicator,
 } from 'react-native'
 import { PanGestureHandler, State } from 'react-native-gesture-handler'
 import { Image } from 'expo-image'
@@ -72,6 +72,9 @@ function EventDetailPopup({ event, onClose }: { event: Event; onClose: () => voi
 
       <View style={styles.popupHeader}>
         <Text style={styles.popupTitle}>{event.title}</Text>
+        {event.id.startsWith('local-') && (
+          <ActivityIndicator size="small" color="rgba(255,255,255,0.70)" style={{ marginRight: 8 }} />
+        )}
         <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={8}>
           <Ionicons name="close" size={20} color="rgba(255,255,255,0.80)" />
         </Pressable>

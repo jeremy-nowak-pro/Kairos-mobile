@@ -283,11 +283,16 @@ function ItemRow({
     ]).start()
   }, [item.done])
 
+  const isPending = item.id.startsWith('local-')
+
   return (
     <View style={styles.itemRow}>
       <Pressable style={styles.itemMain} onPress={onToggle}>
         <Animated.View style={[styles.circle, item.done && styles.circleChecked, { transform: [{ scale: scaleAnim }] }]}>
-          {item.done && <Ionicons name="checkmark" size={13} color="#fff" />}
+          {isPending
+            ? <ActivityIndicator size="small" color="rgba(255,255,255,0.75)" />
+            : item.done && <Ionicons name="checkmark" size={13} color="#fff" />
+          }
         </Animated.View>
 
         {item.image_path && photoUrl && (

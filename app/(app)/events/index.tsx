@@ -57,7 +57,12 @@ function EventCard({ event, delay, animKey }: { event: Event; delay: number; ani
       <GlassCard style={styles.card} contentStyle={styles.cardContent}>
       <View style={[styles.cardBar, { backgroundColor: color.text }]} />
       <View style={styles.cardBody}>
-        <Text style={styles.cardTitle} numberOfLines={1}>{event.title}</Text>
+        <View style={styles.cardTitleRow}>
+          <Text style={styles.cardTitle} numberOfLines={1}>{event.title}</Text>
+          {event.id.startsWith('local-') && (
+            <ActivityIndicator size="small" color="rgba(255,255,255,0.60)" />
+          )}
+        </View>
         <Text style={styles.cardDate}>{formatDate(event.date)}</Text>
         <View style={styles.cardMeta}>
           <Ionicons name="time-outline" size={12} color="rgba(255,255,255,0.70)" />
@@ -189,7 +194,8 @@ const styles = StyleSheet.create({
   cardPressed: { opacity: 0.7 },
   cardBar: { width: 4 },
   cardBody: { flex: 1, paddingHorizontal: 14, paddingVertical: 13 },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: '#ffffff', marginBottom: 3 },
+  cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 },
+  cardTitle: { fontSize: 16, fontWeight: '600', color: '#ffffff', flexShrink: 1 },
   cardDate: { fontSize: 13, color: 'rgba(255,255,255,0.92)', marginBottom: 5 },
   cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
   cardTime: { fontSize: 13, color: 'rgba(255,255,255,0.65)' },
