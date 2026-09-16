@@ -67,6 +67,12 @@ function chain(result: unknown) {
 const LIST = { id: 'l1', space_id: 's1', name: 'Courses', date: null, created_by: 'u1', created_at: '' }
 const ITEM = { id: 'i1', list_id: 'l1', name: 'Lait', image_path: null, done: false, created_at: '' }
 
+function daysAgo(n: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() - n)
+  return d.toISOString().split('T')[0]
+}
+
 beforeEach(() => {
   jest.clearAllMocks()
   ;(FS as any).__reset()
@@ -89,6 +95,30 @@ describe('getLists', () => {
   it('retourne [] si Supabase échoue et le cache est vide', async () => {
     mockFrom.mockReturnValue(chain({ data: null, error: new Error('network') }))
     expect(await getLists('s1')).toEqual([])
+  })
+
+  it('supprime automatiquement une liste datée de plus de 2 jours', async () => {
+    const expiredList = { ...LIST, id: 'l-old', date: daysAgo(5) }
+    const deleteChain = chain({ data: null, error: null })
+    mockFrom
+      .mockReturnValueOnce(chain({ data: [expiredList], error: null })) // select shopping_lists
+      .mockReturnValueOnce(chain({ data: [], error: null })) // select items (image_path) dans deleteList
+      .mockReturnValueOnce(deleteChain) // delete shopping_lists
+
+    const result = await getLists('s1')
+    expect(result).toEqual([])
+    expect(deleteChain.delete).toHaveBeenCalled()
+  })
+
+  it('garde une liste datée de moins de 2 jours', async () => {
+    const recentList = { ...LIST, id: 'l-recent', date: daysAgo(1) }
+    mockFrom.mockReturnValue(chain({ data: [recentList], error: null }))
+    expect(await getLists('s1')).toEqual([recentList])
+  })
+
+  it('garde une liste sans date indéfiniment', async () => {
+    mockFrom.mockReturnValue(chain({ data: [LIST], error: null }))
+    expect(await getLists('s1')).toEqual([LIST])
   })
 })
 

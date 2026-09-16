@@ -56,6 +56,20 @@ export async function getPhotoLocalUri(imagePath: string): Promise<string> {
 
 // ── Lists ─────────────────────────────────────────────────────────────────────
 
+// Une liste sans date est une liste de référence (ex: courses habituelles) —
+// elle reste tant qu'elle n'est pas supprimée à la main. Une liste datée n'a
+// plus d'utilité 2 jours après le jour prévu ; elle se supprime toute seule.
+const EXPIRY_DAYS = 2
+
+function isListExpired(list: ShoppingList): boolean {
+  if (!list.date) return false
+  const cutoff = new Date(list.date + 'T00:00:00')
+  cutoff.setDate(cutoff.getDate() + EXPIRY_DAYS)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return today > cutoff
+}
+
 export async function getLists(spaceId: string): Promise<ShoppingList[]> {
   try {
     const { data, error } = await supabase
@@ -64,8 +78,16 @@ export async function getLists(spaceId: string): Promise<ShoppingList[]> {
       .eq('space_id', spaceId)
       .order('created_at', { ascending: true })
     if (error) throw error
-    writeCache(listsCache(spaceId), data)
-    return data as ShoppingList[]
+
+    const lists = data as ShoppingList[]
+    const expired = lists.filter(isListExpired)
+    if (expired.length > 0) {
+      await Promise.all(expired.map(l => deleteList(l.id, spaceId).catch(() => {})))
+    }
+
+    const remaining = lists.filter(l => !isListExpired(l))
+    writeCache(listsCache(spaceId), remaining)
+    return remaining
   } catch {
     return readCache<ShoppingList[]>(listsCache(spaceId), [])
   }
