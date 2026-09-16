@@ -1,6 +1,6 @@
-import { Image } from 'expo-image'
 import { getAttachments } from './attachments'
 import { supabase } from './supabase'
+import { getCompressedLocalUri } from './mediaCache'
 
 const URL_TTL = 55 * 60 * 1000 // 55 min (signed URLs valid 60 min)
 
@@ -20,6 +20,12 @@ export async function getImageUrl(storagePath: string): Promise<string> {
   return data.signedUrl
 }
 
+// Sert la copie locale compressée si elle existe déjà (fonctionne hors ligne).
+// Sinon télécharge la photo, la redimensionne/recompresse, et la met en cache disque.
+export async function getEventImageLocalUri(storagePath: string): Promise<string> {
+  return getCompressedLocalUri('ev_photo', storagePath, getImageUrl)
+}
+
 export async function prefetchEventImages(eventId: string): Promise<void> {
   if (prefetched.has(eventId)) return
   prefetched.add(eventId)
@@ -29,9 +35,7 @@ export async function prefetchEventImages(eventId: string): Promise<void> {
     const images = atts.filter(a => a.mime_type?.startsWith('image/'))
     if (images.length === 0) return
 
-    const urls = await Promise.all(images.map(a => getImageUrl(a.storage_path).catch(() => null)))
-    const valid = urls.filter((u): u is string => u !== null)
-    await Promise.all(valid.map(url => Image.prefetch(url)))
+    await Promise.all(images.map(a => getEventImageLocalUri(a.storage_path).catch(() => null)))
   } catch {
     // silent — le cache est best-effort
   }

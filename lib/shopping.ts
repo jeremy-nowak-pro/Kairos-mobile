@@ -2,7 +2,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { File, Paths } from 'expo-file-system'
 import * as Crypto from 'expo-crypto'
-import { ImageManipulator, SaveFormat } from 'expo-image-manipulator'
+import { getCompressedLocalUri, deleteLocalMedia } from './mediaCache'
 
 // ── Cache local (fallback hors ligne) ─────────────────────────────────────────
 
@@ -61,25 +61,10 @@ export async function getPhotoSignedUrl(imagePath: string): Promise<string> {
   return data.signedUrl
 }
 
-const localPhotoFile = (imagePath: string) =>
-  new File(Paths.document, `sc_photo_${imagePath.replace(/\//g, '_').replace(/\.[a-zA-Z0-9]+$/, '')}.jpg`)
-
 // Sert la copie locale compressée si elle existe déjà (fonctionne hors ligne).
 // Sinon télécharge la photo, la redimensionne/recompresse, et la met en cache disque.
 export async function getPhotoLocalUri(imagePath: string): Promise<string> {
-  const local = localPhotoFile(imagePath)
-  if (local.exists) return local.uri
-
-  const signedUrl = await getPhotoSignedUrl(imagePath)
-  const temp = await File.downloadFileAsync(signedUrl, Paths.cache, { idempotent: true })
-  try {
-    const rendered = await ImageManipulator.manipulate(temp.uri).resize({ width: 800 }).renderAsync()
-    const compressed = await rendered.saveAsync({ compress: 0.6, format: SaveFormat.JPEG })
-    new File(compressed.uri).move(local)
-    return local.uri
-  } finally {
-    if (temp.exists) temp.delete()
-  }
+  return getCompressedLocalUri('sc_photo', imagePath, getPhotoSignedUrl)
 }
 
 // ── Lists ─────────────────────────────────────────────────────────────────────
@@ -263,8 +248,7 @@ export async function deleteItem(listId: string, itemId: string): Promise<void> 
 
   if (target?.image_path) {
     await supabase.storage.from('shopping-photos').remove([target.image_path])
-    const local = localPhotoFile(target.image_path)
-    if (local.exists) local.delete()
+    deleteLocalMedia('sc_photo', target.image_path)
   }
 
   await supabase.from('shopping_items').delete().eq('id', itemId)

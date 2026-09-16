@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import * as Crypto from 'expo-crypto'
+import { deleteLocalMedia } from './mediaCache'
 
 export interface Attachment {
   id: string
@@ -73,6 +74,7 @@ export async function uploadAttachment(
 
 export async function deleteAttachment(id: string, storagePath: string): Promise<void> {
   await supabase.storage.from('event-attachments').remove([storagePath])
+  deleteLocalMedia('ev_photo', storagePath)
   const { error } = await supabase.from('event_attachments').delete().eq('id', id)
   if (error) throw error
 }

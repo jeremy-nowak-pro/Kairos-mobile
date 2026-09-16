@@ -9,7 +9,7 @@ import { router, useLocalSearchParams, useFocusEffect, Stack, useNavigation } fr
 import { Ionicons } from '@expo/vector-icons'
 import { getEvent, deleteEvent, Event } from '@/lib/events'
 import { getAttachments, Attachment } from '@/lib/attachments'
-import { getImageUrl } from '@/lib/imageCache'
+import { getImageUrl, getEventImageLocalUri } from '@/lib/imageCache'
 import { userColor } from '@/lib/userColor'
 import MeshBackground from '@/components/MeshBackground'
 import GlassCard from '@/components/GlassCard'
@@ -146,7 +146,7 @@ export default function EventDetailScreen() {
       .then(async atts => {
         const imgs = atts.filter(a => a.mime_type?.startsWith('image/'))
         setDocs(atts.filter(a => !a.mime_type?.startsWith('image/')))
-        const urls = await Promise.all(imgs.map(a => getImageUrl(a.storage_path).catch(() => null)))
+        const urls = await Promise.all(imgs.map(a => getEventImageLocalUri(a.storage_path).catch(() => null)))
         setImageUrls(urls.filter((u): u is string => u !== null))
       })
       .catch(() => {})
