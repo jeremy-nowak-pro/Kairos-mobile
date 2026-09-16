@@ -6,6 +6,7 @@ import {
   updateEvent,
   deleteEvent,
   exportEventsToSpace,
+  syncPendingChanges,
 } from '../events'
 import { supabase } from '../supabase'
 import * as FS from 'expo-file-system'
@@ -31,6 +32,10 @@ jest.mock('expo-file-system', () => {
     __set: (path: string, content: string) => { files[path] = content },
   }
 })
+
+jest.mock('expo-crypto', () => ({
+  randomUUID: jest.fn(() => 'test-uuid'),
+}))
 
 jest.mock('../supabase', () => ({
   supabase: {
@@ -59,7 +64,7 @@ function chain(result: unknown) {
 const EVENT = {
   id: 'e1',
   title: 'Réunion',
-  date: '2026-06-10',
+  date: '2099-06-10', // loin dans le futur : ne devient jamais "passé" pour les tests de filtrage
   start_time: '10:00',
   end_time: '11:00',
   location: null,
@@ -90,7 +95,7 @@ describe('getUpcomingEvents', () => {
   })
 
   it('tombe en fallback cache si Supabase échoue', async () => {
-    ;(FS as any).__set('/doc/ev_upcoming_s1.json', JSON.stringify([EVENT]))
+    ;(FS as any).__set('/doc/ev_all_s1.json', JSON.stringify([EVENT]))
     mockFrom.mockReturnValue(chain({ data: null, error: new Error('db error') }))
     expect(await getUpcomingEvents('s1')).toEqual([EVENT])
   })
@@ -129,9 +134,10 @@ describe('getEventsForMonth', () => {
   })
 
   it('tombe en fallback cache si Supabase échoue', async () => {
-    ;(FS as any).__set('/doc/ev_month_s1_2025_0.json', JSON.stringify([EVENT]))
+    const janEvent = { ...EVENT, date: '2025-01-15' }
+    ;(FS as any).__set('/doc/ev_all_s1.json', JSON.stringify([janEvent]))
     mockFrom.mockReturnValue(chain({ data: null, error: new Error('db error') }))
-    expect(await getEventsForMonth('s1', 2025, 0)).toEqual([EVENT])
+    expect(await getEventsForMonth('s1', 2025, 0)).toEqual([janEvent])
   })
 
   it('retourne [] si Supabase échoue et le cache est vide', async () => {
@@ -177,9 +183,11 @@ describe('createEvent', () => {
     expect(await createEvent(payload)).toEqual(EVENT)
   })
 
-  it('lève une erreur en cas d\'échec', async () => {
+  it('crée localement et met en file si le réseau échoue', async () => {
     mockFrom.mockReturnValue(chain({ data: null, error: new Error('insert error') }))
-    await expect(createEvent(payload)).rejects.toThrow('insert error')
+    const result = await createEvent(payload)
+    expect(result.id).toMatch(/^local-/)
+    expect(result.title).toBe('Réunion')
   })
 })
 
@@ -194,9 +202,16 @@ describe('updateEvent', () => {
     expect(await updateEvent('e1', payload)).toEqual(updated)
   })
 
-  it('lève une erreur en cas d\'échec', async () => {
+  it('lève une erreur si rien n\'est connu localement pour retomber dessus', async () => {
     mockFrom.mockReturnValue(chain({ data: null, error: new Error('update error') }))
     await expect(updateEvent('e1', payload)).rejects.toThrow('update error')
+  })
+
+  it('met à jour localement et met en file si le réseau échoue mais qu\'un cache existe', async () => {
+    ;(FS as any).__set('/doc/ev_detail_e1.json', JSON.stringify(EVENT))
+    mockFrom.mockReturnValue(chain({ data: null, error: new Error('update error') }))
+    const result = await updateEvent('e1', payload)
+    expect(result.title).toBe('Modifié')
   })
 })
 
@@ -229,11 +244,11 @@ describe('deleteEvent', () => {
     await expect(deleteEvent('e1')).resolves.toBeUndefined()
   })
 
-  it('lève une erreur si la suppression DB échoue', async () => {
+  it('met en file la suppression si le réseau échoue', async () => {
     mockFrom
       .mockReturnValueOnce(chain({ data: [], error: null }))
       .mockReturnValueOnce(chain({ data: null, error: new Error('delete error') }))
-    await expect(deleteEvent('e1')).rejects.toThrow('delete error')
+    await expect(deleteEvent('e1')).resolves.toBeUndefined()
   })
 
   it('supprime le cache local de l\'événement', async () => {
@@ -243,6 +258,42 @@ describe('deleteEvent', () => {
       .mockReturnValueOnce(chain({ data: null, error: null }))
     await deleteEvent('e1')
     expect(await getEvent('e1')).toBeNull()
+  })
+
+  it('annule la création en attente si on supprime un événement encore local', async () => {
+    const payload = { title: 'X', date: '2099-01-01', start_time: '10:00', end_time: '11:00', created_by: 'u1', space_id: 's1' }
+    mockFrom.mockReturnValue(chain({ data: null, error: new Error('network') }))
+    const created = await createEvent(payload)
+    await deleteEvent(created.id)
+    expect(await getEvent(created.id)).toBeNull()
+
+    const insertChain = chain({ data: null, error: null })
+    mockFrom.mockReturnValue(insertChain)
+    await syncPendingChanges()
+    expect(insertChain.insert).not.toHaveBeenCalled()
+  })
+})
+
+// ─── syncPendingChanges ───────────────────────────────────────────────────────
+
+describe('syncPendingChanges', () => {
+  const payload = { title: 'X', date: '2099-01-01', start_time: '10:00', end_time: '11:00', created_by: 'u1', space_id: 's1' }
+
+  it('remplace le cache local par l\'événement réel après synchro d\'une création', async () => {
+    mockFrom.mockReturnValue(chain({ data: null, error: new Error('network') }))
+    const created = await createEvent(payload)
+
+    const real = { ...EVENT, id: 'real-1', title: 'X' }
+    mockFrom.mockReturnValue(chain({ data: real, error: null }))
+    await syncPendingChanges()
+
+    expect(await getEvent(created.id)).toBeNull()
+    expect(await getEvent('real-1')).toEqual(real)
+  })
+
+  it('ne fait rien si la file est vide', async () => {
+    await expect(syncPendingChanges()).resolves.toBeUndefined()
+    expect(mockFrom).not.toHaveBeenCalled()
   })
 })
 

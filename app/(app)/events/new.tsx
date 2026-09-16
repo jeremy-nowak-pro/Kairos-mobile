@@ -116,9 +116,13 @@ export default function NewEventScreen() {
         created_by: createdBy,
         space_id: space.id,
       })
+      // Événement créé hors ligne (id temporaire) : les pièces jointes exigent
+      // le réseau de bout en bout, on ne les tente pas — elles resteront à
+      // ajouter une fois l'événement synchronisé.
+      const isLocalEvent = event.id.startsWith('local-')
       await Promise.all([
-        ...pendingFiles.map(f => uploadAttachment(f, event.id, space.id, createdBy)),
-        trimmedLocation ? upsertLocation(trimmedLocation) : Promise.resolve(),
+        ...(isLocalEvent ? [] : pendingFiles.map(f => uploadAttachment(f, event.id, space.id, createdBy))),
+        trimmedLocation ? upsertLocation(trimmedLocation).catch(() => {}) : Promise.resolve(),
         sendEventNotification(space.id, user!.id, createdBy, title.trim(), 'created').catch(() => {}),
       ])
       router.back()
