@@ -196,6 +196,28 @@ describe('getItems', () => {
     mockFrom.mockReturnValue(chain({ data: null, error: new Error('network') }))
     expect(await getItems('l1')).toEqual([])
   })
+
+  it('retire automatiquement une photo vieille de plus de 7 jours', async () => {
+    const oldItem = { ...ITEM, image_path: 'l1/old.jpg', created_at: daysAgo(10) }
+    const removeMock = jest.fn().mockResolvedValue({})
+    mockStorageFrom.mockReturnValue({ remove: removeMock })
+    const updateChain = chain({ data: null, error: null })
+    mockFrom
+      .mockReturnValueOnce(chain({ data: [oldItem], error: null })) // select items
+      .mockReturnValueOnce(updateChain) // update image_path = null
+
+    const result = await getItems('l1')
+    expect(result[0].image_path).toBeNull()
+    expect(removeMock).toHaveBeenCalledWith(['l1/old.jpg'])
+    expect(updateChain.update).toHaveBeenCalledWith({ image_path: null })
+  })
+
+  it('garde une photo récente', async () => {
+    const recentItem = { ...ITEM, image_path: 'l1/recent.jpg', created_at: daysAgo(1) }
+    mockFrom.mockReturnValue(chain({ data: [recentItem], error: null }))
+    const result = await getItems('l1')
+    expect(result[0].image_path).toBe('l1/recent.jpg')
+  })
 })
 
 // ─── addItem ──────────────────────────────────────────────────────────────────

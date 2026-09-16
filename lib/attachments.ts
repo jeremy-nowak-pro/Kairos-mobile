@@ -21,6 +21,17 @@ export interface LocalFile {
   size: number | null
 }
 
+// Comportement standard, pour tout le monde : une pièce jointe d'événement
+// (billet, document à montrer pour une date donnée) n'a plus grand intérêt
+// passé une semaine — l'original est censé rester ailleurs (email, portefeuille...).
+const ATTACHMENT_EXPIRY_DAYS = 7
+
+function isAttachmentExpired(createdAt: string): boolean {
+  const cutoff = new Date(createdAt)
+  cutoff.setDate(cutoff.getDate() + ATTACHMENT_EXPIRY_DAYS)
+  return new Date() > cutoff
+}
+
 export async function getAttachments(eventId: string): Promise<Attachment[]> {
   const { data, error } = await supabase
     .from('event_attachments')
@@ -28,7 +39,14 @@ export async function getAttachments(eventId: string): Promise<Attachment[]> {
     .eq('event_id', eventId)
     .order('created_at', { ascending: true })
   if (error) throw error
-  return (data ?? []) as Attachment[]
+
+  const attachments = (data ?? []) as Attachment[]
+  const expired = attachments.filter(a => isAttachmentExpired(a.created_at))
+  if (expired.length === 0) return attachments
+
+  await Promise.all(expired.map(a => deleteAttachment(a.id, a.storage_path).catch(() => {})))
+  const expiredIds = new Set(expired.map(a => a.id))
+  return attachments.filter(a => !expiredIds.has(a.id))
 }
 
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']

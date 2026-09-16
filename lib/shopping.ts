@@ -170,6 +170,38 @@ export async function syncPendingChanges(listId: string): Promise<void> {
   }
 }
 
+// Comportement standard, pour tout le monde (pas lié à un abonnement) : une
+// photo d'article n'a plus grand intérêt passé une semaine, elle est
+// retirée automatiquement — l'article lui-même n'est pas touché.
+const PHOTO_EXPIRY_DAYS = 7
+
+function isPhotoExpired(createdAt: string): boolean {
+  const cutoff = new Date(createdAt)
+  cutoff.setDate(cutoff.getDate() + PHOTO_EXPIRY_DAYS)
+  return new Date() > cutoff
+}
+
+async function expireOldPhotos(items: ShoppingItem[]): Promise<ShoppingItem[]> {
+  const toExpire = items.filter(i => i.image_path && isPhotoExpired(i.created_at))
+  if (toExpire.length === 0) return items
+
+  const expiredIds = new Set<string>()
+  await Promise.all(toExpire.map(async i => {
+    if (!i.image_path) return
+    try {
+      await supabase.storage.from('shopping-photos').remove([i.image_path])
+      const { error } = await supabase.from('shopping_items').update({ image_path: null }).eq('id', i.id)
+      if (error) throw error
+      deleteLocalMedia('sc_photo', i.image_path)
+      expiredIds.add(i.id)
+    } catch {
+      // best-effort : retentera au prochain getItems() réussi
+    }
+  }))
+
+  return items.map(i => expiredIds.has(i.id) ? { ...i, image_path: null } : i)
+}
+
 export async function getItems(listId: string): Promise<ShoppingItem[]> {
   try {
     await syncPendingChanges(listId)
@@ -179,8 +211,9 @@ export async function getItems(listId: string): Promise<ShoppingItem[]> {
       .eq('list_id', listId)
       .order('created_at', { ascending: false })
     if (error) throw error
-    writeCache(itemsCache(listId), data)
-    return data as ShoppingItem[]
+    const items = await expireOldPhotos(data as ShoppingItem[])
+    writeCache(itemsCache(listId), items)
+    return items
   } catch {
     return readCache<ShoppingItem[]>(itemsCache(listId), [])
   }
