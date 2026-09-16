@@ -8,6 +8,29 @@ import {
   exportEventsToSpace,
 } from '../events'
 import { supabase } from '../supabase'
+import * as FS from 'expo-file-system'
+
+// ── Mock expo-file-system ─────────────────────────────────────────────────────
+// Les méthodes MockFile accèdent à `files` via closure — __reset() réinitialise
+// la variable et tous les accès suivants voient le nouvel objet vide.
+
+jest.mock('expo-file-system', () => {
+  let files: Record<string, string> = {}
+  class MockFile {
+    _p: string
+    constructor(dir: string, name: string) { this._p = `${dir}/${name}` }
+    get exists() { return this._p in files }
+    async text() { return files[this._p] ?? '' }
+    write(content: string) { files[this._p] = content }
+    delete() { delete files[this._p] }
+  }
+  return {
+    File: MockFile,
+    Paths: { document: '/doc' },
+    __reset: () => { files = {} },
+    __set: (path: string, content: string) => { files[path] = content },
+  }
+})
 
 jest.mock('../supabase', () => ({
   supabase: {
@@ -47,7 +70,10 @@ const EVENT = {
   created_at: '2026-06-01',
 }
 
-beforeEach(() => jest.clearAllMocks())
+beforeEach(() => {
+  jest.clearAllMocks()
+  ;(FS as any).__reset()
+})
 
 // ─── getUpcomingEvents ────────────────────────────────────────────────────────
 
@@ -63,9 +89,15 @@ describe('getUpcomingEvents', () => {
     expect(await getUpcomingEvents('s1')).toEqual([])
   })
 
-  it('lève une erreur en cas d\'échec', async () => {
+  it('tombe en fallback cache si Supabase échoue', async () => {
+    ;(FS as any).__set('/doc/ev_upcoming_s1.json', JSON.stringify([EVENT]))
     mockFrom.mockReturnValue(chain({ data: null, error: new Error('db error') }))
-    await expect(getUpcomingEvents('s1')).rejects.toThrow('db error')
+    expect(await getUpcomingEvents('s1')).toEqual([EVENT])
+  })
+
+  it('retourne [] si Supabase échoue et le cache est vide', async () => {
+    mockFrom.mockReturnValue(chain({ data: null, error: new Error('db error') }))
+    expect(await getUpcomingEvents('s1')).toEqual([])
   })
 })
 
@@ -96,9 +128,15 @@ describe('getEventsForMonth', () => {
     expect(c.lte).toHaveBeenCalledWith('date', '2024-02-29')
   })
 
-  it('lève une erreur en cas d\'échec', async () => {
+  it('tombe en fallback cache si Supabase échoue', async () => {
+    ;(FS as any).__set('/doc/ev_month_s1_2025_0.json', JSON.stringify([EVENT]))
     mockFrom.mockReturnValue(chain({ data: null, error: new Error('db error') }))
-    await expect(getEventsForMonth('s1', 2025, 0)).rejects.toThrow('db error')
+    expect(await getEventsForMonth('s1', 2025, 0)).toEqual([EVENT])
+  })
+
+  it('retourne [] si Supabase échoue et le cache est vide', async () => {
+    mockFrom.mockReturnValue(chain({ data: null, error: new Error('db error') }))
+    expect(await getEventsForMonth('s1', 2025, 0)).toEqual([])
   })
 })
 
@@ -110,9 +148,15 @@ describe('getEvent', () => {
     expect(await getEvent('e1')).toEqual(EVENT)
   })
 
-  it('retourne null si l\'événement n\'existe pas', async () => {
+  it('retourne null si l\'événement n\'existe pas et le cache est vide', async () => {
     mockFrom.mockReturnValue(chain({ data: null, error: new Error('not found') }))
     expect(await getEvent('e1')).toBeNull()
+  })
+
+  it('tombe en fallback cache si Supabase échoue', async () => {
+    ;(FS as any).__set('/doc/ev_detail_e1.json', JSON.stringify(EVENT))
+    mockFrom.mockReturnValue(chain({ data: null, error: new Error('network') }))
+    expect(await getEvent('e1')).toEqual(EVENT)
   })
 })
 
@@ -190,6 +234,15 @@ describe('deleteEvent', () => {
       .mockReturnValueOnce(chain({ data: [], error: null }))
       .mockReturnValueOnce(chain({ data: null, error: new Error('delete error') }))
     await expect(deleteEvent('e1')).rejects.toThrow('delete error')
+  })
+
+  it('supprime le cache local de l\'événement', async () => {
+    ;(FS as any).__set('/doc/ev_detail_e1.json', JSON.stringify(EVENT))
+    mockFrom
+      .mockReturnValueOnce(chain({ data: [], error: null }))
+      .mockReturnValueOnce(chain({ data: null, error: null }))
+    await deleteEvent('e1')
+    expect(await getEvent('e1')).toBeNull()
   })
 })
 

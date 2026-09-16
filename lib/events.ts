@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { cacheFile, readCache, writeCache } from './localCache'
 
 export interface Event {
   id: string
@@ -14,18 +15,30 @@ export interface Event {
   created_at: string | null
 }
 
-export async function getUpcomingEvents(spaceId: string): Promise<Event[]> {
-  const today = new Date().toISOString().split('T')[0]
-  const { data, error } = await supabase
-    .from('events')
-    .select('*')
-    .eq('space_id', spaceId)
-    .gte('date', today)
-    .order('date', { ascending: true })
-    .order('start_time', { ascending: true })
+// ── Cache local (fallback hors ligne) ─────────────────────────────────────────
 
-  if (error) throw error
-  return (data ?? []) as Event[]
+const upcomingCache = (spaceId: string) => cacheFile(`ev_upcoming_${spaceId}.json`)
+const monthCache = (spaceId: string, year: number, month: number) =>
+  cacheFile(`ev_month_${spaceId}_${year}_${month}.json`)
+const detailCache = (id: string) => cacheFile(`ev_detail_${id}.json`)
+
+export async function getUpcomingEvents(spaceId: string): Promise<Event[]> {
+  try {
+    const today = new Date().toISOString().split('T')[0]
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('space_id', spaceId)
+      .gte('date', today)
+      .order('date', { ascending: true })
+      .order('start_time', { ascending: true })
+
+    if (error) throw error
+    writeCache(upcomingCache(spaceId), data)
+    return (data ?? []) as Event[]
+  } catch {
+    return readCache<Event[]>(upcomingCache(spaceId), [])
+  }
 }
 
 export async function getEventsForMonth(spaceId: string, year: number, month: number): Promise<Event[]> {
@@ -33,27 +46,37 @@ export async function getEventsForMonth(spaceId: string, year: number, month: nu
   const lastDay = new Date(year, month + 1, 0).getDate()
   const to = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
 
-  const { data, error } = await supabase
-    .from('events')
-    .select('*')
-    .eq('space_id', spaceId)
-    .gte('date', from)
-    .lte('date', to)
-    .order('start_time', { ascending: true })
+  try {
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('space_id', spaceId)
+      .gte('date', from)
+      .lte('date', to)
+      .order('start_time', { ascending: true })
 
-  if (error) throw error
-  return (data ?? []) as Event[]
+    if (error) throw error
+    writeCache(monthCache(spaceId, year, month), data)
+    return (data ?? []) as Event[]
+  } catch {
+    return readCache<Event[]>(monthCache(spaceId, year, month), [])
+  }
 }
 
 export async function getEvent(id: string): Promise<Event | null> {
-  const { data, error } = await supabase
-    .from('events')
-    .select('*')
-    .eq('id', id)
-    .single()
+  try {
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', id)
+      .single()
 
-  if (error) return null
-  return data as Event
+    if (error) throw error
+    writeCache(detailCache(id), data)
+    return data as Event
+  } catch {
+    return readCache<Event | null>(detailCache(id), null)
+  }
 }
 
 export async function updateEvent(id: string, payload: {
@@ -89,6 +112,9 @@ export async function deleteEvent(id: string): Promise<void> {
 
   const { error } = await supabase.from('events').delete().eq('id', id)
   if (error) throw error
+
+  const cf = detailCache(id)
+  if (cf.exists) cf.delete()
 }
 
 export async function exportEventsToSpace(

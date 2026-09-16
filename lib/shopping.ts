@@ -1,29 +1,15 @@
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from './supabase'
-import { File, Paths } from 'expo-file-system'
 import * as Crypto from 'expo-crypto'
 import { getCompressedLocalUri, deleteLocalMedia } from './mediaCache'
+import { cacheFile, readCache, writeCache } from './localCache'
 
 // ── Cache local (fallback hors ligne) ─────────────────────────────────────────
 
-const listsCache = (spaceId: string) => new File(Paths.document, `sc_lists_${spaceId}.json`)
-const itemsCache = (listId: string) => new File(Paths.document, `sc_items_${listId}.json`)
-const pendingTogglesCache = (listId: string) => new File(Paths.document, `sc_pending_${listId}.json`)
-const storesFile = new File(Paths.document, 'shopping_stores.json')
-
-async function readCache<T>(file: File, fallback: T): Promise<T> {
-  if (!file.exists) return fallback
-  try {
-    const raw = await file.text()
-    return JSON.parse(raw)
-  } catch {
-    return fallback
-  }
-}
-
-function writeCache(file: File, data: unknown): void {
-  try { file.write(JSON.stringify(data)) } catch { /* best effort */ }
-}
+const listsCache = (spaceId: string) => cacheFile(`sc_lists_${spaceId}.json`)
+const itemsCache = (listId: string) => cacheFile(`sc_items_${listId}.json`)
+const pendingTogglesCache = (listId: string) => cacheFile(`sc_pending_${listId}.json`)
+const storesFile = cacheFile('shopping_stores.json')
 
 // ── Interfaces ────────────────────────────────────────────────────────────────
 
