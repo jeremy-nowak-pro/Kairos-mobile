@@ -189,17 +189,19 @@ export async function getEvent(id: string): Promise<Event | null> {
   }
 }
 
-export async function updateEvent(id: string, payload: {
-  title: string
-  date: string
-  start_time: string
-  end_time: string
+export interface EventUpdatePayload {
+  title?: string
+  date?: string
+  start_time?: string
+  end_time?: string
   location?: string | null
   description?: string | null
   assigned_to?: string | null
-}): Promise<Event> {
+}
+
+export async function updateEvent(id: string, payload: EventUpdatePayload): Promise<Event> {
   if (isLocalId(id)) {
-    await mergeIntoPendingCreate(EVENT_SCOPE, id, payload)
+    await mergeIntoPendingCreate(EVENT_SCOPE, id, payload as Record<string, unknown>)
     const cached = await readCache<Event | null>(detailCache(id), null)
     const merged = { ...(cached as Event), ...payload }
     writeCache(detailCache(id), merged)
@@ -222,7 +224,7 @@ export async function updateEvent(id: string, payload: {
     if (!cached) throw err // rien de connu localement à afficher en attendant
     const merged = { ...cached, ...payload }
     writeCache(detailCache(id), merged)
-    await enqueue(EVENT_SCOPE, { id: Crypto.randomUUID(), op: 'update', targetId: id, payload })
+    await enqueue(EVENT_SCOPE, { id: Crypto.randomUUID(), op: 'update', targetId: id, payload: payload as Record<string, unknown> })
     return merged
   }
 }

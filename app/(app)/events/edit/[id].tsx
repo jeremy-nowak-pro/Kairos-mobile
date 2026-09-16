@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   View, Text, TextInput, Pressable, StyleSheet,
   ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform,
@@ -10,7 +10,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useAuth } from '@/context/auth'
 import { useSpace } from '@/context/space'
-import { getEvent, updateEvent } from '@/lib/events'
+import { getEvent, updateEvent, Event } from '@/lib/events'
 import { sendEventNotification } from '@/lib/notifications'
 import { getSpaceMembers, SpaceMember } from '@/lib/spaces'
 import { upsertLocation } from '@/lib/locations'
@@ -59,11 +59,13 @@ export default function EditEventScreen() {
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
   const [scheduleViewerUri, setScheduleViewerUri] = useState<string | null>(null)
   const [scheduleLoadingId, setScheduleLoadingId] = useState<string | null>(null)
+  const originalRef = useRef<Event | null>(null)
 
   useEffect(() => {
     if (!id) return
     getEvent(id).then(event => {
       if (!event) { router.back(); return }
+      originalRef.current = event
       setEventId(event.id)
       setTitle(event.title)
       setDate(event.date)
@@ -113,13 +115,28 @@ export default function EditEventScreen() {
     setSaving(true)
     try {
       const trimmedLocation = location.trim()
-      await updateEvent(eventId, {
+      const candidate = {
         title: title.trim(), date,
         start_time: parsedStart, end_time: parsedEnd,
         location: trimmedLocation || null,
         description: description.trim() || null,
         assigned_to: selectedMembers.join(','),
-      })
+      }
+      // N'envoie que les champs réellement modifiés : si quelqu'un d'autre a
+      // changé un autre champ entre-temps (ex: pendant qu'on était hors ligne),
+      // sa modification n'est pas écrasée par une valeur périmée.
+      const original = originalRef.current
+      const payload = original
+        ? Object.fromEntries(
+            Object.entries(candidate).filter(
+              ([key, value]) => original[key as keyof typeof candidate] !== value
+            )
+          )
+        : candidate
+
+      if (Object.keys(payload).length > 0) {
+        await updateEvent(eventId, payload)
+      }
       if (trimmedLocation) upsertLocation(trimmedLocation).catch(() => {})
       sendEventNotification(space.id, user!.id, displayName ?? '', title.trim(), 'updated').catch(() => {})
       router.back()
