@@ -7,10 +7,11 @@ interface AuthContextType {
   user: User | null
   displayName: string | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<{ error: string | null }>
+  signIn: (email: string, password: string) => Promise<{ error: string | null; emailNotConfirmed?: boolean }>
   signUp: (email: string, password: string, displayName: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
   updateDisplayName: (name: string) => Promise<{ error: string | null }>
+  resendConfirmation: (email: string) => Promise<{ error: string | null }>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -39,20 +40,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: error ? 'Email ou mot de passe incorrect.' : null }
+    if (!error) return { error: null }
+    if (error.code === 'email_not_confirmed') {
+      return { error: "Ton email n'est pas encore confirmé. Vérifie ta boîte mail.", emailNotConfirmed: true }
+    }
+    return { error: 'Email ou mot de passe incorrect.' }
   }
 
   const signUp = async (email: string, password: string, displayName: string) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { display_name: displayName } },
+      options: {
+        data: { display_name: displayName },
+        emailRedirectTo: 'kairos-mobile://confirm-email',
+      },
     })
-    return { error: error ? 'Inscription impossible. Vérifiez votre email et votre mot de passe.' : null }
+    if (!error) return { error: null }
+    console.error('signUp error:', error.code, error.message)
+    switch (error.code) {
+      case 'user_already_exists':
+        return { error: 'Un compte existe déjà avec cet email.' }
+      case 'weak_password':
+        return { error: 'Mot de passe trop faible (6 caractères minimum).' }
+      case 'email_address_invalid':
+        return { error: 'Adresse email invalide.' }
+      case 'over_email_send_rate_limit':
+        return { error: "Trop de tentatives. Réessaie dans quelques minutes." }
+      default:
+        return { error: `Inscription impossible : ${error.message}` }
+    }
   }
 
   const signOut = async () => {
     await supabase.auth.signOut()
+  }
+
+  const resendConfirmation = async (email: string) => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: 'kairos-mobile://confirm-email' },
+    })
+    return { error: error ? "Impossible de renvoyer l'email. Réessaie plus tard." : null }
   }
 
   const updateDisplayName = async (name: string) => {
@@ -73,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signOut,
       updateDisplayName,
+      resendConfirmation,
     }}>
       {children}
     </AuthContext.Provider>

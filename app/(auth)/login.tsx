@@ -6,29 +6,41 @@ import { BlurView } from 'expo-blur'
 import MeshBackground from '@/components/MeshBackground'
 
 export default function LoginScreen() {
-  const { signIn } = useAuth()
+  const { signIn, resendConfirmation } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [needsConfirmation, setNeedsConfirmation] = useState(false)
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent'>('idle')
 
   useEffect(() => {
-    if (!error) return
+    if (!error || needsConfirmation) return
     const t = setTimeout(() => setError(null), 3000)
     return () => clearTimeout(t)
-  }, [error])
+  }, [error, needsConfirmation])
 
   const handleLogin = async () => {
     setError(null)
+    setNeedsConfirmation(false)
+    setResendState('idle')
     setLoading(true)
-    const { error } = await signIn(email.trim(), password)
+    const { error, emailNotConfirmed } = await signIn(email.trim(), password)
     setLoading(false)
     if (error) {
       setError(error)
+      setNeedsConfirmation(!!emailNotConfirmed)
     } else {
       router.replace('/')
     }
+  }
+
+  const handleResend = async () => {
+    setResendState('sending')
+    const { error } = await resendConfirmation(email.trim())
+    setResendState(error ? 'idle' : 'sent')
+    if (error) setError(error)
   }
 
   return (
@@ -76,6 +88,14 @@ export default function LoginScreen() {
         <View style={styles.errorContainer}>
           {error && <Text style={styles.error}>{error}</Text>}
         </View>
+
+        {needsConfirmation && (
+          <Pressable onPress={handleResend} disabled={resendState !== 'idle'} style={styles.resendLink}>
+            <Text style={styles.resendText}>
+              {resendState === 'sent' ? 'Email renvoyé !' : resendState === 'sending' ? 'Envoi…' : "Renvoyer l'email de confirmation"}
+            </Text>
+          </Pressable>
+        )}
 
         <Pressable style={styles.button} onPress={handleLogin} disabled={loading}>
           {loading
@@ -176,5 +196,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: 'rgba(255,255,255,0.55)',
     fontSize: 13,
+  },
+  resendLink: {
+    marginBottom: 14,
+  },
+  resendText: {
+    textAlign: 'center',
+    color: 'rgba(180,200,255,0.85)',
+    fontSize: 13,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
   },
 })
